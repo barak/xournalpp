@@ -25,6 +25,7 @@ ppa-build
 
 # CMake
 build/
+obj-*/
 desktop/desktop_install.sh
 
 # NetBeans
