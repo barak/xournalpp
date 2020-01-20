@@ -1,3 +1,11 @@
+xournalpp (1.0.16-1) unstable; urgency=medium
+
+  * Update packaging scripts
+  * Patch some upstream issues that annoy lintian
+  * Prepare for official initial debian release (closes: #927076)
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Mon, 20 Jan 2020 16:05:57 +0000
+
 xournalpp (1.0.6-0) unstable; urgency=low
 
   * Multiple fixes and improvements
@@ -29,4 +37,3 @@ xournalpp (1.0.2-0) unstable; urgency=low
   * Initial release Debian Packaging
 
  -- Andreas Butti <andreasbutti@gmail.com>  Mon, 03 Dec 2018 20:00:00 +0100
-
