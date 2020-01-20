@@ -1,7 +1,6 @@
 Source: xournalpp
-Maintainer: Andreas Butti <andreasbutti@gmail.com>
-Uploaders: Barak A. Pearlmutter <bap@debian.org>
-Section: misc
+Maintainer: Barak A. Pearlmutter <bap@debian.org>
+Section: x11
 Priority: optional
 Standards-Version: 4.4.1
 Build-Depends: debhelper-compat (= 12), cmake,
@@ -19,4 +18,5 @@ Description: Handwritten note-taking supporting pen & PDF annotation
  Xournal++ is a GTK+ application for notetaking, sketching, annotating
  a PDF file, or keeping a journal. Supports Pen input like Wacom
  Tablets. Best used with a stylus, although usable with a mouse.
- Reimplementation of the xournal program, with an extended file format.
+ Xournal++ is a reimplementation of the Xournal program, with an
+ extended file format.
