@@ -1,6 +1,8 @@
 #!/usr/bin/make -f
 
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+# Get __DATE__ and __TIME__ in sources to refer to debian/changelog ultimate timestamp
+include /usr/share/dpkg/pkg-info.mk
 
 %:
 	dh $@
