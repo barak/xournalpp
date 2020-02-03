@@ -33,7 +33,7 @@ sudo apt-get install cmake libgtk-3-dev libpoppler-glib-dev portaudio19-dev libs
 libcppunit-dev dvipng texlive libxml2-dev liblua5.3-dev libzip-dev
 ````
 
-#### For OpenSuse:
+#### For openSUSE:
 ```bash
 sudo zypper install cmake gtk3-devel cppunit-devel portaudio-devel libsndfile-devel \
 texlive-dvipng texlive libxml2-devel libpoppler-glib-devel libzip-devel
@@ -71,6 +71,12 @@ The binary executable will be placed in the `build/src/` subdirectory.
 
 ### Creating Packages for Package Managers
 
+Please ensure that the `translations` target has been built before
+attempting to generate any package.
+```bash
+cmake --build . --target translations
+```
+
 After compilation, select which packages you want to generate (see the relevant
 sections below) and then run the `package` target. The generated packages will
 be located in `build/packages`. For example:
@@ -101,13 +107,39 @@ TODO
 
 #### Flatpak
 
-TODO
+The Flatpak manifest for Xournal++ is located at
+https://github.com/flathub/com.github.xournalpp.xournalpp, which should be
+cloned into a separate directory before building.
+
+```bash
+git clone https://github.com/flathub/com.github.xournalpp.xournalpp xournalpp-flatpak
+```
+
+By default, the Flatpak manifest will build the latest stable version of
+Xournal++. You can change the built version to a specific commit by editing the
+commit information of the manifest to the desired commit (also specify tags if
+building a stable version):
+
+```diff
+   - name: xournalpp
+     buildsystem: cmake-ninja
+     sources:
+       - type: git
+         url: https://github.com/xournalpp/xournalpp
+-        commit: 14e9012b94e005112387dbb7d2ed59274d542885
+-        tag: 1.0.10
++        commit: a911a3911df7c588c23997a29ad6a2e8d48b4aea
++        tag: 1.0.15
+```
+
+You can also build your local clone of Xournal++ by changing the source type to
+`dir` and specifying the path to the clone.
 
 ### Installation from source
 
 __We highly discourage installation from source__, as it may lead to issues when
-upgrading to newer versions later on. Please think about creating a native package,
-an AppImage or Flatpak instead. Instructions are below.
+upgrading to newer versions later on. Please think about creating a native
+package, an AppImage or Flatpak instead. Instructions are above.
 
 If you don't want to make a package, you can install Xournal++ into your user
 folder (or any other folder) by specifying `CMAKE_INSTALL_PREFIX`:
