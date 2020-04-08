@@ -15,5 +15,14 @@ override_dh_auto_install:
 	-rm --verbose debian/*/usr/share/xournalpp/ui/icons/hicolor/update-icon-cache.sh
 	-rm --verbose debian/*/usr/share/xournalpp/ui/iconsDark/hicolor/update-icon-cache.sh
 
+override_dh_installman: debian/xournalpp.1
+	dh_installman
+
+debian/xournalpp.1:
+	help2man --no-info \
+		--version-string="$(DEB_VERSION)" \
+		--name="Xournal++, $(shell egrep '^Description: ' debian/control | head -1 | sed 's/Description: //')" \
+		./*/src/xournalpp > $@
+
 override_dh_dwz:
 	dh_dwz --no-dwz-multifile
