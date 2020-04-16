@@ -1,4 +1,4 @@
-xournalpp (1.0.17-1) unstable; urgency=medium
+xournalpp (1.0.18-1) unstable; urgency=medium
 
   * Update packaging scripts
   * Patch some upstream issues that annoy lintian
@@ -6,7 +6,7 @@ xournalpp (1.0.17-1) unstable; urgency=medium
   * Deal with timestamp issues for reproducible build
   * Generate lame xournalpp(1) man page via help2man
 
- -- Barak A. Pearlmutter <bap@debian.org>  Wed, 08 Apr 2020 16:11:13 +0100
+ -- Barak A. Pearlmutter <bap@debian.org>  Thu, 16 Apr 2020 23:05:50 +0100
 
 xournalpp (1.0.6-0) unstable; urgency=low
 
