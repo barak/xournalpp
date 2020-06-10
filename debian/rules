@@ -10,8 +10,7 @@ include /usr/share/dpkg/pkg-info.mk
 override_dh_auto_build:
 	dh_auto_build -- translations all
 
-override_dh_auto_install:
-	dh_auto_install
+execute_after_dh_auto_install:
 	-rm --verbose debian/*/usr/share/xournalpp/ui/icons/hicolor/update-icon-cache.sh
 	-rm --verbose debian/*/usr/share/xournalpp/ui/iconsDark/hicolor/update-icon-cache.sh
 
