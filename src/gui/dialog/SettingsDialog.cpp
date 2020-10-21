@@ -155,14 +155,14 @@ void SettingsDialog::initMouseButtonEvents()
 {
 	XOJ_CHECK_TYPE(SettingsDialog);
 
-	initMouseButtonEvents("hboxMidleMouse", 1);
-	initMouseButtonEvents("hboxRightMouse", 2);
-	initMouseButtonEvents("hboxEraser", 0);
-	initMouseButtonEvents("hboxTouch", 3, true);
-	initMouseButtonEvents("hboxPenButton1", 5);
-	initMouseButtonEvents("hboxPenButton2", 6);
+    initMouseButtonEvents("hboxMidleMouse", BUTTON_MIDDLE);
+    initMouseButtonEvents("hboxRightMouse", BUTTON_RIGHT);
+    initMouseButtonEvents("hboxEraser", BUTTON_ERASER);
+    initMouseButtonEvents("hboxTouch", BUTTON_TOUCH, true);
+    initMouseButtonEvents("hboxPenButton1", BUTTON_STYLUS);
+    initMouseButtonEvents("hboxPenButton2", BUTTON_STYLUS2);
 
-	initMouseButtonEvents("hboxDefaultTool", 4);
+    initMouseButtonEvents("hboxDefaultTool", BUTTON_DEFAULT);
 }
 
 void SettingsDialog::setDpi(int dpi)
@@ -435,15 +435,18 @@ void SettingsDialog::load()
 
 	switch((int)settings->getAudioSampleRate())
 	{
-		case 96100:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(get("cbAudioSampleRate")), 1);
+        case 16000:
+            gtk_combo_box_set_active(GTK_COMBO_BOX(get("cbAudioSampleRate")), 0);
+            break;
+		case 96000:
+			gtk_combo_box_set_active(GTK_COMBO_BOX(get("cbAudioSampleRate")), 2);
 			break;
 		case 192000:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(get("cbAudioSampleRate")), 2);
+			gtk_combo_box_set_active(GTK_COMBO_BOX(get("cbAudioSampleRate")), 3);
 			break;
 		case 44100:
 		default:
-			gtk_combo_box_set_active(GTK_COMBO_BOX(get("cbAudioSampleRate")), 0);
+			gtk_combo_box_set_active(GTK_COMBO_BOX(get("cbAudioSampleRate")), 1);
 			break;
 	}
 
@@ -666,13 +669,16 @@ void SettingsDialog::save()
 
 	switch (gtk_combo_box_get_active(GTK_COMBO_BOX(get("cbAudioSampleRate"))))
 	{
-		case 1:
-			settings->setAudioSampleRate(96100.0);
-			break;
+        case 0:
+            settings->setAudioSampleRate(16000.0);
+            break;
 		case 2:
+			settings->setAudioSampleRate(96000.0);
+			break;
+		case 3:
 			settings->setAudioSampleRate(192000.0);
 			break;
-		case 0:
+		case 1:
 		default:
 			settings->setAudioSampleRate(44100.0);
 			break;

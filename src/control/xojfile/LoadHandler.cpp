@@ -86,8 +86,9 @@ void LoadHandler::initAttributes()
 	this->image = NULL;
 	this->teximage = NULL;
 	this->text = NULL;
+    this->pages.clear();
 
-	if (this->audioFiles)
+    if (this->audioFiles)
 	{
 		g_hash_table_unref(this->audioFiles);
 	}
@@ -293,7 +294,10 @@ bool LoadHandler::parseXml()
 
 	g_markup_parse_context_free(context);
 
-	if (this->pos != PASER_POS_FINISHED && this->lastError == "")
+    // Add all parsed pages to the document
+    this->doc.addPages(pages.begin(), pages.end());
+
+    if (this->pos != PASER_POS_FINISHED && this->lastError == "")
 	{
 		lastError = _("Document is not complete (maybe the end is cut off?)");
 		return false;
@@ -374,7 +378,7 @@ void LoadHandler::parseContents()
 
 		this->page = new XojPage(width, height);
 
-		this->doc.addPage(this->page);
+        pages.push_back(this->page);
 	}
 	else if (strcmp(elementName, "audio") == 0)
 	{
@@ -1342,3 +1346,7 @@ string LoadHandler::getTempFileForPath(string filename)
 		return "";
 	}
 }
+
+auto LoadHandler::getFileVersion() const -> int { return this->fileVersion; }
+
+auto LoadHandler::getFileMinVersion() const -> int { return this->minimalFileVersion; }

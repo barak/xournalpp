@@ -45,7 +45,7 @@ bool XojCairoPdfExport::startPdf(Path file)
 	this->cr = cairo_create(surface);
 
 #if CAIRO_VERSION >= CAIRO_VERSION_ENCODE(1, 16, 0)
-    cairo_pdf_surface_set_metadata(surface, CAIRO_PDF_METADATA_TITLE, doc->getFilename().c_str());
+    cairo_pdf_surface_set_metadata(surface, CAIRO_PDF_METADATA_TITLE, doc->getFilename().getFilename().c_str());
     GtkTreeModel* tocModel = doc->getContentsModel();
     this->populatePdfOutline(tocModel);
 #endif
@@ -62,7 +62,11 @@ void XojCairoPdfExport::populatePdfOutline(GtkTreeModel* tocModel) {
     std::stack<std::pair<GtkTreeIter, int>> nodeStack;
 
     GtkTreeIter firstIter = {0};
-    gtk_tree_model_get_iter_first(tocModel, &firstIter);
+    if (!gtk_tree_model_get_iter_first(tocModel, &firstIter)) {
+        // Outline is empty, so do nothing.
+        return;
+    }
+
     nodeStack.push(std::make_pair(firstIter, idCounter));
     while (!nodeStack.empty()) {
         auto iter = nodeStack.top().first;
@@ -120,6 +124,7 @@ void XojCairoPdfExport::exportPage(size_t page)
 
 	DocumentView view;
 
+    cairo_save(this->cr);
 	if (p->getBackgroundType().isPdfPage() && !noBackgroundExport)
 	{
 		int pgNo = p->getPdfPageNr();
@@ -132,6 +137,7 @@ void XojCairoPdfExport::exportPage(size_t page)
 
 	// next page
 	cairo_show_page(this->cr);
+    cairo_restore(this->cr);
 }
 
 bool XojCairoPdfExport::createPdf(Path file, PageRangeVector& range)

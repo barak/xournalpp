@@ -27,11 +27,10 @@ pacman -S git
 ```bash
 pacman -S mingw-w64-x86_64-toolchain \
           mingw-w64-x86_64-cmake \
-          mingw-w64-x86_64-make \
           mingw-w64-x86_64-ninja \
           patch \
-          make \
-          mingw-w64-x86_64-cppunit
+          mingw-w64-x86_64-cppunit \
+          make
 ```
 -> press enter multiple times / confirm all default values
 
@@ -41,7 +40,8 @@ pacman -S mingw-w64-x86_64-toolchain \
 pacman -S mingw-w64-x86_64-poppler \
           mingw-w64-x86_64-gtk3 \
           mingw-w64-x86_64-libsndfile \
-          mingw-w64-x86_64-libzip
+          mingw-w64-x86_64-libzip \
+          mingw-w64-x86_64-lua
 ```
 -> press enter multiple times / confirm all default values
 
@@ -59,13 +59,6 @@ Build/Install portaudio with
 windows-setup/build-portaudio.sh
 ```
 
-### Install Lua
-
-Build/Install lua with
-```bash
-windows-setup/build-lua.sh
-```
-
 ## Build Xournal++
 
 ```bash
@@ -74,8 +67,13 @@ cd build/
 cmake ..
 cmake --build .
 ```
+## Modify Path Environment Variable
 
-You can run Xournal++ with
+Add `C:\msys64\mingw64\bin` and `C:\msys64\usr\bin` to the top of 
+your PATH environment variable in the Windows Advanced system 
+settings (assuming default installation folder for MSYS2). 
+
+You can now run Xournal++ with
 ```bash
 ./src/xournalpp.exe
 ```

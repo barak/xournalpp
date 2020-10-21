@@ -1423,6 +1423,7 @@ void Control::deletePage()
 	}
 
 	scrollHandler->scrollToPage(pNr, 0);
+	this->win->getXournal()->forceUpdatePagenumbers();
 }
 
 void Control::insertNewPage(size_t position)
@@ -2415,24 +2416,33 @@ bool Control::openFile(Path filename, int scrollToPage, bool forceOpen)
 
 		fileLoaded(scrollToPage);
 		return false;
-	}
-	else
-	{
-		this->closeDocument();
+    } else if (loadHandler.getFileVersion() > FILE_FORMAT_VERSION) {
+        GtkWidget* dialog = gtk_message_dialog_new(
+                getGtkWindow(), GTK_DIALOG_MODAL, GTK_MESSAGE_WARNING, GTK_BUTTONS_YES_NO, "%s",
+                _("The file being loaded has a file format version newer than the one currently supported by this "
+                  "version of Xournal++, so it may not load properly. Open anyways?"));
+        int response = gtk_dialog_run(GTK_DIALOG(dialog));
+        gtk_widget_destroy(dialog);
+        if (response != GTK_RESPONSE_YES) {
+            loadedDocument->clearDocument();
+            return false;
+        }
+    }
 
-		this->doc->lock();
-		this->doc->clearDocument();
-		*this->doc = *loadedDocument;
-		this->doc->unlock();
+    this->closeDocument();
 
-		// Set folder as last save path, so the next save will be at the current document location
-		// This is important because of the new .xopp format, where Xournal .xoj handled as import,
-		// not as file to load
-		settings->setLastSavePath(filename.getParentPath());
-	}
+    this->doc->lock();
+    this->doc->clearDocument();
+    *this->doc = *loadedDocument;
+    this->doc->unlock();
 
-	fileLoaded(scrollToPage);
-	return true;
+    // Set folder as last save path, so the next save will be at the current document location
+    // This is important because of the new .xopp format, where Xournal .xoj handled as import,
+    // not as file to load
+    settings->setLastSavePath(filename.getParentPath());
+
+    fileLoaded(scrollToPage);
+    return true;
 }
 
 bool Control::loadPdf(const Path& filename, int scrollToPage)
@@ -3012,8 +3022,8 @@ bool Control::checkExistingFile(Path& folder, Path& filename)
 	{
 		string msg = FS(FORMAT_STR("The file {1} already exists! Do you want to replace it?") % filename.getFilename());
 		int res = XojMsgBox::replaceFileQuestion(getGtkWindow(), msg);
-		return res != 1;  // res != 1 when user clicks on Replace
-	}
+        return res == GTK_RESPONSE_OK;
+    }
 	return true;
 }
 

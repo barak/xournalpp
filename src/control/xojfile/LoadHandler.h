@@ -54,6 +54,11 @@ public:
 	void removePdfBackground();
 	void setPdfReplacement(string filename, bool attachToDocument);
 
+    /** @return The version of the loaded file */
+    int getFileVersion() const;
+    /** @return The minimum version of the loaded file */
+    int getFileMinVersion() const;
+
 private:
 	void parseStart();
 	void parseContents();
@@ -128,7 +133,8 @@ private:
 
 	vector<double> pressureBuffer;
 
-	PageRef page;
+    std::vector<PageRef> pages;
+    PageRef page;
 	Layer* layer;
 	Stroke* stroke;
 	Text* text;
