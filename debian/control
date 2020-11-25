@@ -44,4 +44,4 @@ Description: Handwritten note-taking program supporting pen & PDF annotation
   - Rect snapping to grid
   - Audio recording and playback alongside with handwritten notes
   - Multi Language Support, English, German, Italian ...
-  - Plugins using LUA Scripting
+  - Plugins using Lua Scripting
