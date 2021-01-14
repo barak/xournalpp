@@ -43,5 +43,5 @@ Description: Handwritten note-taking program supporting pen & PDF annotation
   - Rotation snapping every 45 degrees
   - Rect snapping to grid
   - Audio recording and playback alongside with handwritten notes
-  - Multi Language Support, English, German, Italian ...
+  - Multi Language Support, English, German, Italian, ...
   - Plugins using Lua Scripting

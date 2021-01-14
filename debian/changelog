@@ -1,7 +1,15 @@
+xournalpp (1.0.20-hotfix) unstable; urgency=medium
+
+  * Fixed an issue with packaging info for deb packages preventing installation
+
+ -- Ulrich Huber <ulrich@huberulrich.de>  Wed, 23 Dec 2020 23:19:30 +0100
+
+xournalpp (1.0.20-0) unstable; urgency=medium
+
 xournalpp (1.0.20-0) unstable; urgency=medium
 
   * Fixed a regression with pdf files that could not be overwritten
-  * Fixed page layout update after inserting or deleting a page, changeing the page layout or zooming
+  * Fixed page layout update after inserting, deleting, changing page layout or zooming
   * Fixed incorrect rendering of pages after changing the page format
   * Fixed blocked scrolling after saving a file
   * Fixed presentation mode after startup

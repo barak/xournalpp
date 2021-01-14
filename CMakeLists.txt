@@ -5,7 +5,7 @@ project ("Xournal++" CXX C)
 ## Also update changelog in debian folder!
 set (CPACK_PACKAGE_VERSION_MAJOR "1")
 set (CPACK_PACKAGE_VERSION_MINOR "0")
-set (CPACK_PACKAGE_VERSION_PATCH "20")
+set (CPACK_PACKAGE_VERSION_PATCH "20-hotfix")
 set (CPACK_DEBIAN_PACKAGE_RELEASE 1)
 set (VERSION_SUFFIX "")
 set (PROJECT_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}${VERSION_SUFFIX}")
@@ -313,6 +313,7 @@ set (CPACK_OUTPUT_FILE_PREFIX packages)
 set (CPACK_PACKAGE_NAME "${PROJECT_PACKAGE}")
 set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "Xournal++ - Open source hand note-taking program")
 file(READ "${PROJECT_SOURCE_DIR}/debian/package_description" CPACK_DEBIAN_PACKAGE_DESCRIPTION)
+string(REGEX REPLACE "\n$" "" CPACK_DEBIAN_PACKAGE_DESCRIPTION "${CPACK_DEBIAN_PACKAGE_DESCRIPTION}")  #Automatically generated trailing newline must be removed
 set (CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
 set (CPACK_PACKAGE_INSTALL_DIRECTORY "Xournal++")
 set (CPACK_PACKAGE_FILE_NAME "xournalpp-${PROJECT_VERSION}-${DISTRO_NAME}-${DISTRO_CODENAME}-${PACKAGE_ARCH}")
@@ -332,12 +333,16 @@ endif()
 
 if(CPACK_GENERATOR STREQUAL "DEB")
 	message("Preparing documentation for DEB package")
-	add_custom_target(package_docummentation ALL)
+	add_custom_target(package_documentation ALL)
 
 	#Compress changelog and save it as share/doc/xournalpp/changelog.Debian.gz
-	add_custom_command(TARGET package_docummentation PRE_BUILD
+	add_custom_command(TARGET package_documentation PRE_BUILD
 	COMMAND gzip -c -9 -n "${PROJECT_SOURCE_DIR}/debian/changelog" > "changelog.Debian.gz" VERBATIM)
 	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/changelog.Debian.gz" DESTINATION "share/doc/xournalpp/")
+
+	message("Install copyright for DEB package")
+	#Copy copyright to share/doc/xournalpp/copyright
+	install(FILES "${PROJECT_SOURCE_DIR}/debian/copyright" DESTINATION "share/doc/xournalpp/")
 endif()
 
 if (NOT DEFINED CPACK_GENERATOR)
