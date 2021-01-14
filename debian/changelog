@@ -1,3 +1,13 @@
+xournalpp (1.0.20-0) unstable; urgency=medium
+
+  * Fixed a regression with pdf files that could not be overwritten
+  * Fixed page layout update after inserting or deleting a page, changeing the page layout or zooming
+  * Fixed incorrect rendering of pages after changing the page format
+  * Fixed blocked scrolling after saving a file
+  * Fixed presentation mode after startup
+
+ -- Roland Lötscher <roland_loetscher@hotmail.com>  Thu, 17 Dec 2020 06:28:24 +0100
+
 xournalpp (1.0.19-1) unstable; urgency=medium
 
   * Update packaging scripts
