@@ -38,6 +38,19 @@ Copyright: 2009, The Openclipart Project, Jakub Steiner, Andreas Nilsson
 Comment: From license metadata, which sometimes says “CC-BY”
 License: CC0
 
+Files: ui/icons/hicolor/scalable/actions/tool_camera.svg
+Copyright: Daniel Fore <Daniel.P.Fore@gmail.com>
+           Jonian Guveli <jonian.guveli@gmail.com>
+           K.Vishnoo Charan Reddy <vish@ubuntu.com>.
+Comment:
+ From Ubuntu Humanity Theme
+ https://raw.githubusercontent.com/andreasb242/xournalpp/b47c587a4e74a7a475325b88955dc6bae861e467/ui/icons/hicolor/scalable/actions/tool_camera.svg
+ .
+ See commit fc70b1fcb3acf2cea576106ce3175b1c175cc2c5:
+ Icons are freen (Createive Commons) found on
+ https://www.iconspng.com and a little edited by me, so they fit.
+License: GPL-2+
+
 Files: ui/pixmaps/com.github.xournalpp.xournalpp.svg
 Copyright: 2011, Jakub Steiner
 Comment: From license metadata
