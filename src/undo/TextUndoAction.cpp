@@ -1,97 +1,72 @@
 #include "TextUndoAction.h"
 
+#include <utility>
+
 #include "gui/Redrawable.h"
 #include "gui/TextEditor.h"
 #include "model/Layer.h"
 #include "model/PageRef.h"
 #include "model/Text.h"
 
-#include <i18n.h>
-#include <Rectangle.h>
+#include "Rectangle.h"
+#include "i18n.h"
 
-TextUndoAction::TextUndoAction(PageRef page, Layer* layer, Text* text, string lastText, TextEditor* textEditor)
- : UndoAction("TextUndoAction")
-{
-	XOJ_INIT_TYPE(TextUndoAction);
-
-	this->page = page;
-	this->layer = layer;
-	this->text = text;
-	this->lastText = lastText;
-	this->textEditor = textEditor;
+TextUndoAction::TextUndoAction(const PageRef& page, Layer* layer, Text* text, string lastText, TextEditor* textEditor):
+        UndoAction("TextUndoAction") {
+    this->page = page;
+    this->layer = layer;
+    this->text = text;
+    this->lastText = std::move(lastText);
+    this->textEditor = textEditor;
 }
 
-TextUndoAction::~TextUndoAction()
-{
-	XOJ_RELEASE_TYPE(TextUndoAction);
+TextUndoAction::~TextUndoAction() = default;
+
+auto TextUndoAction::getUndoText() -> string { return this->lastText; }
+
+void TextUndoAction::textEditFinished() { this->textEditor = nullptr; }
+
+auto TextUndoAction::getText() -> string { return _("Text changes"); }
+
+auto TextUndoAction::undo(Control* control) -> bool {
+    double x1 = text->getX();
+    double y1 = text->getY();
+    double x2 = text->getX() + text->getElementWidth();
+    double y2 = text->getY() + text->getElementHeight();
+
+    newText = text->getText();
+    text->setText(lastText);
+    this->textEditor->setText(lastText);
+
+    x1 = std::min(x1, text->getX());
+    y1 = std::min(y1, text->getY());
+    x2 = std::max(x2, text->getX() + text->getElementWidth());
+    y2 = std::max(y2, text->getY() + text->getElementHeight());
+
+    Rectangle<double> rect(x1, y1, x2 - x1, y2 - y1);
+    this->page->fireRectChanged(rect);
+
+    this->undone = true;
+    return true;
 }
 
-string TextUndoAction::getUndoText()
-{
-	XOJ_CHECK_TYPE(TextUndoAction);
+auto TextUndoAction::redo(Control* control) -> bool {
+    double x1 = text->getX();
+    double y1 = text->getY();
+    double x2 = text->getX() + text->getElementWidth();
+    double y2 = text->getY() + text->getElementHeight();
 
-	return this->lastText;
-}
+    text->setText(newText);
+    this->textEditor->setText(newText);
 
-void TextUndoAction::textEditFinished()
-{
-	XOJ_CHECK_TYPE(TextUndoAction);
+    x1 = std::min(x1, text->getX());
+    y1 = std::min(y1, text->getY());
+    x2 = std::max(x2, text->getX() + text->getElementWidth());
+    y2 = std::max(y2, text->getY() + text->getElementHeight());
 
-	this->textEditor = NULL;
-}
+    Rectangle<double> rect(x1, y1, x2 - x1, y2 - y1);
+    this->page->fireRectChanged(rect);
 
-string TextUndoAction::getText()
-{
-	XOJ_CHECK_TYPE(TextUndoAction);
-
-	return _("Text changes");
-}
-
-bool TextUndoAction::undo(Control* control)
-{
-	XOJ_CHECK_TYPE(TextUndoAction);
-
-	double x1 = text->getX();
-	double y1 = text->getY();
-	double x2 = text->getX() + text->getElementWidth();
-	double y2 = text->getY() + text->getElementHeight();
-
-	newText = text->getText();
-	text->setText(lastText);
-	this->textEditor->setText(lastText);
-
-	x1 = MIN(x1, text->getX());
-	y1 = MIN(y1, text->getY());
-	x2 = MAX(x2, text->getX() + text->getElementWidth());
-	y2 = MAX(y2, text->getY() + text->getElementHeight());
-
-	Rectangle rect(x1, y1, x2 - x1, y2 - y1);
-	this->page->fireRectChanged(rect);
-
-	this->undone = true;
-	return true;
-}
-
-bool TextUndoAction::redo(Control* control)
-{
-	XOJ_CHECK_TYPE(TextUndoAction);
-
-	double x1 = text->getX();
-	double y1 = text->getY();
-	double x2 = text->getX() + text->getElementWidth();
-	double y2 = text->getY() + text->getElementHeight();
-
-	text->setText(newText);
-	this->textEditor->setText(newText);
-
-	x1 = MIN(x1, text->getX());
-	y1 = MIN(y1, text->getY());
-	x2 = MAX(x2, text->getX() + text->getElementWidth());
-	y2 = MAX(y2, text->getY() + text->getElementHeight());
-
-	Rectangle rect(x1, y1, x2 - x1, y2 - y1);
-	this->page->fireRectChanged(rect);
-
-	this->undone = false;
-	return true;
+    this->undone = false;
+    return true;
 }

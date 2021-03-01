@@ -11,167 +11,138 @@
 
 #pragma once
 
-#include <XournalType.h>
-
-#include <vector>
-#include <deque>
-#include <mutex>
+#include <algorithm>
+#include <cassert>
 #include <condition_variable>
+#include <deque>
+#include <limits>
+#include <mutex>
+#include <vector>
 
 template <typename T>
-class AudioQueue : protected std::deque<T>
-{
+class AudioQueue {
 public:
-	AudioQueue()
-	{
-		XOJ_INIT_TYPE(AudioQueue);
-	}
+    void reset() {
+        std::lock_guard<std::mutex> lock(internalLock);
+        this->popNotified = false;
+        this->pushNotified = false;
+        this->streamEnd = false;
+        internalQueue.clear();
 
-	~AudioQueue()
-	{
-		XOJ_CHECK_TYPE(AudioQueue);
+        this->sampleRate = -1;
+        this->channels = 0;
+    }
 
-		XOJ_RELEASE_TYPE(AudioQueue);
-	}
+    bool empty() {
+        std::lock_guard<std::mutex> lock(internalLock);
+        return internalQueue.empty();
+    }
 
-public:
-	void reset()
-	{
-		XOJ_CHECK_TYPE(AudioQueue);
+    size_t size() {
+        std::lock_guard<std::mutex> lock(internalLock);
+        return internalQueue.size();
+    }
 
-		this->popNotified = false;
-		this->pushNotified = false;
-		this->streamEnd = false;
-		this->clear();
+    template <typename Iter>
+    void emplace(Iter begI, Iter endI) {
+        std::lock_guard<std::mutex> lock(internalLock);
+        std::move(begI, endI, std::front_inserter(internalQueue));
 
-		this->sampleRate = -1;
-		this->channels = 0;
-	}
+        this->pushNotified = true;
+        this->pushLockCondition.notify_one();
+    }
 
-	bool empty()
-	{
-		XOJ_CHECK_TYPE(AudioQueue);
+    template <typename InsertIter>
+    InsertIter pop(InsertIter insertIter, size_t nSamples) {
+        std::lock_guard<std::mutex> lock(internalLock);
 
-		return std::deque<T>::empty();
-	}
+        if (this->channels == 0) {
+            this->popNotified = true;
+            this->popLockCondition.notify_one();
+            return insertIter;
+        }
 
-	unsigned long size()
-	{
-		XOJ_CHECK_TYPE(AudioQueue);
 
-		return std::deque<T>::size();
-	}
+        auto queueSize = internalQueue.size();
+        auto returnBufferLength = std::min<size_t>(nSamples, queueSize - queueSize % this->channels);
+        auto begI = rbegin(internalQueue);
+        auto endI = std::next(begI, returnBufferLength);
 
-	void push(T* samples, unsigned long nSamples)
-	{
-		XOJ_CHECK_TYPE(AudioQueue);
+        auto ret = std::move(begI, endI, insertIter);
+        internalQueue.erase(endI.base(), begI.base());
 
-		for (unsigned long i = 0; i < nSamples; i++)
-		{
-			this->push_front(samples[i]);
-		}
+        this->popNotified = true;
+        this->popLockCondition.notify_one();
+        return ret;
+    }
 
-		this->popNotified = false;
+    void signalEndOfStream() {
+        std::lock_guard<std::mutex> lock(internalLock);
+        this->streamEnd = true;
+        this->pushNotified = true;
+        this->popNotified = true;
+        this->pushLockCondition.notify_one();
+        this->popLockCondition.notify_one();
+    }
 
-		this->pushNotified = true;
-		this->pushLockCondition.notify_one();
-	}
+    void waitForProducer(std::unique_lock<std::mutex>& lock) {
+        // static_assert(lock.mutex() == &this->queueLock);
+        assert(lock.mutex() == &this->queueLock);
+        while (!this->pushNotified && !hasStreamEnded()) {
+            this->pushLockCondition.wait(lock);
+        }
+        this->pushNotified = false;
+    }
 
-	void pop(T* returnBuffer, unsigned long& returnBufferLength, unsigned long nSamples)
-	{
-		XOJ_CHECK_TYPE(AudioQueue);
+    void waitForConsumer(std::unique_lock<std::mutex>& lock) {
+        // static_assert(lock.mutex() == &this->queueLock);
+        assert(lock.mutex() == &this->queueLock);
+        while (!this->popNotified && !hasStreamEnded()) {
+            this->popLockCondition.wait(lock);
+        }
+        this->popNotified = false;
+    }
 
-		if (this->channels == 0)
-		{
-			returnBufferLength = 0;
+    bool hasStreamEnded() {
+        std::lock_guard<std::mutex> lock(internalLock);
+        return this->streamEnd;
+    }
 
-			this->popNotified = true;
-			this->popLockCondition.notify_one();
+    [[nodiscard]] std::unique_lock<std::mutex> acquire_lock() {
+        std::unique_lock retLock{this->queueLock, std::defer_lock};
+        std::lock(retLock, this->internalLock);
+        std::lock_guard{this->internalLock, std::adopt_lock};
+        return retLock;
+    }
 
-			return;
-		}
+    void setAudioAttributes(double lSampleRate, unsigned int lChannels) {
+        std::lock_guard<std::mutex> lock(internalLock);
+        this->sampleRate = lSampleRate;
+        this->channels = lChannels;
+    }
 
-		returnBufferLength = std::min(nSamples, this->size() - this->size() % this->channels);
-		for (long i = 0; i < returnBufferLength; i++)
-		{
-			returnBuffer[i] = this->back();
-			this->pop_back();
-		}
-
-		this->pushNotified = false;
-
-		this->popNotified = true;
-		this->popLockCondition.notify_one();
-	}
-
-	void signalEndOfStream()
-	{
-		XOJ_CHECK_TYPE(AudioQueue);
-
-		this->streamEnd = true;
-		this->pushNotified = true;
-		this->pushLockCondition.notify_one();
-		this->popNotified = true;
-		this->popLockCondition.notify_one();
-	}
-
-	void waitForProducer(std::unique_lock<std::mutex>& lock)
-	{
-		XOJ_CHECK_TYPE(AudioQueue);
-
-		while (!this->pushNotified)
-		{
-			this->pushLockCondition.wait(lock);
-		}
-	}
-
-	void waitForConsumer(std::unique_lock<std::mutex>& lock)
-	{
-		XOJ_CHECK_TYPE(AudioQueue);
-
-		while (!this->popNotified)
-		{
-			this->popLockCondition.wait(lock);
-		}
-	}
-
-	bool hasStreamEnded()
-	{
-		XOJ_CHECK_TYPE(AudioQueue);
-
-		return this->streamEnd;
-	}
-
-	std::mutex& syncMutex()
-	{
-		XOJ_CHECK_TYPE(AudioQueue);
-
-		return this->queueLock;
-	}
-
-	void setAudioAttributes(double sampleRate, unsigned int channels)
-	{
-		this->sampleRate = sampleRate;
-		this->channels = channels;
-	}
-
-	void getAudioAttributes(double &sampleRate, unsigned int &channels)
-	{
-		sampleRate = this->sampleRate;
-		channels = this->channels;
-	}
+    /**
+     * @return std::pair<double, int>,
+     * std::pair<double, int>::first is the sample rate and std::pair<double, int>::second the channel count.
+     */
+    [[nodiscard]] std::pair<double, int> getAudioAttributes() {
+        std::lock_guard<std::mutex> lock(internalLock);
+        return {this->sampleRate, static_cast<int>(this->channels)};
+    }
 
 private:
-	XOJ_TYPE_ATTRIB;
+    std::mutex queueLock;
+    std::mutex internalLock;
 
-protected:
-	std::mutex queueLock;
-	bool streamEnd = false;
-	std::condition_variable pushLockCondition;
-	bool pushNotified = false;
-	std::condition_variable popLockCondition;
-	bool popNotified = false;
+    std::deque<T> internalQueue;
 
-	double sampleRate = -1;
-	unsigned int channels = 0;
+    std::condition_variable pushLockCondition;
+    std::condition_variable popLockCondition;
+
+    double sampleRate{std::numeric_limits<double>::quiet_NaN()};
+    unsigned int channels{0};
+
+    bool streamEnd{false};
+    bool pushNotified{false};
+    bool popNotified{false};
 };

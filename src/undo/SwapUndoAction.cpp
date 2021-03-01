@@ -3,87 +3,61 @@
 #include "control/Control.h"
 #include "model/Document.h"
 
-#include <i18n.h>
+#include "i18n.h"
 
-SwapUndoAction::SwapUndoAction(size_t pageNr, bool moveUp, PageRef swappedPage, PageRef otherPage)
- : UndoAction("SwapUndoAction")
-{
-	XOJ_INIT_TYPE(SwapUndoAction);
-
-	this->pageNr = pageNr;
-	this->moveUp = moveUp;
-	this->swappedPage = swappedPage;
-	this->otherPage = otherPage;
+SwapUndoAction::SwapUndoAction(size_t pageNr, bool moveUp, const PageRef& swappedPage, const PageRef& otherPage):
+        UndoAction("SwapUndoAction") {
+    this->pageNr = pageNr;
+    this->moveUp = moveUp;
+    this->swappedPage = swappedPage;
+    this->otherPage = otherPage;
 }
 
-SwapUndoAction::~SwapUndoAction()
-{
-	XOJ_CHECK_TYPE(SwapUndoAction);
+SwapUndoAction::~SwapUndoAction() = default;
 
-	XOJ_RELEASE_TYPE(SwapUndoAction);
+auto SwapUndoAction::undo(Control* control) -> bool {
+    swap(control);
+    this->undone = true;
+
+    return true;
 }
 
-bool SwapUndoAction::undo(Control* control)
-{
-	XOJ_CHECK_TYPE(SwapUndoAction);
+auto SwapUndoAction::redo(Control* control) -> bool {
+    swap(control);
+    this->undone = false;
 
-	swap(control);
-	this->undone = true;
-
-	return true;
+    return true;
 }
 
-bool SwapUndoAction::redo(Control* control)
-{
-	XOJ_CHECK_TYPE(SwapUndoAction);
+void SwapUndoAction::swap(Control* control) {
+    Document* doc = control->getDocument();
 
-	swap(control);
-	this->undone = false;
+    doc->unlock();
 
-	return true;
+    gint insertPos = this->pageNr;
+    gint deletePos = this->pageNr + 1;
+
+    if (moveUp != this->undone) {
+        std::swap(insertPos, deletePos);
+    }
+
+    doc->deletePage(deletePos);
+    doc->insertPage(this->swappedPage, insertPos);
+
+    control->firePageDeleted(deletePos);
+    control->firePageInserted(insertPos);
+    control->firePageSelected(insertPos);
+
+    control->getScrollHandler()->scrollToPage(insertPos);
+
+    doc->lock();
 }
 
-void SwapUndoAction::swap(Control* control)
-{
-	XOJ_CHECK_TYPE(SwapUndoAction);
-
-	Document* doc = control->getDocument();
-
-	doc->unlock();
-
-	gint insertPos = this->pageNr;
-	gint deletePos = this->pageNr + 1;
-
-	if (moveUp != this->undone)
-	{
-		std::swap(insertPos, deletePos);
-	}
-
-	doc->deletePage(deletePos);
-	doc->insertPage(this->swappedPage, insertPos);
-
-	control->firePageDeleted(deletePos);
-	control->firePageInserted(insertPos);
-	control->firePageSelected(insertPos);
-
-	control->getScrollHandler()->scrollToPage(insertPos);
-
-	doc->lock();
+auto SwapUndoAction::getPages() -> vector<PageRef> {
+    vector<PageRef> pages;
+    pages.push_back(this->swappedPage);
+    pages.push_back(this->otherPage);
+    return pages;
 }
 
-vector<PageRef> SwapUndoAction::getPages()
-{
-	XOJ_CHECK_TYPE(SwapUndoAction);
-
-	vector<PageRef> pages;
-	pages.push_back(this->swappedPage);
-	pages.push_back(this->otherPage);
-	return pages;
-}
-
-string SwapUndoAction::getText()
-{
-	XOJ_CHECK_TYPE(SwapUndoAction);
-
-	return moveUp ? _("Move page upwards") : _("Move page downwards");
-}
+auto SwapUndoAction::getText() -> string { return moveUp ? _("Move page upwards") : _("Move page downwards"); }

@@ -11,30 +11,30 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "UndoAction.h"
-#include <XournalType.h>
+#include "XournalType.h"
 
 class ColorUndoActionEntry;
 class Element;
 class Layer;
 class Redrawable;
 
-class ColorUndoAction : public UndoAction
-{
+class ColorUndoAction: public UndoAction {
 public:
-	ColorUndoAction(PageRef page, Layer* layer);
-	virtual ~ColorUndoAction();
+    ColorUndoAction(const PageRef& page, Layer* layer);
+    virtual ~ColorUndoAction();
 
 public:
-	virtual bool undo(Control* control);
-	virtual bool redo(Control* control);
-	virtual string getText();
+    virtual bool undo(Control* control);
+    virtual bool redo(Control* control);
+    virtual string getText();
 
-	void addStroke(Element* e, int originalColor, double newColor);
+    void addStroke(Element* e, Color originalColor, Color newColor);
 
 private:
-	XOJ_TYPE_ATTRIB;
-
-	std::vector<ColorUndoActionEntry*> data;
-	Layer* layer;
+    std::vector<ColorUndoActionEntry*> data;
+    Layer* layer;
 };

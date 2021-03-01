@@ -11,13 +11,13 @@
 
 #pragma once
 
-#include "PlaceholderString.h"
-
 #include <libintl.h>
+
+#include "PlaceholderString.h"
 #undef snprintf
 
 #define _(msg) gettext(msg)
-#define C_(context, msg) g_dpgettext2 (NULL, context, msg)
+#define C_(context, msg) g_dpgettext2(nullptr, context, msg)
 
 // Formatted Translation
 #define _F(msg) PlaceholderString(_(msg))

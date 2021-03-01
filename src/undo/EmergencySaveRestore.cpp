@@ -1,37 +1,19 @@
 #include "EmergencySaveRestore.h"
 
-#include <i18n.h>
+#include "i18n.h"
 
-EmergencySaveRestore::EmergencySaveRestore()
- : UndoAction("EmergencySaveRestore")
-{
-	XOJ_INIT_TYPE(EmergencySaveRestore);
+EmergencySaveRestore::EmergencySaveRestore(): UndoAction("EmergencySaveRestore") {}
+
+EmergencySaveRestore::~EmergencySaveRestore() = default;
+
+auto EmergencySaveRestore::redo(Control* control) -> bool {
+    // Does nothing, only used to mark the document as changed
+    return true;
 }
 
-EmergencySaveRestore::~EmergencySaveRestore()
-{
-	XOJ_CHECK_TYPE(EmergencySaveRestore);
-	XOJ_RELEASE_TYPE(EmergencySaveRestore);
+auto EmergencySaveRestore::undo(Control* control) -> bool {
+    // Does nothing, only used to mark the document as changed
+    return true;
 }
 
-bool EmergencySaveRestore::redo(Control* control)
-{
-	XOJ_CHECK_TYPE(EmergencySaveRestore);
-
-	// Does nothing, only used to mark the document as changed
-	return true;
-}
-
-bool EmergencySaveRestore::undo(Control* control)
-{
-	XOJ_CHECK_TYPE(EmergencySaveRestore);
-
-	// Does nothing, only used to mark the document as changed
-	return true;
-}
-
-string EmergencySaveRestore::getText()
-{
-	XOJ_CHECK_TYPE(EmergencySaveRestore);
-	return _("Emergency saved document");
-}
+auto EmergencySaveRestore::getText() -> string { return _("Emergency saved document"); }

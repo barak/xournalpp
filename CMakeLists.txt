@@ -1,22 +1,28 @@
-cmake_minimum_required (VERSION 2.8.8)
+cmake_minimum_required(VERSION 3.10)
 
 project ("Xournal++" CXX C)
 
+## Project related Variables
 ## Also update changelog in debian folder!
 set (CPACK_PACKAGE_VERSION_MAJOR "1")
-set (CPACK_PACKAGE_VERSION_MINOR "0")
-set (CPACK_PACKAGE_VERSION_PATCH "20-hotfix")
+set (CPACK_PACKAGE_VERSION_MINOR "1")
+set (CPACK_PACKAGE_VERSION_PATCH "0")
 set (CPACK_DEBIAN_PACKAGE_RELEASE 1)
-set (VERSION_SUFFIX "")
+set (VERSION_SUFFIX "+dev")
 set (PROJECT_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}${VERSION_SUFFIX}")
 set (PROJECT_PACKAGE "xournalpp")
 set (PROJECT_STRING "${PROJECT_NAME} ${PROJECT_VERSION}")
 set (PROJECT_URL "https://github.com/xournalpp/xournalpp")
 
-set (CMAKE_MODULE_PATH
-    "${PROJECT_SOURCE_DIR}/cmake/find"
-    "${PROJECT_SOURCE_DIR}/cmake/include"
-)
+## CMAKE_Variables
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/find" "${PROJECT_SOURCE_DIR}/cmake/include")
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # enable clang tidy to use correct includes
+set_directory_properties(PROPERTIES EP_BASE "${PROJECT_BINARY_DIR}/external")
+
+add_definitions(-D_USE_MATH_DEFINES)
 
 # package version
 include (Version)
@@ -42,13 +48,18 @@ set (PACKAGE_DATA_DIR "${CMAKE_INSTALL_PREFIX}/share")
 # Git repo info
 include (GitRepo)
 
-## C++11 ##
-include (C++11)
-CheckCXX11 (FATAL_ERROR)
+################################
+# CMake os-fixups
+# this section should decrease in size for newer CMake versions.
+################################
 
-## os specific library ending ##
-if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    set(LIB_ENDING "dylib")
+################################
+# Project compiler flags
+################################
+set(xournalpp_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+
+if (MSVC)
+	set(xournalpp_CXX_FLAGS ${xournalpp_CXX_FLAGS} -DNOMINMAX -DWIN32_LEAN_AND_MEAN)
 else ()
     set(LIB_ENDING "so")
 endif ()
@@ -60,17 +71,24 @@ endif ()
 
 ## Libraries ##
 
-macro (add_includes_ldflags LDFLAGS INCLUDES)
-    set (xournalpp_LDFLAGS ${xournalpp_LDFLAGS} "${LDFLAGS}")
-    set (xournalpp_INCLUDE_DIRS ${xournalpp_INCLUDE_DIRS} "${INCLUDES}")
+macro(add_includes_ldflags LDFLAGS INCLUDES)
+	set(xournalpp_LDFLAGS ${xournalpp_LDFLAGS} "${LDFLAGS}")
+    include_directories(SYSTEM ${INCLUDES})
+    # Do not add system headers and external libraries to the additional include paths
+    # set(xournalpp_INCLUDE_DIRS ${xournalpp_INCLUDE_DIRS} "${INCLUDES}")
 endmacro (add_includes_ldflags LDFLAGS INCLUDES)
+
+find_package(CXX17 REQUIRED COMPONENTS optional)
+find_package(Filesystem REQUIRED COMPONENTS ghc Final Experimental)
 
 # libexec
 if (WIN32)
-    set (xournalpp_LDFLAGS ${xournalpp_LDFLAGS} "-mwindows")
+	set(xournalpp_LDFLAGS ${xournalpp_LDFLAGS} "-mwindows")
+	# Need ImageMagick to generate icons on Windows
+	find_package(ImageMagick REQUIRED COMPONENTS convert)
 else ()
-    find_package(Backtrace REQUIRED)
-    add_includes_ldflags ("${Backtrace_LIBRARIES}" "${Backtrace_INCLUDE_DIRS}")
+	find_package(Backtrace REQUIRED)
+	add_includes_ldflags("${Backtrace_LIBRARIES}" "${Backtrace_INCLUDE_DIRS}")
 endif ()
 
 # GLIB
@@ -95,6 +113,9 @@ add_includes_ldflags ("${Libxml_LDFLAGS}" "${Libxml_INCLUDE_DIRS}")
 pkg_check_modules (PopplerGlib REQUIRED "poppler-glib >= 0.41.0")
 add_includes_ldflags ("${PopplerGlib_LDFLAGS}" "${PopplerGlib_INCLUDE_DIRS}")
 set(POPPLER_INCLUDE_DIR, "${PopplerGlib_INCLUDE_DIRS}")
+
+# librsvg
+pkg_check_modules (librsvg REQUIRED "librsvg-2.0 >= 2.40")
 
 # zlib
 find_package (ZLIB REQUIRED)
@@ -121,8 +142,8 @@ add_includes_ldflags ("${SNDFILE_LDFLAGS}" "${SNDFILE_INCLUDE_DIRS}")
 # CppUnit
 option (ENABLE_CPPUNIT "Build CppUnit test instead of xournalpp application" OFF)
 if (ENABLE_CPPUNIT)
-  pkg_check_modules (CppUnit REQUIRED "cppunit >= 1.12-0")
-  enable_testing ()
+	pkg_check_modules(CppUnit REQUIRED "cppunit >= 1.12-0")
+	enable_testing()
 endif (ENABLE_CPPUNIT)
 
 # Mac integration
@@ -141,32 +162,36 @@ endif()
 
 if (Lua_FOUND)
 	message("Enable Xournal++ Plugins")
-	add_includes_ldflags ("${Lua_LDFLAGS}" "${Lua_INCLUDE_DIRS}")
-	set (ENABLE_PLUGINS "true")
+	add_includes_ldflags("${Lua_LDFLAGS}" "${Lua_INCLUDE_DIRS}")
+	set(ENABLE_PLUGINS "true")
 endif ()
+
+unset(add_includes_ldflags)
 
 #
 # DO NOT INCLUDE LIBRARIES WITH pkg_check_modules AFTER THIS LINE!!!
 #
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    # Fix linker flag handling for MacOS builds where frameworks are separated from their flag
-    string(REPLACE "-framework;" "-framework " xournalpp_LDFLAGS "${xournalpp_LDFLAGS}")
+	# Fix linker flag handling for MacOS builds where frameworks are separated from their flag
+	string(REPLACE "-framework;" "-framework " xournalpp_LDFLAGS "${xournalpp_LDFLAGS}")
 endif()
 
+configure_file(
+		src/config-features.h.in
+		src/config-features.h
+		ESCAPE_QUOTES @ONLY
+)
 configure_file (
-  src/config-features.h.in
-  src/config-features.h
-  ESCAPE_QUOTES @ONLY
+		src/filesystem.h.in
+		src/filesystem.h
 )
 
 ## I18n ##
 add_subdirectory (po)
 
-## Configuration headers and developement options ##
+## Configuration headers and development options ##
 
 # Development options
-option (DEV_MEMORY_CHECKING "Memory checking" ON)
-option (DEV_MEMORY_LEAK_CHECKING "Memory leak checking" ON)
 option (DEV_CALL_LOG "Call log" OFF)
 
 # Debug options
@@ -179,11 +204,10 @@ option (DEBUG_SHOW_ELEMENT_BOUNDS "Draw a surrounding border to all elements" OF
 option (DEBUG_SHOW_REPAINT_BOUNDS "Draw a border around all repaint rects" OFF)
 option (DEBUG_SHOW_PAINT_BOUNDS "Draw a border around all painted rects" OFF)
 mark_as_advanced (FORCE
-  DEBUG_INPUT DEBUG_RECOGNIZER DEBUG_SHEDULER DEBUG_SHOW_ELEMENT_BOUNDS DEBUG_SHOW_REPAINT_BOUNDS DEBUG_SHOW_PAINT_BOUNDS
+		DEBUG_INPUT DEBUG_RECOGNIZER DEBUG_SHEDULER DEBUG_SHOW_ELEMENT_BOUNDS DEBUG_SHOW_REPAINT_BOUNDS DEBUG_SHOW_PAINT_BOUNDS
 )
 
 # Advanced development config
-set (DEV_CONFIG_DIR ".xournalpp" CACHE STRING "Xournal++ config dir, relative to user's home dir")
 set (DEV_TOOLBAR_CONFIG "toolbar.ini" CACHE STRING "Toolbar config file name")
 set (DEV_SETTINGS_XML_FILE "settings.xml" CACHE STRING "Settings file name")
 set (DEV_PRINT_CONFIG_FILE "print-config.ini" CACHE STRING "Print config file name")
@@ -192,40 +216,45 @@ set (DEV_METADATA_MAX_ITEMS 50 CACHE STRING "Maximal amount of metadata elements
 set (DEV_ERRORLOG_DIR "errorlogs" CACHE STRING "Directory where errorlogfiles will be placed")
 set (DEV_FILE_FORMAT_VERSION 4 CACHE STRING "File format version" FORCE)
 
-option (DEV_ENABLE_GCOV "Build with gcov support" OFF) # Enabel gcov support – expanded in src/
+option(DEV_ENABLE_GCOV "Build with gcov support" OFF) # Enabel gcov support – expanded in src/
 option (DEV_CHECK_GTK3_COMPAT "Adds a few compiler flags to check basic GTK3 upgradeability support (still compiles for GTK2!)")
 if (DEV_CHECK_GTK3_COMPAT)
-    add_definitions (-DGTK_DISABLE_SINGLE_INCLUDES -DGDK_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED -DGSEAL_ENABLE)
+	add_definitions(-DGTK_DISABLE_SINGLE_INCLUDES -DGDK_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED -DGSEAL_ENABLE)
 endif ()
 
 mark_as_advanced (FORCE
-  DEV_CONFIG_DIR DEV_TOOLBAR_CONFIG DEV_SETTINGS_XML_FILE DEV_PRINT_CONFIG_FILE DEV_METADATA_FILE DEV_METADATA_MAX_ITEMS
-  DEV_ENABLE_GCOV DEV_CHECK_GTK3_COMPAT
+		DEV_TOOLBAR_CONFIG DEV_SETTINGS_XML_FILE DEV_PRINT_CONFIG_FILE DEV_METADATA_FILE DEV_METADATA_MAX_ITEMS
+		DEV_ENABLE_GCOV DEV_CHECK_GTK3_COMPAT
 )
 
-configure_file (
-  src/config.h.in
-  src/config.h
-  ESCAPE_QUOTES @ONLY
+configure_file(
+		src/config.h.in
+		src/config.h
+		ESCAPE_QUOTES @ONLY
 )
 
-configure_file (
-  src/config-debug.h.in
-  src/config-debug.h
-  ESCAPE_QUOTES @ONLY
+configure_file(
+		src/config-debug.h.in
+		src/config-debug.h
+		ESCAPE_QUOTES @ONLY
 )
 
-configure_file (
-  src/config-dev.h.in
-  src/config-dev.h
-  ESCAPE_QUOTES @ONLY
+configure_file(
+		src/config-dev.h.in
+		src/config-dev.h
+		ESCAPE_QUOTES @ONLY
 )
 
-configure_file (
-  src/config-paths.h.in
-  src/config-paths.h
-  ESCAPE_QUOTES @ONLY
+configure_file(
+		src/config-paths.h.in
+		src/config-paths.h
+		ESCAPE_QUOTES @ONLY
 )
+
+option(xournalpp_LINT "enable lint (clang-tidy) target" OFF)
+if (xournalpp_LINT)
+	include(clang-tidy)
+endif ()
 
 ## Source building ##
 add_subdirectory (src)
@@ -234,12 +263,16 @@ add_subdirectory (src)
 
 # Install resources
 install (DIRECTORY ui
-  DESTINATION "share/xournalpp"
-  COMPONENT xournalpp
+		DESTINATION "share/xournalpp"
+		COMPONENT xournalpp
 )
 install (DIRECTORY plugins
-  DESTINATION "share/xournalpp"
-  COMPONENT xournalpp
+		DESTINATION "share/xournalpp"
+		COMPONENT xournalpp
+)
+install (DIRECTORY resources
+        DESTINATION "share/xournalpp"
+        COMPONENT xournalpp
 )
 
 # Install desktop shortcuts for Linux
@@ -275,7 +308,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 			DESTINATION share/mimelnk/application)
 
 	install(FILES desktop/com.github.xournalpp.xournalpp.thumbnailer
-	        DESTINATION share/thumbnailers)
+			DESTINATION share/thumbnailers)
 
 	install(FILES desktop/com.github.xournalpp.xournalpp.appdata.xml
 			DESTINATION share/metainfo)
@@ -283,28 +316,29 @@ endif ()
 
 # Uninstall target
 configure_file (
-  cmake/cmake_uninstall.cmake.in
-  cmake/cmake_uninstall.cmake
-  @ONLY
+		cmake/cmake_uninstall.cmake.in
+		cmake/cmake_uninstall.cmake
+		@ONLY
 )
 
-add_custom_target (uninstall
-  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake_uninstall.cmake
+add_custom_target(uninstall
+		COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake/cmake_uninstall.cmake
 
-  COMMENT "Uninstall entire Xournal++"
-)
+		COMMENT "Uninstall entire Xournal++"
+		)
 
-message ("
+message("
 Configuration:
 	Compiler:                   ${CMAKE_CXX_COMPILER}
 	CppUnit enabled:            ${ENABLE_CPPUNIT}
+	Filesystem library:         ${CXX_FILESYSTEM_NAMESPACE}
 ")
 
-option (CMAKE_DEBUG_INCLUDES_LDFLAGS "List include dirs and ldflags for xournalpp target" OFF)
+option(CMAKE_DEBUG_INCLUDES_LDFLAGS "List include dirs and ldflags for xournalpp target" OFF)
 mark_as_advanced (FORCE CMAKE_DEBUG_INCLUDES_LDFLAGS)
 if (CMAKE_DEBUG_INCLUDES_LDFLAGS)
-    message ("Include directories: ${xournalpp_INCLUDE_DIRS}")
-    message ("LDFLAGS/LIBRARIES: ${xournalpp_LDFLAGS}")
+	message("Include directories: ${xournalpp_INCLUDE_DIRS}")
+	message("LDFLAGS/LIBRARIES: ${xournalpp_LDFLAGS}")
 endif (CMAKE_DEBUG_INCLUDES_LDFLAGS)
 
 
@@ -313,7 +347,6 @@ set (CPACK_OUTPUT_FILE_PREFIX packages)
 set (CPACK_PACKAGE_NAME "${PROJECT_PACKAGE}")
 set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "Xournal++ - Open source hand note-taking program")
 file(READ "${PROJECT_SOURCE_DIR}/debian/package_description" CPACK_DEBIAN_PACKAGE_DESCRIPTION)
-string(REGEX REPLACE "\n$" "" CPACK_DEBIAN_PACKAGE_DESCRIPTION "${CPACK_DEBIAN_PACKAGE_DESCRIPTION}")  #Automatically generated trailing newline must be removed
 set (CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
 set (CPACK_PACKAGE_INSTALL_DIRECTORY "Xournal++")
 set (CPACK_PACKAGE_FILE_NAME "xournalpp-${PROJECT_VERSION}-${DISTRO_NAME}-${DISTRO_CODENAME}-${PACKAGE_ARCH}")
@@ -328,25 +361,21 @@ set (CPACK_DEBIAN_PACKAGE_DEPENDS
 set (CPACK_DEBIAN_PACKAGE_SUGGESTS "texlive-base, texlive-latex-extra")  # Latex tool
 # Use debian's arch scheme; we only care about x86/amd64 for now but feel free to add more
 if (${PACKAGE_ARCH} STREQUAL "x86_64")
-  set (CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
+	set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
 endif()
 
 if(CPACK_GENERATOR STREQUAL "DEB")
 	message("Preparing documentation for DEB package")
-	add_custom_target(package_documentation ALL)
+	add_custom_target(package_docummentation ALL)
 
 	#Compress changelog and save it as share/doc/xournalpp/changelog.Debian.gz
-	add_custom_command(TARGET package_documentation PRE_BUILD
+	add_custom_command(TARGET package_docummentation PRE_BUILD
 	COMMAND gzip -c -9 -n "${PROJECT_SOURCE_DIR}/debian/changelog" > "changelog.Debian.gz" VERBATIM)
 	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/changelog.Debian.gz" DESTINATION "share/doc/xournalpp/")
-
-	message("Install copyright for DEB package")
-	#Copy copyright to share/doc/xournalpp/copyright
-	install(FILES "${PROJECT_SOURCE_DIR}/debian/copyright" DESTINATION "share/doc/xournalpp/")
 endif()
 
 if (NOT DEFINED CPACK_GENERATOR)
-  set (CPACK_GENERATOR "TGZ")
+	set(CPACK_GENERATOR "TGZ")
 endif ()
 
-include (CPack)
+include(CPack)

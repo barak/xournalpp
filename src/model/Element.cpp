@@ -1,197 +1,140 @@
 #include "Element.h"
 
-#include <serializing/ObjectInputStream.h>
-#include <serializing/ObjectOutputStream.h>
+#include <cmath>
 
-Element::Element(ElementType type)
- : type(type)
-{
-	XOJ_INIT_TYPE(Element);
+#include "serializing/ObjectInputStream.h"
+#include "serializing/ObjectOutputStream.h"
+
+Element::Element(ElementType type): type(type) {}
+
+Element::~Element() = default;
+
+auto Element::getType() const -> ElementType { return this->type; }
+
+void Element::setX(double x) {
+    this->x = x;
+    this->sizeCalculated = false;
 }
 
-Element::~Element()
-{
-	XOJ_RELEASE_TYPE(Element);
+void Element::setY(double y) {
+    this->y = y;
+    this->sizeCalculated = false;
 }
 
-ElementType Element::getType() const
-{
-	XOJ_CHECK_TYPE(Element);
-
-	return this->type;
+auto Element::getX() const -> double {
+    if (!this->sizeCalculated) {
+        this->sizeCalculated = true;
+        calcSize();
+    }
+    return x;
 }
 
-void Element::setX(double x)
-{
-	XOJ_CHECK_TYPE(Element);
-
-	this->x = x;
+auto Element::getY() const -> double {
+    if (!this->sizeCalculated) {
+        this->sizeCalculated = true;
+        calcSize();
+    }
+    return y;
+}
+auto Element::getSnappedBounds() const -> Rectangle<double> {
+    if (!this->sizeCalculated) {
+        this->sizeCalculated = true;
+        calcSize();
+    }
+    return this->snappedBounds;
 }
 
-void Element::setY(double y)
-{
-	XOJ_CHECK_TYPE(Element);
-
-	this->y = y;
+void Element::move(double dx, double dy) {
+    this->x += dx;
+    this->y += dy;
+    this->snappedBounds = this->snappedBounds.translated(dx, dy);
 }
 
-double Element::getX()
-{
-	XOJ_CHECK_TYPE(Element);
-
-	if (!this->sizeCalculated)
-	{
-		this->sizeCalculated = true;
-		calcSize();
-	}
-	return x;
+auto Element::getElementWidth() const -> double {
+    if (!this->sizeCalculated) {
+        this->sizeCalculated = true;
+        calcSize();
+    }
+    return this->width;
 }
 
-double Element::getY()
-{
-	XOJ_CHECK_TYPE(Element);
-
-	if (!this->sizeCalculated)
-	{
-		this->sizeCalculated = true;
-		calcSize();
-	}
-	return y;
+auto Element::getElementHeight() const -> double {
+    if (!this->sizeCalculated) {
+        this->sizeCalculated = true;
+        calcSize();
+    }
+    return this->height;
 }
 
-void Element::move(double dx, double dy)
-{
-	XOJ_CHECK_TYPE(Element);
-
-	this->x += dx;
-	this->y += dy;
+auto Element::boundingRect() const -> Rectangle<double> {
+    return Rectangle<double>(getX(), getY(), getElementWidth(), getElementHeight());
 }
 
-double Element::getElementWidth()
-{
-	XOJ_CHECK_TYPE(Element);
+void Element::setColor(Color color) { this->color = color; }
 
-	if (!this->sizeCalculated)
-	{
-		this->sizeCalculated = true;
-		calcSize();
-	}
-	return this->width;
+auto Element::getColor() const -> Color { return this->color; }
+
+auto Element::intersectsArea(const GdkRectangle* src) -> bool {
+    // compute the smallest rectangle with integer coordinates containing the bounding box and having width, height > 0
+    auto x = getX();
+    auto y = getY();
+    auto x1 = gint(std::floor(getX()));
+    auto y1 = gint(std::floor(getY()));
+    auto x2 = gint(std::ceil(x + getElementWidth()));
+    auto y2 = gint(std::ceil(y + getElementHeight()));
+    GdkRectangle rect = {x1, y1, std::max(1, x2 - x1), std::max(1, y2 - y1)};
+
+    return gdk_rectangle_intersect(src, &rect, nullptr);
 }
 
-double Element::getElementHeight()
-{
-	XOJ_CHECK_TYPE(Element);
+auto Element::intersectsArea(double x, double y, double width, double height) -> bool {
+    double dest_x = NAN, dest_y = NAN;
+    double dest_w = NAN, dest_h = NAN;
 
-	if (!this->sizeCalculated)
-	{
-		this->sizeCalculated = true;
-		calcSize();
-	}
-	return this->height;
+    dest_x = std::max(getX(), x);
+    dest_y = std::max(getY(), y);
+    dest_w = std::min(getX() + getElementWidth(), x + width) - dest_x;
+    dest_h = std::min(getY() + getElementHeight(), y + height) - dest_y;
+
+    return (dest_w > 0 && dest_h > 0);
 }
 
-Rectangle Element::boundingRect()
-{
-	return Rectangle(getX(), getY(), getElementWidth(), getElementHeight());
+auto Element::isInSelection(ShapeContainer* container) -> bool {
+    if (!container->contains(getX(), getY())) {
+        return false;
+    }
+    if (!container->contains(getX() + getElementWidth(), getY())) {
+        return false;
+    }
+    if (!container->contains(getX(), getY() + getElementHeight())) {
+        return false;
+    }
+    if (!container->contains(getX() + getElementWidth(), getY() + getElementHeight())) {
+        return false;
+    }
+
+    return true;
 }
 
-void Element::setColor(int color)
-{
-	XOJ_CHECK_TYPE(Element);
+auto Element::rescaleOnlyAspectRatio() -> bool { return false; }
+auto Element::rescaleWithMirror() -> bool { return false; }
 
-	this->color = color;
+void Element::serializeElement(ObjectOutputStream& out) const {
+    out.writeObject("Element");
+
+    out.writeDouble(this->x);
+    out.writeDouble(this->y);
+    out.writeInt(int(this->color));
+
+    out.endObject();
 }
 
-int Element::getColor() const
-{
-	XOJ_CHECK_TYPE(Element);
+void Element::readSerializedElement(ObjectInputStream& in) {
+    in.readObject("Element");
 
-	return this->color;
-}
+    this->x = in.readDouble();
+    this->y = in.readDouble();
+    this->color = Color(in.readInt());
 
-bool Element::intersectsArea(const GdkRectangle* src)
-{
-	XOJ_CHECK_TYPE(Element);
-
-	GdkRectangle rect = {
-		gint(getX()),
-		gint(getY()),
-		gint(getElementWidth()),
-		gint(getElementHeight())
-	};
-
-	return gdk_rectangle_intersect(src, &rect, NULL);
-}
-
-bool Element::intersectsArea(double x, double y, double width, double height)
-{
-	XOJ_CHECK_TYPE(Element);
-
-	double dest_x, dest_y;
-	double dest_w, dest_h;
-
-	dest_x = MAX(getX(), x);
-	dest_y = MAX(getY(), y);
-	dest_w = MIN(getX() + getElementWidth(), x + width) - dest_x;
-	dest_h = MIN(getY() + getElementHeight(), y + height) - dest_y;
-
-	return (dest_w > 0 && dest_h > 0);
-}
-
-bool Element::isInSelection(ShapeContainer* container)
-{
-	XOJ_CHECK_TYPE(Element);
-
-	if (!container->contains(getX(), getY()))
-	{
-		return false;
-	}
-	if (!container->contains(getX() + getElementWidth(), getY()))
-	{
-		return false;
-	}
-	if (!container->contains(getX(), getY() + getElementHeight()))
-	{
-		return false;
-	}
-	if (!container->contains(getX() + getElementWidth(), getY() + getElementHeight()))
-	{
-		return false;
-	}
-
-	return true;
-}
-
-bool Element::rescaleOnlyAspectRatio()
-{
-	XOJ_CHECK_TYPE(Element);
-
-	return false;
-}
-
-void Element::serializeElement(ObjectOutputStream& out)
-{
-	XOJ_CHECK_TYPE(Element);
-
-	out.writeObject("Element");
-
-	out.writeDouble(this->x);
-	out.writeDouble(this->y);
-	out.writeInt(this->color);
-
-	out.endObject();
-}
-
-void Element::readSerializedElement(ObjectInputStream& in)
-{
-	XOJ_CHECK_TYPE(Element);
-
-	in.readObject("Element");
-
-	this->x = in.readDouble();
-	this->y = in.readDouble();
-	this->color = in.readInt();
-
-	in.endObject();
+    in.endObject();
 }

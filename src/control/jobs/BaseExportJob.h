@@ -11,58 +11,59 @@
 
 #pragma once
 
-#include "BlockingJob.h"
+#include <string>
+#include <vector>
 
-#include <PathUtil.h>
-#include <XournalType.h>
+#include "BlockingJob.h"
+#include "PathUtil.h"
+#include "XournalType.h"
+#include "filesystem.h"
+
+/**
+ *  @brief List of types for the export of background components.
+ *  The order must agree with the corresponding listBackgroundType in ui/exportSettings.glade.
+ *  It is constructed so that one can check for intermediate types using comparison.
+ */
+enum ExportBackgroundType { EXPORT_BACKGROUND_NONE, EXPORT_BACKGROUND_UNRULED, EXPORT_BACKGROUND_ALL };
 
 class Control;
 
-class BaseExportJob : public BlockingJob
-{
+class BaseExportJob: public BlockingJob {
 public:
-	BaseExportJob(Control* control, string name);
+    BaseExportJob(Control* control, const string& name);
 
 protected:
-	virtual ~BaseExportJob();
+    virtual ~BaseExportJob();
 
 public:
-	virtual void afterRun();
+    virtual void afterRun();
 
 public:
-	virtual bool showFilechooser();
-	string getFilterName();
+    virtual bool showFilechooser();
+    string getFilterName() const;
 
 protected:
-	void initDialog();
-	virtual void addFilterToDialog() = 0;
-	void addFileFilterToDialog(string name, string pattern);
-	bool checkOverwriteBackgroundPDF(Path& filename);
-	virtual bool isUriValid(string& uri);
+    void initDialog();
+    virtual void addFilterToDialog() = 0;
+    void addFileFilterToDialog(const string& name, const string& pattern);
+    bool checkOverwriteBackgroundPDF(fs::path const& file) const;
+    virtual bool testAndSetFilepath(fs::path file);
 
 private:
-	XOJ_TYPE_ATTRIB;
-
 protected:
-	GtkWidget* dialog = NULL;
+    GtkWidget* dialog = nullptr;
 
-	Path filename;
+    fs::path filepath;
 
-	/**
-	 * Error message to show to the user
-	 */
-	string errorMsg;
+    /**
+     * Error message to show to the user
+     */
+    string errorMsg;
 
-	class ExportType
-	{
-	public:
-		string extension;
-		bool withoutBackground;
+    class ExportType {
+    public:
+        string extension;
 
-		ExportType(string ext, bool hideBg)
-		 : extension(ext),
-		   withoutBackground(hideBg)
-		{
-		}
-	};
+        ExportType(string ext): extension(ext) {}
+    };
 };

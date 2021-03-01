@@ -11,13 +11,18 @@
 
 #pragma once
 
-#include <XournalType.h>
+#include "config-features.h"
+
+#ifdef ENABLE_PLUGINS
+
+#include <string>
+#include <utility>
+#include <vector>
 
 #include <gtk/gtk.h>
 
-#include <config-features.h>
+#include "filesystem.h"
 
-#ifdef ENABLE_PLUGINS
 extern "C" {
 #include <lua.h>
 }
@@ -25,230 +30,109 @@ extern "C" {
 class Plugin;
 class Control;
 
-class MenuEntry {
-public:
-	MenuEntry(Plugin* plugin)
-	 : plugin(plugin)
-	{
-		XOJ_INIT_TYPE(MenuEntry);
-	}
+struct MenuEntry final {
+    MenuEntry() = default;
+    MenuEntry(Plugin* plugin, std::string menu, std::string callback, std::string accelerator):
+            plugin(plugin), menu(std::move(menu)), callback(std::move(callback)), accelerator(std::move(accelerator)) {}
 
-	~MenuEntry()
-	{
-		XOJ_CHECK_TYPE(MenuEntry);
-		XOJ_RELEASE_TYPE(MenuEntry);
-	}
-
-public:
-	XOJ_TYPE_ATTRIB;
-
-	/**
-	 * The Plugin
-	 */
-	Plugin* plugin;
-
-	/**
-	 * Menu item
-	 */
-	GtkWidget* widget = NULL;
-
-	/**
-	 * Menu display name
-	 */
-	string menu;
-
-	/**
-	 * Callback function name
-	 */
-	string callback;
-
-	/**
-	 * Accelerator key
-	 *
-	 * See https://developer.gnome.org/gtk3/stable/gtk3-Keyboard-Accelerators.html#gtk-accelerator-parse
-	 */
-	string accelerator;
+    GtkWidget* widget = nullptr;  ///< Menu item
+    Plugin* plugin = nullptr;     ///< The Plugin
+    std::string menu{};           ///< Menu display name
+    std::string callback{};       ///< Callback function name
+    std::string accelerator{};
+    ///< Accelerator key, see
+    ///< https://developer.gnome.org/gtk3/stable/gtk3-Keyboard-Accelerators.html#gtk-accelerator-parse
 };
 
-class Plugin
-{
-public:
-	Plugin(Control* control, string name, string path);
-	virtual ~Plugin();
-
-public:
-	/**
-	 * Load the plugin script
-	 */
-	void loadScript();
-
-	/**
-	 * Check if this plugin is valid
-	 */
-	bool isValid();
-
-	/**
-	 * Register toolbar item and all other UI stuff
-	 */
-	void registerToolbar();
-
-	/**
-	 * Register all menu entries to the menu
-	 */
-	void registerMenu(GtkWindow* mainWindow, GtkWidget* menu);
-
-	/**
-	 * Execute menu entry
-	 */
-	void executeMenuEntry(MenuEntry* entry);
-
-	/**
-	 * @return the Plugin name
-	 */
-	string getName();
-
-	/**
-	 * @return Description of the plugin
-	 */
-	string getDescription();
-
-	/**
-	 * Author of the plugin
-	 */
-	string getAuthor();
-
-	/**
-	 * Plugin version
-	 */
-	string getVersion();
-
-	/**
-	 * The plugin is enabled
-	 */
-	bool isEnabled();
-
-	/**
-	 * The plugin is enabled
-	 */
-	void setEnabled(bool enabled);
-
-	/**
-	 * The plugin is default enabled
-	 */
-	bool isDefaultEnabled();
-
-	/**
-	 * @return Flag to check if init ui is currently running
-	 */
-	bool isInInitUi();
-
-	/**
-	 * Register a menu item
-	 *
-	 * @return Internal ID, can e.g. be used to disable the menu
-	 */
-	int registerMenu(string menu, string callback, string accelerator);
-
-	/**
-	 * @return The main controller
-	 */
-	Control* getControl();
-
-private:
-	/**
-	 * Load ini file
-	 */
-	void loadIni();
-
-	/**
-	 * Execute lua function
-	 */
-	bool callFunction(string fnc);
-
-	/**
-	 * Load custom Lua Libraries
-	 */
-	void registerXournalppLibs(lua_State* lua);
-
-	/**
-	 * Add the plugin folder to the lua path
-	 */
-	void addPluginToLuaPath();
-
-public:
-	/**
-	 * Get Plugin from lua engine
-	 */
-	static Plugin* getPluginFromLua(lua_State* lua);
-
-private:
-	XOJ_TYPE_ATTRIB;
-
-	/**
-	 * Plugin root path
-	 */
-	string path;
-
-	/**
-	 * Plugin name
-	 */
-	string name;
-
-	/**
-	 * Description of the plugin
-	 */
-	string description;
-
-	/**
-	 * Author of the plugin
-	 */
-	string author;
-
-	/**
-	 * Plugin version
-	 */
-	string version;
-
-	/**
-	 * Main plugin script
-	 */
-	string mainfile;
-
-	/**
-	 * The plugin is enabled
-	 */
-	bool enabled = false;
-
-	/**
-	 * The plugin is default enabled
-	 */
-	bool defaultEnabled = false;
-
-	/**
-	 * Lua engine
-	 */
-	lua_State* lua = NULL;
-
-	/**
-	 * All registered menu entries
-	 */
-	vector<MenuEntry*> menuEntries;
-
-	/**
-	 * The main controller
-	 */
-	Control* control;
-
-	/**
-	 * Flag to check if init ui is currently running
-	 */
-	bool inInitUi = false;
-
-	/**
-	 * Flag if the plugin is valid / correct loaded
-	 */
-	bool valid = false;
+struct LuaDeleter {
+    void operator()(lua_State* ptr) const { lua_close(ptr); }
 };
 
+class Plugin final {
+public:
+    Plugin(Control* control, std::string name, fs::path path);
+
+public:
+    /// Load the plugin script
+    void loadScript();
+
+    /// Check if this plugin is valid
+    auto isValid() const -> bool;
+
+    /// Register toolbar item and all other UI stuff
+    void registerToolbar();
+
+    /// Register all menu entries to the menu
+    void registerMenu(GtkWindow* mainWindow, GtkWidget* menu);
+
+    /// Execute menu entry
+    void executeMenuEntry(MenuEntry* entry);
+
+    /// @return the Plugin name
+    auto getName() const -> std::string const&;
+
+    /// @return Description of the plugin
+    auto getDescription() const -> std::string const&;
+
+    /// Author of the plugin
+    auto getAuthor() const -> std::string const&;
+
+    /// Plugin version
+    auto getVersion() const -> std::string const&;
+
+    /// The plugin is enabled
+    auto isEnabled() const -> bool;
+
+    /// The plugin is enabled
+    void setEnabled(bool lEnabled);
+
+    /// The plugin is default enabled
+    auto isDefaultEnabled() const -> bool;
+
+    ///@return Flag to check if init ui is currently running
+    auto isInInitUi() const -> bool;
+
+    /// Register a menu item
+    /// @return Internal ID, can e.g. be used to disable the menu
+    auto registerMenu(std::string menu, std::string callback, std::string accelerator) -> size_t;
+
+    ///@return The main controller
+    auto getControl() const -> Control*;
+
+private:
+    /// Load ini file
+    void loadIni();
+
+    /// Execute lua function
+    auto callFunction(const std::string& fnc) -> bool;
+
+    /// Load custom Lua Libraries
+    static void registerXournalppLibs(lua_State* luaPtr);
+
+    /// Add the plugin folder to the lua path
+    void addPluginToLuaPath();
+
+public:
+    /// Get Plugin from lua engine
+    static auto getPluginFromLua(lua_State* lua) -> Plugin*;
+
+private:
+    Control* control;                              ///< The main controller
+    std::unique_ptr<lua_State, LuaDeleter> lua{};  ///< Lua engine
+    std::vector<MenuEntry> menuEntries;            ///< All registered menu entries
+
+    std::string name;             ///< Plugin name
+    std::string description;      ///< Description of the plugin
+    std::string author;           ///< Author of the plugin
+    std::string version;          ///< Plugin version
+    std::string mainfile;         ///< Main plugin script
+    fs::path path;                ///< Plugin root path
+    bool enabled = false;         ///< The plugin is enabled
+    bool defaultEnabled = false;  ///< The plugin is default enabled
+    bool inInitUi = false;        ///< Flag to check if init ui is currently running
+    bool valid = false;           ///< Flag if the plugin is valid / correct loaded
+};
+
+#else
+struct Plugin final {};  ///< empty struct, since Plugin is not compiled
 #endif
-

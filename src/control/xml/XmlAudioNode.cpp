@@ -1,25 +1,11 @@
 #include "XmlAudioNode.h"
 
-XmlAudioNode::XmlAudioNode(const char* tag)
-		: XmlNode(tag),
-		audioFilename("")
-{
-	XOJ_INIT_TYPE(XmlAudioNode);
-}
+#include <utility>
 
-XmlAudioNode::~XmlAudioNode()
-{
-	XOJ_CHECK_TYPE(XmlAudioNode);
+XmlAudioNode::XmlAudioNode(const char* tag): XmlNode(tag), audioFilepath{} {}
 
-	XOJ_RELEASE_TYPE(XmlAudioNode);
-}
+XmlAudioNode::~XmlAudioNode() = default;
 
-string XmlAudioNode::getAudioFilename()
-{
-	return this->audioFilename;
-}
+auto XmlAudioNode::getAudioFilepath() -> fs::path { return this->audioFilepath; }
 
-void XmlAudioNode::setAudioFilename(string filename)
-{
-	this->audioFilename = filename;
-}
+void XmlAudioNode::setAudioFilepath(fs::path filepath) { this->audioFilepath = std::move(filepath); }

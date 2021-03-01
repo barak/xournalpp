@@ -13,36 +13,34 @@
 
 #include "model/PageRef.h"
 
-#include <config.h>
+#include "config.h"
 
 class Control;
 class XojPage;
 
-class UndoAction
-{
+class UndoAction {
 public:
-	UndoAction(const char* className);
-	virtual ~UndoAction();
+    UndoAction(std::string className);  // NOLINT
+    virtual ~UndoAction() = default;
 
 public:
-	virtual bool undo(Control* control) = 0;
-	virtual bool redo(Control* control) = 0;
+    virtual bool undo(Control* control) = 0;
+    virtual bool redo(Control* control) = 0;
 
-	virtual string getText() = 0;
+    virtual string getText() = 0;
 
-	/**
-	 * Get the affected pages
-	 */
-	virtual vector<PageRef> getPages();
+    /**
+     * Get the affected pages
+     */
+    virtual vector<PageRef> getPages();
 
-	const char* getClassName() const;
+    auto getClassName() const -> std::string const&;
 
 protected:
-	XOJ_TYPE_ATTRIB;
-
-	// This is only for debugging / Testing purpose
-	const char* className = NULL;
-
-	PageRef page;
-	bool undone = false;
+    // This is only for debugging / Testing purpose
+    std::string className;
+    PageRef page;
+    bool undone = false;
 };
+
+using UndoActionPtr = std::unique_ptr<UndoAction>;

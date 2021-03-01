@@ -1,174 +1,87 @@
 #include "LinkDestination.h"
 
+#include <utility>
+
 #include "Util.h"
 
-struct _LinkDestClass
-{
-	GObjectClass base_class;
+struct _LinkDestClass {
+    GObjectClass base_class;
 };
 
-G_DEFINE_TYPE(XojLinkDest, link_dest, G_TYPE_OBJECT) // @suppress("Unused static function")
+G_DEFINE_TYPE(XojLinkDest, link_dest, G_TYPE_OBJECT)  // @suppress("Unused static function")
 
-static void link_dest_init(XojLinkDest* linkAction)
-{
-	linkAction->dest = NULL;
+static void link_dest_init(XojLinkDest* linkAction) { linkAction->dest = nullptr; }
+
+static gpointer parent_class = nullptr;
+
+static void link_dest_finalize(GObject* object) {
+    delete LINK_DEST(object)->dest;
+    LINK_DEST(object)->dest = nullptr;
+
+    G_OBJECT_CLASS(parent_class)->finalize(object);
 }
 
-static gpointer parent_class = NULL;
+static void link_dest_dispose(GObject* object) { G_OBJECT_CLASS(parent_class)->dispose(object); }
 
-static void link_dest_finalize(GObject* object)
-{
-	delete LINK_DEST(object)->dest;
-	LINK_DEST(object)->dest = NULL;
+static void link_dest_class_init(XojLinkDestClass* linkClass) {
+    GObjectClass* g_object_class = nullptr;
 
-	G_OBJECT_CLASS(parent_class)->finalize(object);
+    parent_class = g_type_class_peek_parent(linkClass);
+
+    g_object_class = G_OBJECT_CLASS(linkClass);
+
+    g_object_class->dispose = link_dest_dispose;
+    g_object_class->finalize = link_dest_finalize;
 }
 
-static void link_dest_dispose(GObject* object)
-{
-	G_OBJECT_CLASS(parent_class)->dispose(object);
+auto link_dest_new() -> XojLinkDest* { return LINK_DEST(g_object_new(TYPE_LINK_DEST, nullptr)); }
+
+LinkDestination::LinkDestination() {
+    this->page = npos;
+    this->changeLeft = false;
+    this->changeZoom = false;
+    this->changeTop = false;
+    this->zoom = 0;
+    this->left = 0;
+    this->top = 0;
+    this->expand = false;
 }
 
-static void link_dest_class_init(XojLinkDestClass* linkClass)
-{
-	GObjectClass* g_object_class;
+LinkDestination::~LinkDestination() = default;
 
-	parent_class = g_type_class_peek_parent(linkClass);
+auto LinkDestination::getPdfPage() const -> size_t { return this->page; }
 
-	g_object_class = G_OBJECT_CLASS(linkClass);
+void LinkDestination::setPdfPage(size_t page) { this->page = page; }
 
-	g_object_class->dispose = link_dest_dispose;
-	g_object_class->finalize = link_dest_finalize;
+void LinkDestination::setExpand(bool expand) { this->expand = expand; }
+
+auto LinkDestination::getExpand() const -> bool { return this->expand; }
+
+auto LinkDestination::shouldChangeLeft() const -> bool { return changeLeft; }
+
+auto LinkDestination::shouldChangeTop() const -> bool { return changeTop; }
+
+auto LinkDestination::getZoom() const -> double { return zoom; }
+
+auto LinkDestination::getLeft() const -> double { return left; }
+
+auto LinkDestination::getTop() const -> double { return top; }
+
+void LinkDestination::setChangeLeft(double left) {
+    this->left = left;
+    this->changeLeft = true;
 }
 
-XojLinkDest* link_dest_new()
-{
-	return LINK_DEST(g_object_new(TYPE_LINK_DEST, NULL));
+void LinkDestination::setChangeZoom(double zoom) {
+    this->zoom = zoom;
+    this->changeZoom = true;
 }
 
-LinkDestination::LinkDestination()
-{
-	XOJ_INIT_TYPE(LinkDestination);
-
-	this->page = npos;
-	this->changeLeft = false;
-	this->changeZoom = false;
-	this->changeTop = false;
-	this->zoom = 0;
-	this->left = 0;
-	this->top = 0;
-	this->expand = false;
+void LinkDestination::setChangeTop(double top) {
+    this->top = top;
+    this->changeTop = true;
 }
 
-LinkDestination::~LinkDestination()
-{
-	XOJ_RELEASE_TYPE(LinkDestination);
-}
+void LinkDestination::setName(string name) { this->name = std::move(name); }
 
-size_t LinkDestination::getPdfPage()
-{
-	XOJ_CHECK_TYPE(LinkDestination);
-
-	return this->page;
-}
-
-void LinkDestination::setPdfPage(size_t page)
-{
-	XOJ_CHECK_TYPE(LinkDestination);
-
-	this->page = page;
-}
-
-void LinkDestination::setExpand(bool expand)
-{
-	XOJ_CHECK_TYPE(LinkDestination);
-
-	this->expand = expand;
-}
-
-bool LinkDestination::getExpand()
-{
-	XOJ_CHECK_TYPE(LinkDestination);
-
-	return this->expand;
-}
-
-bool LinkDestination::shouldChangeLeft()
-{
-	XOJ_CHECK_TYPE(LinkDestination);
-
-	return changeLeft;
-}
-
-bool LinkDestination::shouldChangeZoom()
-{
-	XOJ_CHECK_TYPE(LinkDestination);
-
-	return changeZoom;
-}
-
-bool LinkDestination::shouldChangeTop()
-{
-	XOJ_CHECK_TYPE(LinkDestination);
-
-	return changeTop;
-}
-
-double LinkDestination::getZoom()
-{
-	XOJ_CHECK_TYPE(LinkDestination);
-
-	return zoom;
-}
-
-double LinkDestination::getLeft()
-{
-	XOJ_CHECK_TYPE(LinkDestination);
-
-	return left;
-}
-
-double LinkDestination::getTop()
-{
-	XOJ_CHECK_TYPE(LinkDestination);
-
-	return top;
-}
-
-void LinkDestination::setChangeLeft(double left)
-{
-	XOJ_CHECK_TYPE(LinkDestination);
-
-	this->left = left;
-	this->changeLeft = true;
-}
-
-void LinkDestination::setChangeZoom(double zoom)
-{
-	XOJ_CHECK_TYPE(LinkDestination);
-
-	this->zoom = zoom;
-	this->changeZoom = true;
-}
-
-void LinkDestination::setChangeTop(double top)
-{
-	XOJ_CHECK_TYPE(LinkDestination);
-
-	this->top = top;
-	this->changeTop = true;
-}
-
-void LinkDestination::setName(string name)
-{
-	XOJ_CHECK_TYPE(LinkDestination);
-
-	this->name = name;
-}
-
-string LinkDestination::getName()
-{
-	XOJ_CHECK_TYPE(LinkDestination);
-
-	return this->name;
-}
+auto LinkDestination::getName() -> string { return this->name; }

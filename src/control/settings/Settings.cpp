@@ -1,873 +1,739 @@
 #include "Settings.h"
 
-#include "ButtonConfig.h"
-#include "model/FormatDefinitions.h"
-
-#include <config.h>
-#include <i18n.h>
-#include <Util.h>
-#include <util/DeviceListHelper.h>
 #include <utility>
-#define DEFAULT_FONT "Sans"
-#define DEFAULT_FONT_SIZE 12
 
-#define WRITE_BOOL_PROP(var) xmlNode = saveProperty((const char *)#var, var ? "true" : "false", root)
-#define WRITE_STRING_PROP(var) xmlNode = saveProperty((const char *)#var, var.empty() ? "" : var.c_str(), root)
-#define WRITE_INT_PROP(var) xmlNode = saveProperty((const char *)#var, var, root)
-#define WRITE_DOUBLE_PROP(var) xmlNode = savePropertyDouble((const char *)#var, var, root)
-#define WRITE_COMMENT(var) com = xmlNewComment((const xmlChar *)var); xmlAddPrevSibling(xmlNode, com);
+#include "model/FormatDefinitions.h"
+#include "util/DeviceListHelper.h"
 
-Settings::Settings(Path filename)
- : filename(std::move(filename))
-{
-	XOJ_INIT_TYPE(Settings);
-	loadDefault();
+#include "ButtonConfig.h"
+#include "Util.h"
+#include "filesystem.h"
+#include "i18n.h"
+
+constexpr auto const* DEFAULT_FONT = "Sans";
+constexpr auto DEFAULT_FONT_SIZE = 12;
+
+#define WRITE_BOOL_PROP(var) xmlNode = saveProperty((const char*)#var, (var) ? "true" : "false", root)
+#define WRITE_STRING_PROP(var) xmlNode = saveProperty((const char*)#var, (var).empty() ? "" : (var).c_str(), root)
+#define WRITE_INT_PROP(var) xmlNode = saveProperty((const char*)#var, var, root)
+#define WRITE_UINT_PROP(var) xmlNode = savePropertyUnsigned((const char*)#var, var, root)
+#define WRITE_DOUBLE_PROP(var) xmlNode = savePropertyDouble((const char*)#var, var, root)
+#define WRITE_COMMENT(var)                      \
+    com = xmlNewComment((const xmlChar*)(var)); \
+    xmlAddPrevSibling(xmlNode, com);
+
+Settings::Settings(fs::path filepath): filepath(std::move(filepath)) { loadDefault(); }
+
+Settings::~Settings() {
+    for (auto& i: this->buttonConfig) {
+        delete i;
+        i = nullptr;
+    }
 }
 
-Settings::~Settings()
-{
-	XOJ_CHECK_TYPE(Settings);
+void Settings::loadDefault() {
+    this->pressureSensitivity = true;
+    this->minimumPressure = 0.05;
+    this->pressureMultiplier = 1.0;
+    this->pressureGuessing = false;
+    this->zoomGesturesEnabled = true;
 
-	for (int i = 0; i < BUTTON_COUNT; i++)
-	{
-		delete this->buttonConfig[i];
-		this->buttonConfig[i] = NULL;
-	}
+    this->maximized = false;
+    this->showPairedPages = false;
+    this->presentationMode = false;
 
-	XOJ_RELEASE_TYPE(Settings);
-}
+    this->numColumns = 1;  // only one of these applies at a time
+    this->numRows = 1;
+    this->viewFixedRows = false;
 
-void Settings::loadDefault()
-{
-	XOJ_CHECK_TYPE(Settings);
+    this->layoutVertical = false;
+    this->layoutRightToLeft = false;
+    this->layoutBottomToTop = false;
 
-	this->pressureSensitivity = true;
-	this->zoomGesturesEnabled = true;
-	this->maximized = false;
-	this->showPairedPages = false;
-	this->presentationMode = false;
+    this->numPairsOffset = 1;
 
-	this->numColumns = 1;	// only one of these applies at a time
-	this->numRows = 1;
-	this->viewFixedRows = false;	
-	
-	this->layoutVertical = false;
-	this->layoutRightToLeft = false;
-	this->layoutBottomToTop = false;
-	
-	this->numPairsOffset = 1;
-	
-	this->zoomStep = 10.0;
-	this->zoomStepScroll = 2.0;
+    this->zoomStep = 10.0;
+    this->zoomStepScroll = 2.0;
 
-	this->displayDpi = 72;
+    this->displayDpi = 72;
 
-	this->font.setName(DEFAULT_FONT);
-	this->font.setSize(DEFAULT_FONT_SIZE);
+    this->font.setName(DEFAULT_FONT);
+    this->font.setSize(DEFAULT_FONT_SIZE);
 
-	this->mainWndWidth = 800;
-	this->mainWndHeight = 600;
+    this->mainWndWidth = 800;
+    this->mainWndHeight = 600;
 
-	this->showSidebar = true;
-	this->sidebarWidth = 150;
+    this->showSidebar = true;
+    this->sidebarWidth = 150;
 
-	this->sidebarOnRight = false;
+    this->showToolbar = true;
 
-	this->scrollbarOnLeft = false;
+    this->sidebarOnRight = false;
 
-	this->menubarVisible = true;
+    this->scrollbarOnLeft = false;
 
-	this->autoloadPdfXoj = true;
-	this->showBigCursor = false;
-	this->highlightPosition = false;
-	this->darkTheme = false;
-	this->scrollbarHideType = SCROLLBAR_HIDE_NONE;
-	this->disableScrollbarFadeout = false;
+    this->menubarVisible = true;
 
-	//Set this for autosave frequency in minutes.
-	this->autosaveTimeout = 3;
-	this->autosaveEnabled = true;
+    this->autoloadPdfXoj = true;
+    this->stylusCursorType = STYLUS_CURSOR_DOT;
+    this->highlightPosition = false;
+    this->cursorHighlightColor = 0x80FFFF00;  // Yellow with 50% opacity
+    this->cursorHighlightRadius = 30.0;
+    this->cursorHighlightBorderColor = 0x800000FF;  // Blue with 50% opacity
+    this->cursorHighlightBorderWidth = 0.0;
+    this->darkTheme = false;
+    this->scrollbarHideType = SCROLLBAR_HIDE_NONE;
+    this->disableScrollbarFadeout = false;
 
-	this->addHorizontalSpace = false;
-	this->addHorizontalSpaceAmount = 150;
-	this->addVerticalSpace = false;
-	this->addVerticalSpaceAmount = 150;
+    // Set this for autosave frequency in minutes.
+    this->autosaveTimeout = 3;
+    this->autosaveEnabled = true;
 
-	//Drawing direction emulates modifier keys
-	this->drawDirModsRadius = 50;
-	this->drawDirModsEnabled = false;
-	
-	this->snapRotation = true;
-	this->snapRotationTolerance = 0.20;
+    this->addHorizontalSpace = false;
+    this->addHorizontalSpaceAmount = 150;
+    this->addVerticalSpace = false;
+    this->addVerticalSpaceAmount = 150;
 
-	this->snapGrid = true;
-	this->snapGridTolerance = 0.25;
+    // Drawing direction emulates modifier keys
+    this->drawDirModsRadius = 50;
+    this->drawDirModsEnabled = false;
 
-	this->touchWorkaround = false;
+    this->snapRotation = true;
+    this->snapRotationTolerance = 0.30;
 
-	this->defaultSaveName = _("%F-Note-%H-%M");
+    this->snapGrid = true;
+    this->snapGridTolerance = 0.50;
+    this->snapGridSize = DEFAULT_GRID_SIZE;
+
+    this->touchDrawing = false;
+
+    this->defaultSaveName = _("%F-Note-%H-%M");
 
     // Eraser
     this->buttonConfig[BUTTON_ERASER] =
-            new ButtonConfig(TOOL_ERASER, 0, TOOL_SIZE_NONE, DRAWING_TYPE_DEFAULT, ERASER_TYPE_NONE);
+            new ButtonConfig(TOOL_ERASER, Color{0x000000U}, TOOL_SIZE_NONE, DRAWING_TYPE_DEFAULT, ERASER_TYPE_NONE);
     // Middle button
-    this->buttonConfig[BUTTON_MIDDLE] =
-            new ButtonConfig(TOOL_NONE, 0, TOOL_SIZE_NONE, DRAWING_TYPE_DEFAULT, ERASER_TYPE_NONE);
+    this->buttonConfig[BUTTON_MOUSE_MIDDLE] =
+            new ButtonConfig(TOOL_NONE, Color{0x000000U}, TOOL_SIZE_NONE, DRAWING_TYPE_DEFAULT, ERASER_TYPE_NONE);
     // Right button
-    this->buttonConfig[BUTTON_RIGHT] =
-            new ButtonConfig(TOOL_NONE, 0, TOOL_SIZE_NONE, DRAWING_TYPE_DEFAULT, ERASER_TYPE_NONE);
+    this->buttonConfig[BUTTON_MOUSE_RIGHT] =
+            new ButtonConfig(TOOL_NONE, Color{0x000000U}, TOOL_SIZE_NONE, DRAWING_TYPE_DEFAULT, ERASER_TYPE_NONE);
     // Touch
     this->buttonConfig[BUTTON_TOUCH] =
-            new ButtonConfig(TOOL_NONE, 0, TOOL_SIZE_NONE, DRAWING_TYPE_DEFAULT, ERASER_TYPE_NONE);
+            new ButtonConfig(TOOL_NONE, Color{0x000000U}, TOOL_SIZE_NONE, DRAWING_TYPE_DEFAULT, ERASER_TYPE_NONE);
     // Default config
     this->buttonConfig[BUTTON_DEFAULT] =
-            new ButtonConfig(TOOL_PEN, 0, TOOL_SIZE_FINE, DRAWING_TYPE_DEFAULT, ERASER_TYPE_NONE);
+            new ButtonConfig(TOOL_PEN, Color{0x000000U}, TOOL_SIZE_FINE, DRAWING_TYPE_DEFAULT, ERASER_TYPE_NONE);
     // Pen button 1
-    this->buttonConfig[BUTTON_STYLUS] =
-            new ButtonConfig(TOOL_NONE, 0, TOOL_SIZE_NONE, DRAWING_TYPE_DEFAULT, ERASER_TYPE_NONE);
+    this->buttonConfig[BUTTON_STYLUS_ONE] =
+            new ButtonConfig(TOOL_NONE, Color{0x000000U}, TOOL_SIZE_NONE, DRAWING_TYPE_DEFAULT, ERASER_TYPE_NONE);
     // Pen button 2
-    this->buttonConfig[BUTTON_STYLUS2] =
-            new ButtonConfig(TOOL_NONE, 0, TOOL_SIZE_NONE, DRAWING_TYPE_DEFAULT, ERASER_TYPE_NONE);
+    this->buttonConfig[BUTTON_STYLUS_TWO] =
+            new ButtonConfig(TOOL_NONE, Color{0x000000U}, TOOL_SIZE_NONE, DRAWING_TYPE_DEFAULT, ERASER_TYPE_NONE);
 
     this->fullscreenHideElements = "mainMenubar";
-	this->presentationHideElements = "mainMenubar,sidebarContents";
+    this->presentationHideElements = "mainMenubar,sidebarContents";
 
-	this->pdfPageCacheSize = 10;
+    this->touchZoomStartThreshold = 0.0;
 
-	this->selectionBorderColor = 0xff0000; // red
-	this->selectionMarkerColor = 0x729FCF; // light blue
+    this->pageRerenderThreshold = 5.0;
+    this->pdfPageCacheSize = 10;
+    this->preloadPagesBefore = 3U;
+    this->preloadPagesAfter = 5U;
+    this->eagerPageCleanup = true;
 
-	this->backgroundColor = 0xDCDAD5;
+    this->selectionBorderColor = 0xff0000U;  // red
+    this->selectionMarkerColor = 0x729fcfU;  // light blue
 
-	// clang-format off
+    this->backgroundColor = 0xdcdad5U;
+
+    // clang-format off
 	this->pageTemplate = "xoj/template\ncopyLastPageSettings=true\nsize=595.275591x841.889764\nbackgroundType=lined\nbackgroundColor=#ffffff\n";
-	// clang-format on
+    // clang-format on
 
-	this->audioSampleRate = 44100.0;
-	this->audioInputDevice = -1;
-	this->audioOutputDevice = -1;
-	this->audioGain = 1.0;
+    this->audioSampleRate = 44100.0;
+    this->audioInputDevice = -1;
+    this->audioOutputDevice = -1;
+    this->audioGain = 1.0;
+    this->defaultSeekTime = 5;
 
-	this->pluginEnabled = "";
-	this->pluginDisabled = "";
+    this->pluginEnabled = "";
+    this->pluginDisabled = "";
 
-	this->experimentalInputSystemEnabled = false;
-	this->inputSystemTPCButton = false;
-	this->inputSystemDrawOutsideWindow = true;
+    this->numIgnoredStylusEvents = 0;
 
-	this->strokeFilterIgnoreTime = 150;
-	this->strokeFilterIgnoreLength = 1;
-	this->strokeFilterSuccessiveTime = 500;
-	this->strokeFilterEnabled = false;
-	this->doActionOnStrokeFiltered = false;
-	this->trySelectOnStrokeFiltered = false;
+    this->inputSystemTPCButton = false;
+    this->inputSystemDrawOutsideWindow = true;
 
-	this->inTransaction = false;
+    this->strokeFilterIgnoreTime = 150;
+    this->strokeFilterIgnoreLength = 1;
+    this->strokeFilterSuccessiveTime = 500;
+    this->strokeFilterEnabled = false;
+    this->doActionOnStrokeFiltered = false;
+    this->trySelectOnStrokeFiltered = false;
 
+    this->snapRecognizedShapesEnabled = false;
+    this->restoreLineWidthEnabled = false;
+
+    this->inTransaction = false;
+
+    /**
+     * Stabilizer related settings
+     */
+    this->stabilizerAveragingMethod = StrokeStabilizer::AveragingMethod::NONE;
+    this->stabilizerPreprocessor = StrokeStabilizer::Preprocessor::NONE;
+    this->stabilizerBuffersize = 20;
+    this->stabilizerSigma = 0.5;
+    this->stabilizerDeadzoneRadius = 1.3;
+    this->stabilizerCuspDetection = true;
+    this->stabilizerDrag = 0.4;
+    this->stabilizerMass = 5.0;
+    this->stabilizerFinalizeStroke = true;
+    /**/
 }
 
 /**
  * tempg_ascii_strtod
-* 	Transition to using g_ascii_strtod to minimize disruption. May, 2019. 
-*  Delete this and replace calls to this function with calls to g_ascii_strtod() in 2020.
-* 	See: https://developer.gnome.org/glib/stable/glib-String-Utility-Functions.html#g-strtod
-*/
-double tempg_ascii_strtod( const gchar* txt, gchar ** endptr )
-{
-	return g_strtod ( txt, endptr  );		//  makes best guess between locale formatted and C formatted numbers. See link above.
+ * 	Transition to using g_ascii_strtod to minimize disruption. May, 2019.
+ *  Delete this and replace calls to this function with calls to g_ascii_strtod() in 2020.
+ * 	See: https://developer.gnome.org/glib/stable/glib-String-Utility-Functions.html#g-strtod
+ */
+auto tempg_ascii_strtod(const gchar* txt, gchar** endptr) -> double {
+    return g_strtod(txt,
+                    endptr);  //  makes best guess between locale formatted and C formatted numbers. See link above.
 }
 
 
-void Settings::parseData(xmlNodePtr cur, SElement& elem)
-{
-	XOJ_CHECK_TYPE(Settings);
+void Settings::parseData(xmlNodePtr cur, SElement& elem) {
+    for (xmlNodePtr x = cur->children; x != nullptr; x = x->next) {
+        if (!xmlStrcmp(x->name, reinterpret_cast<const xmlChar*>("data"))) {
+            xmlChar* name = xmlGetProp(x, reinterpret_cast<const xmlChar*>("name"));
+            parseData(x, elem.child(reinterpret_cast<const char*>(name)));
+            xmlFree(name);
+        } else if (!xmlStrcmp(x->name, reinterpret_cast<const xmlChar*>("attribute"))) {
+            xmlChar* name = xmlGetProp(x, reinterpret_cast<const xmlChar*>("name"));
+            xmlChar* value = xmlGetProp(x, reinterpret_cast<const xmlChar*>("value"));
+            xmlChar* type = xmlGetProp(x, reinterpret_cast<const xmlChar*>("type"));
 
-	for (xmlNodePtr x = cur->children; x != NULL; x = x->next)
-	{
-		if (!xmlStrcmp(x->name, (const xmlChar*) "data"))
-		{
-			xmlChar* name = xmlGetProp(x, (const xmlChar*) "name");
-			parseData(x, elem.child((const char*) name));
-			xmlFree(name);
-		}
-		else if (!xmlStrcmp(x->name, (const xmlChar*) "attribute"))
-		{
-			xmlChar* name = xmlGetProp(x, (const xmlChar*) "name");
-			xmlChar* value = xmlGetProp(x, (const xmlChar*) "value");
-			xmlChar* type = xmlGetProp(x, (const xmlChar*) "type");
+            string sType = reinterpret_cast<const char*>(type);
 
-			string sType = (const char*) type;
+            if (sType == "int") {
+                int i = atoi(reinterpret_cast<const char*>(value));
+                elem.setInt(reinterpret_cast<const char*>(name), i);
+            } else if (sType == "double") {
+                double d = tempg_ascii_strtod(reinterpret_cast<const char*>(value),
+                                              nullptr);  // g_ascii_strtod ignores locale setting.
+                elem.setDouble(reinterpret_cast<const char*>(name), d);
+            } else if (sType == "hex") {
+                int i = 0;
+                if (sscanf(reinterpret_cast<const char*>(value), "%x", &i)) {
+                    elem.setIntHex(reinterpret_cast<const char*>(name), i);
+                } else {
+                    g_warning("Settings::Unknown hex value: %s:%s\n", name, value);
+                }
+            } else if (sType == "string") {
+                elem.setString(reinterpret_cast<const char*>(name), reinterpret_cast<const char*>(value));
+            } else if (sType == "boolean") {
+                elem.setBool(reinterpret_cast<const char*>(name),
+                             strcmp(reinterpret_cast<const char*>(value), "true") == 0);
+            } else {
+                g_warning("Settings::Unknown datatype: %s\n", sType.c_str());
+            }
 
-			if (sType == "int")
-			{
-				int i = atoi((const char*) value);
-				elem.setInt((const char*) name, i);
-			}
-			else if (sType == "double")
-			{
-				double d = tempg_ascii_strtod((const char*) value, NULL);	//g_ascii_strtod ignores locale setting.
-				elem.setDouble((const char*) name, d);
-			}
-			else if (sType == "hex")
-			{
-				int i = 0;
-				if (sscanf((const char*) value, "%x", &i))
-				{
-					elem.setIntHex((const char*) name, i);
-				}
-				else
-				{
-					g_warning("Settings::Unknown hex value: %s:%s\n", name, value);
-				}
-			}
-			else if (sType == "string")
-			{
-				elem.setString((const char*) name, (const char*) value);
-			}
-			else if (sType == "boolean")
-			{
-				elem.setBool((const char*) name, strcmp((const char*) value, "true") == 0);
-			}
-			else
-			{
-				g_warning("Settings::Unknown datatype: %s\n", sType.c_str());
-			}
-
-			xmlFree(name);
-			xmlFree(type);
-			xmlFree(value);
-		}
-		else
-		{
-			g_warning("Settings::parseData: Unknown XML node: %s\n", x->name);
-			continue;
-		}
-	}
-
+            xmlFree(name);
+            xmlFree(type);
+            xmlFree(value);
+        } else {
+            g_warning("Settings::parseData: Unknown XML node: %s\n", x->name);
+            continue;
+        }
+    }
 }
 
-void Settings::parseItem(xmlDocPtr doc, xmlNodePtr cur)
-{
-	XOJ_CHECK_TYPE(Settings);
+void Settings::parseItem(xmlDocPtr doc, xmlNodePtr cur) {
+    // Parse data map
+    if (!xmlStrcmp(cur->name, reinterpret_cast<const xmlChar*>("data"))) {
+        xmlChar* name = xmlGetProp(cur, reinterpret_cast<const xmlChar*>("name"));
+        if (name == nullptr) {
+            g_warning("Settings::%s:No name property!\n", cur->name);
+            return;
+        }
 
-	// Parse data map
-	if (!xmlStrcmp(cur->name, (const xmlChar*) "data"))
-	{
-		xmlChar* name = xmlGetProp(cur, (const xmlChar*) "name");
-		if (name == NULL)
-		{
-			g_warning("Settings::%s:No name property!\n", cur->name);
-			return;
-		}
+        parseData(cur, data[reinterpret_cast<const char*>(name)]);
 
-		parseData(cur, data[(const char*) name]);
+        xmlFree(name);
+        return;
+    }
 
-		xmlFree(name);
-		return;
-	}
+    if (cur->type == XML_COMMENT_NODE) {
+        return;
+    }
 
-	if (cur->type == XML_COMMENT_NODE)
-	{
-		return;
-	}
+    if (xmlStrcmp(cur->name, reinterpret_cast<const xmlChar*>("property"))) {
+        g_warning("Settings::Unknown XML node: %s\n", cur->name);
+        return;
+    }
 
-	if (xmlStrcmp(cur->name, (const xmlChar*) "property"))
-	{
-		g_warning("Settings::Unknown XML node: %s\n", cur->name);
-		return;
-	}
+    xmlChar* name = xmlGetProp(cur, reinterpret_cast<const xmlChar*>("name"));
+    if (name == nullptr) {
+        g_warning("Settings::%s:No name property!\n", cur->name);
+        return;
+    }
 
-	xmlChar* name = xmlGetProp(cur, (const xmlChar*) "name");
-	if (name == NULL)
-	{
-		g_warning("Settings::%s:No name property!\n", cur->name);
-		return;
-	}
+    if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("font")) == 0) {
+        xmlFree(name);
+        xmlChar* font = nullptr;
+        xmlChar* size = nullptr;
 
-	if (xmlStrcmp(name, (const xmlChar*) "font") == 0)
-	{
-		xmlFree(name);
-		xmlChar* font;
-		xmlChar* size;
+        font = xmlGetProp(cur, reinterpret_cast<const xmlChar*>("font"));
+        if (font) {
+            this->font.setName(reinterpret_cast<const char*>(font));
+            xmlFree(font);
+        }
 
-		font = xmlGetProp(cur, (const xmlChar*) "font");
-		if (font)
-		{
-			this->font.setName((const char*) font);
-			xmlFree(font);
-		}
+        size = xmlGetProp(cur, reinterpret_cast<const xmlChar*>("size"));
+        if (size) {
+            double dSize = DEFAULT_FONT_SIZE;
+            if (sscanf(reinterpret_cast<const char*>(size), "%lf", &dSize) == 1) {
+                this->font.setSize(dSize);
+            }
+            xmlFree(size);
+        }
+        return;
+    }
 
-		size = xmlGetProp(cur, (const xmlChar*) "size");
-		if (size)
-		{
-			double dSize = DEFAULT_FONT_SIZE;
-			if (sscanf((const char*) size, "%lf", &dSize) == 1)
-			{
-				this->font.setSize(dSize);
-			}
+    xmlChar* value = xmlGetProp(cur, reinterpret_cast<const xmlChar*>("value"));
+    if (value == nullptr) {
+        xmlFree(name);
+        g_warning("No value property!\n");
+        return;
+    }
 
-			xmlFree(size);
-		}
+    // TODO(fabian): remove this typo fix in 2-3 release cycles
+    if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("presureSensitivity")) == 0) {
+        this->pressureSensitivity = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    }
+    if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("pressureSensitivity")) == 0) {
+        this->pressureSensitivity = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("minimumPressure")) == 0) {
+        this->minimumPressure = g_ascii_strtod(reinterpret_cast<const char*>(value), nullptr);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("pressureMultiplier")) == 0) {
+        this->pressureMultiplier = g_ascii_strtod(reinterpret_cast<const char*>(value), nullptr);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("zoomGesturesEnabled")) == 0) {
+        this->zoomGesturesEnabled = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("selectedToolbar")) == 0) {
+        this->selectedToolbar = reinterpret_cast<const char*>(value);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("lastSavePath")) == 0) {
+        this->lastSavePath = fs::u8path(reinterpret_cast<const char*>(value));
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("lastOpenPath")) == 0) {
+        this->lastOpenPath = fs::u8path(reinterpret_cast<const char*>(value));
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("lastImagePath")) == 0) {
+        this->lastImagePath = fs::u8path(reinterpret_cast<const char*>(value));
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("zoomStep")) == 0) {
+        this->zoomStep = tempg_ascii_strtod(reinterpret_cast<const char*>(value), nullptr);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("zoomStepScroll")) == 0) {
+        this->zoomStepScroll = tempg_ascii_strtod(reinterpret_cast<const char*>(value), nullptr);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("displayDpi")) == 0) {
+        this->displayDpi = g_ascii_strtoll(reinterpret_cast<const char*>(value), nullptr, 10);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("mainWndWidth")) == 0) {
+        this->mainWndWidth = g_ascii_strtoll(reinterpret_cast<const char*>(value), nullptr, 10);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("mainWndHeight")) == 0) {
+        this->mainWndHeight = g_ascii_strtoll(reinterpret_cast<const char*>(value), nullptr, 10);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("maximized")) == 0) {
+        this->maximized = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("showToolbar")) == 0) {
+        this->showToolbar = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("showSidebar")) == 0) {
+        this->showSidebar = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("sidebarWidth")) == 0) {
+        this->sidebarWidth = std::max<int>(g_ascii_strtoll(reinterpret_cast<const char*>(value), nullptr, 10), 50);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("sidebarOnRight")) == 0) {
+        this->sidebarOnRight = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("scrollbarOnLeft")) == 0) {
+        this->scrollbarOnLeft = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("menubarVisible")) == 0) {
+        this->menubarVisible = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("numColumns")) == 0) {
+        this->numColumns = g_ascii_strtoll(reinterpret_cast<const char*>(value), nullptr, 10);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("numRows")) == 0) {
+        this->numRows = g_ascii_strtoll(reinterpret_cast<const char*>(value), nullptr, 10);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("viewFixedRows")) == 0) {
+        this->viewFixedRows = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("layoutVertical")) == 0) {
+        this->layoutVertical = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("layoutRightToLeft")) == 0) {
+        this->layoutRightToLeft = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("layoutBottomToTop")) == 0) {
+        this->layoutBottomToTop = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("showPairedPages")) == 0) {
+        this->showPairedPages = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("numPairsOffset")) == 0) {
+        this->numPairsOffset = g_ascii_strtoll(reinterpret_cast<const char*>(value), nullptr, 10);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("presentationMode")) == 0) {
+        this->presentationMode = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("autoloadPdfXoj")) == 0) {
+        this->autoloadPdfXoj = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("stylusCursorType")) == 0) {
+        this->stylusCursorType = stylusCursorTypeFromString(reinterpret_cast<const char*>(value));
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("highlightPosition")) == 0) {
+        this->highlightPosition = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("cursorHighlightColor")) == 0) {
+        this->cursorHighlightColor = g_ascii_strtoull(reinterpret_cast<const char*>(value), nullptr, 10);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("cursorHighlightRadius")) == 0) {
+        this->cursorHighlightRadius = g_ascii_strtod(reinterpret_cast<const char*>(value), nullptr);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("cursorHighlightBorderColor")) == 0) {
+        this->cursorHighlightBorderColor = g_ascii_strtoull(reinterpret_cast<const char*>(value), nullptr, 10);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("cursorHighlightBorderWidth")) == 0) {
+        this->cursorHighlightBorderWidth = g_ascii_strtod(reinterpret_cast<const char*>(value), nullptr);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("darkTheme")) == 0) {
+        this->darkTheme = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("defaultSaveName")) == 0) {
+        this->defaultSaveName = reinterpret_cast<const char*>(value);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("pluginEnabled")) == 0) {
+        this->pluginEnabled = reinterpret_cast<const char*>(value);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("pluginDisabled")) == 0) {
+        this->pluginDisabled = reinterpret_cast<const char*>(value);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("pageTemplate")) == 0) {
+        this->pageTemplate = reinterpret_cast<const char*>(value);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("sizeUnit")) == 0) {
+        this->sizeUnit = reinterpret_cast<const char*>(value);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("audioFolder")) == 0) {
+        this->audioFolder = reinterpret_cast<const char*>(value);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("autosaveEnabled")) == 0) {
+        this->autosaveEnabled = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("autosaveTimeout")) == 0) {
+        this->autosaveTimeout = g_ascii_strtoll(reinterpret_cast<const char*>(value), nullptr, 10);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("fullscreenHideElements")) == 0) {
+        this->fullscreenHideElements = reinterpret_cast<const char*>(value);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("presentationHideElements")) == 0) {
+        this->presentationHideElements = reinterpret_cast<const char*>(value);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("touchZoomStartThreshold")) == 0) {
+        this->touchZoomStartThreshold = g_ascii_strtod(reinterpret_cast<const char*>(value), nullptr);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("pageRerenderThreshold")) == 0) {
+        this->pageRerenderThreshold = g_ascii_strtod(reinterpret_cast<const char*>(value), nullptr);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("pdfPageCacheSize")) == 0) {
+        this->pdfPageCacheSize = g_ascii_strtoll(reinterpret_cast<const char*>(value), nullptr, 10);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("preloadPagesBefore")) == 0) {
+        this->preloadPagesBefore = g_ascii_strtoull(reinterpret_cast<const char*>(value), nullptr, 10);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("preloadPagesAfter")) == 0) {
+        this->preloadPagesAfter = g_ascii_strtoull(reinterpret_cast<const char*>(value), nullptr, 10);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("eagerPageCleanup")) == 0) {
+        this->eagerPageCleanup = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("selectionBorderColor")) == 0) {
+        this->selectionBorderColor = Color(g_ascii_strtoull(reinterpret_cast<const char*>(value), nullptr, 10));
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("selectionMarkerColor")) == 0) {
+        this->selectionMarkerColor = Color(g_ascii_strtoull(reinterpret_cast<const char*>(value), nullptr, 10));
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("backgroundColor")) == 0) {
+        this->backgroundColor = Color(g_ascii_strtoull(reinterpret_cast<const char*>(value), nullptr, 10));
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("addHorizontalSpace")) == 0) {
+        this->addHorizontalSpace = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("addHorizontalSpaceAmount")) == 0) {
+        this->addHorizontalSpaceAmount = g_ascii_strtoll(reinterpret_cast<const char*>(value), nullptr, 10);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("addVerticalSpace")) == 0) {
+        this->addVerticalSpace = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("addVerticalSpaceAmount")) == 0) {
+        this->addVerticalSpaceAmount = g_ascii_strtoll(reinterpret_cast<const char*>(value), nullptr, 10);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("drawDirModsEnabled")) == 0) {
+        this->drawDirModsEnabled = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("drawDirModsRadius")) == 0) {
+        this->drawDirModsRadius = g_ascii_strtoll(reinterpret_cast<const char*>(value), nullptr, 10);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("snapRotation")) == 0) {
+        this->snapRotation = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("snapRotationTolerance")) == 0) {
+        this->snapRotationTolerance = tempg_ascii_strtod(reinterpret_cast<const char*>(value), nullptr);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("snapGrid")) == 0) {
+        this->snapGrid = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("snapGridSize")) == 0) {
+        this->snapGridSize = tempg_ascii_strtod(reinterpret_cast<const char*>(value), nullptr);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("snapGridTolerance")) == 0) {
+        this->snapGridTolerance = tempg_ascii_strtod(reinterpret_cast<const char*>(value), nullptr);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("touchDrawing")) == 0) {
+        this->touchDrawing = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("pressureGuessing")) == 0) {
+        this->pressureGuessing = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("scrollbarHideType")) == 0) {
+        if (xmlStrcmp(value, reinterpret_cast<const xmlChar*>("both")) == 0) {
+            this->scrollbarHideType = SCROLLBAR_HIDE_BOTH;
+        } else if (xmlStrcmp(value, reinterpret_cast<const xmlChar*>("horizontal")) == 0) {
+            this->scrollbarHideType = SCROLLBAR_HIDE_HORIZONTAL;
+        } else if (xmlStrcmp(value, reinterpret_cast<const xmlChar*>("vertical")) == 0) {
+            this->scrollbarHideType = SCROLLBAR_HIDE_VERTICAL;
+        } else {
+            this->scrollbarHideType = SCROLLBAR_HIDE_NONE;
+        }
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("disableScrollbarFadeout")) == 0) {
+        this->disableScrollbarFadeout = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("audioSampleRate")) == 0) {
+        this->audioSampleRate = tempg_ascii_strtod(reinterpret_cast<const char*>(value), nullptr);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("audioGain")) == 0) {
+        this->audioGain = tempg_ascii_strtod(reinterpret_cast<const char*>(value), nullptr);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("defaultSeekTime")) == 0) {
+        this->defaultSeekTime = tempg_ascii_strtod(reinterpret_cast<const char*>(value), nullptr);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("audioInputDevice")) == 0) {
+        this->audioInputDevice = g_ascii_strtoll(reinterpret_cast<const char*>(value), nullptr, 10);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("audioOutputDevice")) == 0) {
+        this->audioOutputDevice = g_ascii_strtoll(reinterpret_cast<const char*>(value), nullptr, 10);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("numIgnoredStylusEvents")) == 0) {
+        this->numIgnoredStylusEvents =
+                std::max<int>(g_ascii_strtoll(reinterpret_cast<const char*>(value), nullptr, 10), 0);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("inputSystemTPCButton")) == 0) {
+        this->inputSystemTPCButton = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("inputSystemDrawOutsideWindow")) == 0) {
+        this->inputSystemDrawOutsideWindow = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("strokeFilterIgnoreTime")) == 0) {
+        this->strokeFilterIgnoreTime = g_ascii_strtoll(reinterpret_cast<const char*>(value), nullptr, 10);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("strokeFilterIgnoreLength")) == 0) {
+        this->strokeFilterIgnoreLength = tempg_ascii_strtod(reinterpret_cast<const char*>(value), nullptr);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("strokeFilterSuccessiveTime")) == 0) {
+        this->strokeFilterSuccessiveTime = g_ascii_strtoll(reinterpret_cast<const char*>(value), nullptr, 10);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("strokeFilterEnabled")) == 0) {
+        this->strokeFilterEnabled = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("doActionOnStrokeFiltered")) == 0) {
+        this->doActionOnStrokeFiltered = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("trySelectOnStrokeFiltered")) == 0) {
+        this->trySelectOnStrokeFiltered = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("latexSettings.autoCheckDependencies")) == 0) {
+        this->latexSettings.autoCheckDependencies = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("latexSettings.globalTemplatePath")) == 0) {
+        std::string v(reinterpret_cast<char*>(value));
+        this->latexSettings.globalTemplatePath = fs::u8path(v);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("latexSettings.genCmd")) == 0) {
+        this->latexSettings.genCmd = reinterpret_cast<char*>(value);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("snapRecognizedShapesEnabled")) == 0) {
+        this->snapRecognizedShapesEnabled = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("restoreLineWidthEnabled")) == 0) {
+        this->restoreLineWidthEnabled = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("preferredLocale")) == 0) {
+        this->preferredLocale = reinterpret_cast<char*>(value);
+        /**
+         * Stabilizer related settings
+         */
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("stabilizerAveragingMethod")) == 0) {
+        this->stabilizerAveragingMethod =
+                (StrokeStabilizer::AveragingMethod)g_ascii_strtoll(reinterpret_cast<const char*>(value), nullptr, 10);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("stabilizerPreprocessor")) == 0) {
+        this->stabilizerPreprocessor =
+                (StrokeStabilizer::Preprocessor)g_ascii_strtoll(reinterpret_cast<const char*>(value), nullptr, 10);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("stabilizerBuffersize")) == 0) {
+        this->stabilizerBuffersize = g_ascii_strtoull(reinterpret_cast<const char*>(value), nullptr, 10);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("stabilizerSigma")) == 0) {
+        this->stabilizerSigma = tempg_ascii_strtod(reinterpret_cast<const char*>(value), nullptr);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("stabilizerDeadzoneRadius")) == 0) {
+        this->stabilizerDeadzoneRadius = tempg_ascii_strtod(reinterpret_cast<const char*>(value), nullptr);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("stabilizerDrag")) == 0) {
+        this->stabilizerDrag = tempg_ascii_strtod(reinterpret_cast<const char*>(value), nullptr);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("stabilizerMass")) == 0) {
+        this->stabilizerMass = tempg_ascii_strtod(reinterpret_cast<const char*>(value), nullptr);
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("stabilizerCuspDetection")) == 0) {
+        this->stabilizerCuspDetection = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    } else if (xmlStrcmp(name, reinterpret_cast<const xmlChar*>("stabilizerFinalizeStroke")) == 0) {
+        this->stabilizerFinalizeStroke = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
+    }
+    /**/
 
-		return;
-	}
-
-	xmlChar* value = xmlGetProp(cur, (const xmlChar*) "value");
-	if (value == NULL)
-	{
-		xmlFree(name);
-		g_warning("No value property!\n");
-		return;
-	}
-
-	// TODO: remove this typo fix in 2-3 release cycles
-	if (xmlStrcmp(name, (const xmlChar*) "presureSensitivity") == 0)
-	{
-		this->pressureSensitivity = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
-	}
-	if (xmlStrcmp(name, (const xmlChar*) "pressureSensitivity") == 0)
-	{
-		this->pressureSensitivity = xmlStrcmp(value, reinterpret_cast<const xmlChar*>("true")) == 0;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "zoomGesturesEnabled") == 0)
-	{
-		this->zoomGesturesEnabled = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "selectedToolbar") == 0)
-	{
-		this->selectedToolbar = (const char*) value;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "lastSavePath") == 0)
-	{
-		this->lastSavePath = (const char*) value;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "lastOpenPath") == 0)
-	{
-		this->lastOpenPath = (const char*) value;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "lastImagePath") == 0)
-	{
-		this->lastImagePath = (const char*) value;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "zoomStep") == 0)
-	{
-		this->zoomStep = tempg_ascii_strtod((const char*) value, NULL);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "zoomStepScroll") == 0)
-	{
-		this->zoomStepScroll = tempg_ascii_strtod((const char*) value, NULL);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "displayDpi") == 0)
-	{
-		this->displayDpi = g_ascii_strtoll((const char*) value, NULL, 10);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "mainWndWidth") == 0)
-	{
-		this->mainWndWidth = g_ascii_strtoll((const char*) value, NULL, 10);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "mainWndHeight") == 0)
-	{
-		this->mainWndHeight = g_ascii_strtoll((const char*) value, NULL, 10);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "maximized") == 0)
-	{
-		this->maximized = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "showSidebar") == 0)
-	{
-		this->showSidebar = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "sidebarWidth") == 0)
-	{
-		this->sidebarWidth = std::max<int>(g_ascii_strtoll((const char*) value, NULL, 10), 50);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "sidebarOnRight") == 0)
-	{
-		this->sidebarOnRight = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "scrollbarOnLeft") == 0)
-	{
-		this->scrollbarOnLeft = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "menubarVisible") == 0)
-	{
-		this->menubarVisible = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "numColumns") == 0)
-	{
-		this->numColumns = g_ascii_strtoll((const char*) value, NULL, 10);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "numRows") == 0)
-	{
-		this->numRows = g_ascii_strtoll((const char*) value, NULL, 10);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "viewFixedRows") == 0)
-	{
-		this->viewFixedRows = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "layoutVertical") == 0)
-	{
-		this->layoutVertical = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "layoutRightToLeft") == 0)
-	{
-		this->layoutRightToLeft = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "layoutBottomToTop") == 0)
-	{
-		this->layoutBottomToTop = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "showPairedPages") == 0)
-	{
-		this->showPairedPages = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "numPairsOffset") == 0)
-	{
-		this->numPairsOffset = g_ascii_strtoll((const char*) value, NULL, 10);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "presentationMode") == 0)
-	{
-		this->presentationMode = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "autoloadPdfXoj") == 0)
-	{
-		this->autoloadPdfXoj = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "showBigCursor") == 0)
-	{
-		this->showBigCursor = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "highlightPosition") == 0)
-	{
-		this->highlightPosition = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "darkTheme") == 0)
-	{
-		this->darkTheme = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "defaultSaveName") == 0)
-	{
-		this->defaultSaveName = (const char*) value;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "pluginEnabled") == 0)
-	{
-		this->pluginEnabled = (const char*) value;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "pluginDisabled") == 0)
-	{
-		this->pluginDisabled = (const char*) value;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "pageTemplate") == 0)
-	{
-		this->pageTemplate = (const char*) value;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "sizeUnit") == 0)
-	{
-		this->sizeUnit = (const char*) value;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "audioFolder") == 0)
-	{
-		this->audioFolder = (const char*) value;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "autosaveEnabled") == 0)
-	{
-		this->autosaveEnabled = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "autosaveTimeout") == 0)
-	{
-		this->autosaveTimeout = g_ascii_strtoll((const char*) value, NULL, 10);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "fullscreenHideElements") == 0)
-	{
-		this->fullscreenHideElements = (const char*) value;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "presentationHideElements") == 0)
-	{
-		this->presentationHideElements = (const char*) value;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "pdfPageCacheSize") == 0)
-	{
-		this->pdfPageCacheSize = g_ascii_strtoll((const char*) value, NULL, 10);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "selectionBorderColor") == 0)
-	{
-		this->selectionBorderColor = g_ascii_strtoll((const char*) value, NULL, 10);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "selectionMarkerColor") == 0)
-	{
-		this->selectionMarkerColor = g_ascii_strtoll((const char*) value, NULL, 10);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "backgroundColor") == 0)
-	{
-		this->backgroundColor = g_ascii_strtoll((const char*) value, NULL, 10);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "addHorizontalSpace") == 0)
-	{
-		this->addHorizontalSpace = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "addHorizontalSpaceAmount") == 0)
-	{
-		this->addHorizontalSpaceAmount = g_ascii_strtoll((const char*) value, NULL, 10);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "addVerticalSpace") == 0)
-	{
-		this->addVerticalSpace = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "addVerticalSpaceAmount") == 0)
-	{
-		this->addVerticalSpaceAmount = g_ascii_strtoll((const char*) value, NULL, 10);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "drawDirModsEnabled") == 0)
-	{
-		this->drawDirModsEnabled = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "drawDirModsRadius") == 0)
-	{
-		this->drawDirModsRadius = g_ascii_strtoll((const char*) value, NULL, 10);
-	}	
-	else if (xmlStrcmp(name, (const xmlChar*) "snapRotation") == 0)
-	{
-		this->snapRotation = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "snapRotationTolerance") == 0)
-	{
-		this->snapRotationTolerance = tempg_ascii_strtod((const char*) value, NULL);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "snapGrid") == 0)
-	{
-		this->snapGrid = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "snapGrid") == 0)
-	{
-		this->snapGrid = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "snapGridTolerance") == 0)
-	{
-		this->snapGridTolerance = tempg_ascii_strtod((const char*) value, NULL);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "touchWorkaround") == 0)
-	{
-		this->touchWorkaround = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "scrollbarHideType") == 0)
-	{
-		if (xmlStrcmp(value, (const xmlChar*) "both") == 0)
-		{
-			this->scrollbarHideType = SCROLLBAR_HIDE_BOTH;
-		}
-		else if (xmlStrcmp(value, (const xmlChar*) "horizontal") == 0)
-		{
-			this->scrollbarHideType = SCROLLBAR_HIDE_HORIZONTAL;
-		}
-		else if (xmlStrcmp(value, (const xmlChar*) "vertical") == 0)
-		{
-			this->scrollbarHideType = SCROLLBAR_HIDE_VERTICAL;
-		}
-		else
-		{
-			this->scrollbarHideType = SCROLLBAR_HIDE_NONE;
-		}
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "disableScrollbarFadeout") == 0)
-	{
-		this->disableScrollbarFadeout = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "audioSampleRate") == 0)
-	{
-		this->audioSampleRate = tempg_ascii_strtod((const char *) value, NULL);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "audioGain") == 0)
-	{
-		this->audioGain = tempg_ascii_strtod((const char *) value, NULL);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "audioInputDevice") == 0)
-	{
-		this->audioInputDevice = g_ascii_strtoll((const char *) value, NULL, 10);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "audioOutputDevice") == 0)
-	{
-		this->audioOutputDevice = g_ascii_strtoll((const char *) value, NULL, 10);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "experimentalInputSystemEnabled") == 0)
-	{
-		this->experimentalInputSystemEnabled = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "inputSystemTPCButton") == 0)
-	{
-		this->inputSystemTPCButton = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "inputSystemDrawOutsideWindow") == 0)
-	{
-		this->inputSystemDrawOutsideWindow = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "strokeFilterIgnoreTime") == 0)
-	{
-		this->strokeFilterIgnoreTime = g_ascii_strtoll((const char*) value, NULL, 10);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "strokeFilterIgnoreLength") == 0)
-	{
-		this->strokeFilterIgnoreLength = tempg_ascii_strtod((const char*) value, NULL);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "strokeFilterSuccessiveTime") == 0)
-	{
-		this->strokeFilterSuccessiveTime = g_ascii_strtoll((const char*) value, NULL, 10);
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "strokeFilterEnabled") == 0)
-	{
-		this->strokeFilterEnabled = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "doActionOnStrokeFiltered") == 0)
-	{
-		this->doActionOnStrokeFiltered = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-	else if (xmlStrcmp(name, (const xmlChar*) "trySelectOnStrokeFiltered") == 0)
-	{
-		this->trySelectOnStrokeFiltered = xmlStrcmp(value, (const xmlChar*) "true") ? false : true;
-	}
-
-	xmlFree(name);
-	xmlFree(value);
+    xmlFree(name);
+    xmlFree(value);
 }
 
-void Settings::loadDeviceClasses()
-{
-	SElement& s = getCustomElement("deviceClasses");
-	for (auto device : s.children())
-	{
-		SElement& deviceNode = device.second;
-		int deviceClass;
-		int deviceSource;
-		deviceNode.getInt("deviceClass", deviceClass);
-		deviceNode.getInt("deviceSource", deviceSource);
-		inputDeviceClasses.insert(std::pair<string, std::pair<int, GdkInputSource>>(
-		        device.first, std::pair<int, GdkInputSource>(deviceClass, (GdkInputSource) deviceSource)));
-	}
+void Settings::loadDeviceClasses() {
+    SElement& s = getCustomElement("deviceClasses");
+    for (auto device: s.children()) {
+        SElement& deviceNode = device.second;
+        int deviceClass = 0;
+        int deviceSource = 0;
+        deviceNode.getInt("deviceClass", deviceClass);
+        deviceNode.getInt("deviceSource", deviceSource);
+        inputDeviceClasses.emplace(device.first, std::make_pair(static_cast<InputDeviceTypeOption>(deviceClass),
+                                                                static_cast<GdkInputSource>(deviceSource)));
+    }
 }
 
-void Settings::loadButtonConfig()
-{
-	XOJ_CHECK_TYPE(Settings);
+void Settings::loadButtonConfig() {
+    SElement& s = getCustomElement("buttonConfig");
 
-	SElement& s = getCustomElement("buttonConfig");
-
-	for (int i = 0; i < BUTTON_COUNT; i++)
-	{
-        SElement& e = s.child(buttonToString(static_cast<Buttons>(i)));
+    for (int i = 0; i < BUTTON_COUNT; i++) {
+        SElement& e = s.child(buttonToString(static_cast<Button>(i)));
         ButtonConfig* cfg = buttonConfig[i];
 
         string sType;
-		if (e.getString("tool", sType))
-		{
-			ToolType type = toolTypeFromString(sType);
-			cfg->action = type;
+        if (e.getString("tool", sType)) {
+            ToolType type = toolTypeFromString(sType);
+            cfg->action = type;
 
-			if (type == TOOL_PEN || type == TOOL_HILIGHTER)
-			{
-				string drawingType;
-				if (e.getString("drawingType", drawingType))
-				{
-					cfg->drawingType = drawingTypeFromString(drawingType);
-				}
+            if (type == TOOL_PEN || type == TOOL_HIGHLIGHTER) {
+                string drawingType;
+                if (e.getString("drawingType", drawingType)) {
+                    cfg->drawingType = drawingTypeFromString(drawingType);
+                }
 
-				string sSize;
-				if (e.getString("size", sSize))
-				{
-					cfg->size = toolSizeFromString(sSize);
-				}
-				else
-				{
-					// If not specified: do not change
-					cfg->size = TOOL_SIZE_NONE;
-				}
-			}
-
-			if (type == TOOL_PEN || type == TOOL_HILIGHTER || type == TOOL_TEXT)
-			{
-				e.getInt("color", cfg->color);
-			}
-
-			if (type == TOOL_ERASER)
-			{
-				string sEraserMode;
-				if (e.getString("eraserMode", sEraserMode))
-				{
-					cfg->eraserMode = eraserTypeFromString(sEraserMode);
-				}
-				else
-				{
-					// If not specified: do not change
-					cfg->eraserMode = ERASER_TYPE_NONE;
-				}
-
-				string sSize;
-				if (e.getString("size", sSize))
-				{
-					cfg->size = toolSizeFromString(sSize);
-				}
-				else
-				{
-					// If not specified: do not change
-					cfg->size = TOOL_SIZE_NONE;
-				}
-			}
-
-			// Touch device
-            if (i == BUTTON_TOUCH) {
-                if (!e.getString("device", cfg->device))
-				{
-					cfg->device = "";
-				}
-
-				e.getBool("disableDrawing", cfg->disableDrawing);
+                string sSize;
+                if (e.getString("size", sSize)) {
+                    cfg->size = toolSizeFromString(sSize);
+                } else {
+                    // If not specified: do not change
+                    cfg->size = TOOL_SIZE_NONE;
+                }
             }
+
+            if (type == TOOL_PEN || type == TOOL_HIGHLIGHTER || type == TOOL_TEXT) {
+                if (int iColor; e.getInt("color", iColor)) {
+                    cfg->color = Color(iColor);
+                }
+            }
+
+            if (type == TOOL_ERASER) {
+                string sEraserMode;
+                if (e.getString("eraserMode", sEraserMode)) {
+                    cfg->eraserMode = eraserTypeFromString(sEraserMode);
+                } else {
+                    // If not specified: do not change
+                    cfg->eraserMode = ERASER_TYPE_NONE;
+                }
+
+                string sSize;
+                if (e.getString("size", sSize)) {
+                    cfg->size = toolSizeFromString(sSize);
+                } else {
+                    // If not specified: do not change
+                    cfg->size = TOOL_SIZE_NONE;
+                }
+            }
+
+            // Touch device
+            if (i == BUTTON_TOUCH) {
+                if (!e.getString("device", cfg->device)) {
+                    cfg->device = "";
+                }
+
+                e.getBool("disableDrawing", cfg->disableDrawing);
+            }
+        } else {
+            continue;
         }
-		else
-		{
-			continue;
-		}
-	}
+    }
 }
 
-bool Settings::load()
-{
-	
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::load() -> bool {
+    xmlKeepBlanksDefault(0);
 
-	xmlKeepBlanksDefault(0);
+    if (!fs::exists(filepath)) {
+        g_warning("configfile does not exist %s\n", filepath.string().c_str());
+        return false;
+    }
 
-	if (!filename.exists())
-	{
-		g_warning("configfile does not exist %s\n", filename.c_str());
-		return false;
-	}
+    xmlDocPtr doc = xmlParseFile(filepath.u8string().c_str());
 
-	xmlDocPtr doc = xmlParseFile(filename.c_str());
+    if (doc == nullptr) {
+        g_warning("Settings::load:: doc == null, could not load Settings!\n");
+        return false;
+    }
 
-	if (doc == NULL)
-	{
-		g_warning("Settings::load:: doc == null, could not load Settings!\n");
-		return false;
-	}
+    xmlNodePtr cur = xmlDocGetRootElement(doc);
+    if (cur == nullptr) {
+        g_message("The settings file \"%s\" is empty", filepath.string().c_str());
+        xmlFreeDoc(doc);
 
-	xmlNodePtr cur = xmlDocGetRootElement(doc);
-	if (cur == NULL)
-	{
-		g_message("The settings file \"%s\" is empty", filename.c_str());
-		xmlFreeDoc(doc);
+        return false;
+    }
 
-		return false;
-	}
+    if (xmlStrcmp(cur->name, reinterpret_cast<const xmlChar*>("settings"))) {
+        g_message("File \"%s\" is of the wrong type", filepath.string().c_str());
+        xmlFreeDoc(doc);
 
-	if (xmlStrcmp(cur->name, (const xmlChar*) "settings"))
-	{
-		g_message("File \"%s\" is of the wrong type", filename.c_str());
-		xmlFreeDoc(doc);
+        return false;
+    }
 
-		return false;
-	}
+    cur = xmlDocGetRootElement(doc);
+    cur = cur->xmlChildrenNode;
 
-	cur = xmlDocGetRootElement(doc);
-	cur = cur->xmlChildrenNode;
+    while (cur != nullptr) {
+        parseItem(doc, cur);
 
-	while (cur != NULL)
-	{
-		parseItem(doc, cur);
+        cur = cur->next;
+    }
 
-		cur = cur->next;
-	}
+    xmlFreeDoc(doc);
 
-	xmlFreeDoc(doc);
+    loadButtonConfig();
+    loadDeviceClasses();
 
-	loadButtonConfig();
-	loadDeviceClasses();
-
-	return true;
+    return true;
 }
 
-xmlNodePtr Settings::savePropertyDouble(const gchar* key, double value, xmlNodePtr parent)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	char text[G_ASCII_DTOSTR_BUF_SIZE];
-	//  g_ascii_ version uses C locale always.
-	g_ascii_formatd(text, G_ASCII_DTOSTR_BUF_SIZE, Util::PRECISION_FORMAT_STRING, value);
-	xmlNodePtr xmlNode = saveProperty(key, text, parent);
-	return xmlNode;
+auto Settings::savePropertyDouble(const gchar* key, double value, xmlNodePtr parent) -> xmlNodePtr {
+    char text[G_ASCII_DTOSTR_BUF_SIZE];
+    //  g_ascii_ version uses C locale always.
+    g_ascii_formatd(text, G_ASCII_DTOSTR_BUF_SIZE, Util::PRECISION_FORMAT_STRING, value);
+    xmlNodePtr xmlNode = saveProperty(key, text, parent);
+    return xmlNode;
 }
 
-xmlNodePtr Settings::saveProperty(const gchar* key, int value, xmlNodePtr parent)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	char* text = g_strdup_printf("%i", value);
-	xmlNodePtr xmlNode = saveProperty(key, text, parent);
-	g_free(text);
-	return xmlNode;
+auto Settings::saveProperty(const gchar* key, int value, xmlNodePtr parent) -> xmlNodePtr {
+    char* text = g_strdup_printf("%i", value);
+    xmlNodePtr xmlNode = saveProperty(key, text, parent);
+    g_free(text);
+    return xmlNode;
 }
 
-xmlNodePtr Settings::saveProperty(const gchar* key, const gchar* value, xmlNodePtr parent)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	xmlNodePtr xmlNode = xmlNewChild(parent, NULL, (const xmlChar*) "property", NULL);
-
-	xmlSetProp(xmlNode, (const xmlChar*) "name", (const xmlChar*) key);
-
-	xmlSetProp(xmlNode, (const xmlChar*) "value", (const xmlChar*) value);
-
-	return xmlNode;
+auto Settings::savePropertyUnsigned(const gchar* key, unsigned int value, xmlNodePtr parent) -> xmlNodePtr {
+    char* text = g_strdup_printf("%u", value);
+    xmlNodePtr xmlNode = saveProperty(key, text, parent);
+    g_free(text);
+    return xmlNode;
 }
 
-void Settings::saveDeviceClasses()
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::saveProperty(const gchar* key, const gchar* value, xmlNodePtr parent) -> xmlNodePtr {
+    xmlNodePtr xmlNode = xmlNewChild(parent, nullptr, reinterpret_cast<const xmlChar*>("property"), nullptr);
 
-	SElement& s = getCustomElement("deviceClasses");
+    xmlSetProp(xmlNode, reinterpret_cast<const xmlChar*>("name"), reinterpret_cast<const xmlChar*>(key));
 
-	for (const std::map<string, std::pair<int, GdkInputSource>>::value_type& device: inputDeviceClasses)
-	{
-		SElement& e = s.child(device.first);
-		e.setInt("deviceClass", device.second.first);
-		e.setInt("deviceSource", device.second.second);
-	}
+    xmlSetProp(xmlNode, reinterpret_cast<const xmlChar*>("value"), reinterpret_cast<const xmlChar*>(value));
+
+    return xmlNode;
 }
 
-void Settings::saveButtonConfig()
-{
-	XOJ_CHECK_TYPE(Settings);
+void Settings::saveDeviceClasses() {
+    SElement& s = getCustomElement("deviceClasses");
 
-	SElement& s = getCustomElement("buttonConfig");
-	s.clear();
+    for (auto& device: inputDeviceClasses) {
+        const std::string& name = device.first;
+        InputDeviceTypeOption& deviceClass = device.second.first;
+        GdkInputSource& source = device.second.second;
+        SElement& e = s.child(name);
+        e.setInt("deviceClass", static_cast<int>(deviceClass));
+        e.setInt("deviceSource", source);
+    }
+}
 
-	for (int i = 0; i < BUTTON_COUNT; i++)
-	{
-        SElement& e = s.child(buttonToString(static_cast<Buttons>(i)));
+void Settings::saveButtonConfig() {
+    SElement& s = getCustomElement("buttonConfig");
+    s.clear();
+
+    for (int i = 0; i < BUTTON_COUNT; i++) {
+        SElement& e = s.child(buttonToString(static_cast<Button>(i)));
         ButtonConfig* cfg = buttonConfig[i];
 
         ToolType type = cfg->action;
-		e.setString("tool", toolTypeToString(type));
+        e.setString("tool", toolTypeToString(type));
 
-		if (type == TOOL_PEN || type == TOOL_HILIGHTER)
-		{
-			e.setString("drawingType", drawingTypeToString(cfg->drawingType));
-			e.setString("size", toolSizeToString(cfg->size));
-		} // end if pen or highlighter
+        if (type == TOOL_PEN || type == TOOL_HIGHLIGHTER) {
+            e.setString("drawingType", drawingTypeToString(cfg->drawingType));
+            e.setString("size", toolSizeToString(cfg->size));
+        }  // end if pen or highlighter
 
-		if (type == TOOL_PEN || type == TOOL_HILIGHTER || type == TOOL_TEXT)
-		{
-			e.setIntHex("color", cfg->color);
-		}
+        if (type == TOOL_PEN || type == TOOL_HIGHLIGHTER || type == TOOL_TEXT) {
+            e.setIntHex("color", int32_t(cfg->color));
+        }
 
-		if (type == TOOL_ERASER)
-		{
-			e.setString("eraserMode", eraserTypeToString(cfg->eraserMode));
-			e.setString("size", toolSizeToString(cfg->size));
-		}
+        if (type == TOOL_ERASER) {
+            e.setString("eraserMode", eraserTypeToString(cfg->eraserMode));
+            e.setString("size", toolSizeToString(cfg->size));
+        }
 
-		// Touch device
+        // Touch device
         if (i == BUTTON_TOUCH) {
             e.setString("device", cfg->device);
-			e.setBool("disableDrawing", cfg->disableDrawing);
+            e.setBool("disableDrawing", cfg->disableDrawing);
         }
     }
 }
@@ -875,2016 +741,1426 @@ void Settings::saveButtonConfig()
 /**
  * Do not save settings until transactionEnd() is called
  */
-void Settings::transactionStart()
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	inTransaction = true;
-}
+void Settings::transactionStart() { inTransaction = true; }
 
 /**
  * Stop transaction and save settings
  */
-void Settings::transactionEnd()
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	inTransaction = false;
-	save();
+void Settings::transactionEnd() {
+    inTransaction = false;
+    save();
 }
 
-void Settings::save()
-{
-	XOJ_CHECK_TYPE(Settings);
+void Settings::save() {
+    if (inTransaction) {
+        return;
+    }
 
-	if (inTransaction)
-	{
-		return;
-	}
+    xmlDocPtr doc = nullptr;
+    xmlNodePtr root = nullptr;
+    xmlNodePtr xmlNode = nullptr;
 
-	xmlDocPtr doc;
-	xmlNodePtr root;
-	xmlNodePtr xmlNode;
+    xmlIndentTreeOutput = true;
 
-	xmlIndentTreeOutput = TRUE;
+    doc = xmlNewDoc(reinterpret_cast<const xmlChar*>("1.0"));
+    if (doc == nullptr) {
+        return;
+    }
 
-	doc = xmlNewDoc((const xmlChar*) "1.0");
-	if (doc == NULL)
-	{
-		return;
-	}
+    saveButtonConfig();
+    saveDeviceClasses();
 
-	saveButtonConfig();
-	saveDeviceClasses();
+    /* Create metadata root */
+    root = xmlNewDocNode(doc, nullptr, reinterpret_cast<const xmlChar*>("settings"), nullptr);
+    xmlDocSetRootElement(doc, root);
+    xmlNodePtr com = xmlNewComment(
+            reinterpret_cast<const xmlChar*>("The Xournal++ settings file. Do not edit this file! "
+                                             "Most settings are available in the Settings dialog, "
+                                             "the others are commented in this file, but handle with care!"));
+    xmlAddPrevSibling(root, com);
 
-	/* Create metadata root */
-	root = xmlNewDocNode(doc, NULL, (const xmlChar*) "settings", NULL);
-	xmlDocSetRootElement(doc, root);
-	xmlNodePtr com = xmlNewComment((const xmlChar*)
-								   "The Xournal++ settings file. Do not edit this file! "
-								   "The most settings are available in the Settings dialog, "
-								   "the others are commented in this file, but handle with care!");
-	xmlAddPrevSibling(root, com);
+    WRITE_BOOL_PROP(pressureSensitivity);
+    WRITE_DOUBLE_PROP(minimumPressure);
+    WRITE_DOUBLE_PROP(pressureMultiplier);
 
-	WRITE_BOOL_PROP(pressureSensitivity);
-	WRITE_BOOL_PROP(zoomGesturesEnabled);
+    WRITE_BOOL_PROP(zoomGesturesEnabled);
 
-	WRITE_STRING_PROP(selectedToolbar);
+    WRITE_STRING_PROP(selectedToolbar);
 
-	auto lastSavePath = this->lastSavePath.str();
-	auto lastOpenPath = this->lastOpenPath.str();
-	auto lastImagePath = this->lastImagePath.str();
-	WRITE_STRING_PROP(lastSavePath);
-	WRITE_STRING_PROP(lastOpenPath);
-	WRITE_STRING_PROP(lastImagePath);
+    auto lastSavePath = this->lastSavePath.u8string();
+    auto lastOpenPath = this->lastOpenPath.u8string();
+    auto lastImagePath = this->lastImagePath.u8string();
+    WRITE_STRING_PROP(lastSavePath);
+    WRITE_STRING_PROP(lastOpenPath);
+    WRITE_STRING_PROP(lastImagePath);
 
-	WRITE_DOUBLE_PROP(zoomStep);
-	WRITE_DOUBLE_PROP(zoomStepScroll);
-	WRITE_INT_PROP(displayDpi);
-	WRITE_INT_PROP(mainWndWidth);
-	WRITE_INT_PROP(mainWndHeight);
-	WRITE_BOOL_PROP(maximized);
+    WRITE_DOUBLE_PROP(zoomStep);
+    WRITE_DOUBLE_PROP(zoomStepScroll);
+    WRITE_INT_PROP(displayDpi);
+    WRITE_INT_PROP(mainWndWidth);
+    WRITE_INT_PROP(mainWndHeight);
+    WRITE_BOOL_PROP(maximized);
 
-	WRITE_BOOL_PROP(showSidebar);
-	WRITE_INT_PROP(sidebarWidth);
+    WRITE_BOOL_PROP(showToolbar);
 
-	WRITE_BOOL_PROP(sidebarOnRight);
-	WRITE_BOOL_PROP(scrollbarOnLeft);
-	WRITE_BOOL_PROP(menubarVisible);
-	WRITE_INT_PROP(numColumns);
-	WRITE_INT_PROP(numRows);
-	WRITE_BOOL_PROP(viewFixedRows);
-	WRITE_BOOL_PROP(showPairedPages);
-	WRITE_BOOL_PROP(layoutVertical);
-	WRITE_BOOL_PROP(layoutRightToLeft);
-	WRITE_BOOL_PROP(layoutBottomToTop);
-	WRITE_INT_PROP(numPairsOffset);
-	WRITE_BOOL_PROP(presentationMode);
+    WRITE_BOOL_PROP(showSidebar);
+    WRITE_INT_PROP(sidebarWidth);
 
-	WRITE_STRING_PROP(fullscreenHideElements);
-	WRITE_COMMENT("Which gui elements are hidden if you are in Fullscreen mode, separated by a colon (,)");
+    WRITE_BOOL_PROP(sidebarOnRight);
+    WRITE_BOOL_PROP(scrollbarOnLeft);
+    WRITE_BOOL_PROP(menubarVisible);
+    WRITE_INT_PROP(numColumns);
+    WRITE_INT_PROP(numRows);
+    WRITE_BOOL_PROP(viewFixedRows);
+    WRITE_BOOL_PROP(showPairedPages);
+    WRITE_BOOL_PROP(layoutVertical);
+    WRITE_BOOL_PROP(layoutRightToLeft);
+    WRITE_BOOL_PROP(layoutBottomToTop);
+    WRITE_INT_PROP(numPairsOffset);
+    WRITE_BOOL_PROP(presentationMode);
 
-	WRITE_STRING_PROP(presentationHideElements);
-	WRITE_COMMENT("Which gui elements are hidden if you are in Presentation mode, separated by a colon (,)");
+    WRITE_STRING_PROP(fullscreenHideElements);
+    WRITE_COMMENT("Which gui elements are hidden if you are in Fullscreen mode, separated by a colon (,)");
 
-	WRITE_BOOL_PROP(showBigCursor);
-	WRITE_BOOL_PROP(highlightPosition);
-	WRITE_BOOL_PROP(darkTheme);
+    WRITE_STRING_PROP(presentationHideElements);
+    WRITE_COMMENT("Which gui elements are hidden if you are in Presentation mode, separated by a colon (,)");
 
-	WRITE_BOOL_PROP(disableScrollbarFadeout);
+    xmlNode = saveProperty("stylusCursorType", stylusCursorTypeToString(this->stylusCursorType), root);
+    WRITE_COMMENT("The cursor icon used with a stylus, allowed values are \"none\", \"dot\", \"big\"");
 
-	if (this->scrollbarHideType == SCROLLBAR_HIDE_BOTH)
-	{
-		saveProperty((const char*) "scrollbarHideType", "both", root);
-	}
-	else if (this->scrollbarHideType == SCROLLBAR_HIDE_HORIZONTAL)
-	{
-		saveProperty((const char*) "scrollbarHideType", "horizontal", root);
-	}
-	else if (this->scrollbarHideType == SCROLLBAR_HIDE_VERTICAL)
-	{
-		saveProperty((const char*) "scrollbarHideType", "vertical", root);
-	}
-	else
-	{
-		saveProperty((const char*) "scrollbarHideType", "none", root);
-	}
+    WRITE_BOOL_PROP(highlightPosition);
+    WRITE_UINT_PROP(cursorHighlightColor);
+    WRITE_UINT_PROP(cursorHighlightBorderColor);
+    WRITE_DOUBLE_PROP(cursorHighlightRadius);
+    WRITE_DOUBLE_PROP(cursorHighlightBorderWidth);
+    WRITE_BOOL_PROP(darkTheme);
 
-	WRITE_BOOL_PROP(autoloadPdfXoj);
-	WRITE_COMMENT("Hides scroolbars in the main window, allowed values: \"none\", \"horizontal\", \"vertical\", \"both\"");
+    WRITE_BOOL_PROP(disableScrollbarFadeout);
 
-	WRITE_STRING_PROP(defaultSaveName);
+    if (this->scrollbarHideType == SCROLLBAR_HIDE_BOTH) {
+        saveProperty("scrollbarHideType", "both", root);
+    } else if (this->scrollbarHideType == SCROLLBAR_HIDE_HORIZONTAL) {
+        saveProperty("scrollbarHideType", "horizontal", root);
+    } else if (this->scrollbarHideType == SCROLLBAR_HIDE_VERTICAL) {
+        saveProperty("scrollbarHideType", "vertical", root);
+    } else {
+        saveProperty("scrollbarHideType", "none", root);
+    }
 
-	WRITE_BOOL_PROP(autosaveEnabled);
-	WRITE_INT_PROP(autosaveTimeout);
+    WRITE_BOOL_PROP(autoloadPdfXoj);
+    WRITE_COMMENT(
+            "Hides scroolbars in the main window, allowed values: \"none\", \"horizontal\", \"vertical\", \"both\"");
 
-	WRITE_BOOL_PROP(addHorizontalSpace);
-	WRITE_INT_PROP(addHorizontalSpaceAmount);	
-	WRITE_BOOL_PROP(addVerticalSpace);
-	WRITE_INT_PROP(addVerticalSpaceAmount);
-	
-	WRITE_BOOL_PROP(drawDirModsEnabled);
-	WRITE_INT_PROP(drawDirModsRadius);
-	
+    WRITE_STRING_PROP(defaultSaveName);
 
-	WRITE_BOOL_PROP(snapRotation);
-	WRITE_DOUBLE_PROP(snapRotationTolerance);
-	WRITE_BOOL_PROP(snapGrid);
-	WRITE_DOUBLE_PROP(snapGridTolerance);
+    WRITE_BOOL_PROP(autosaveEnabled);
+    WRITE_INT_PROP(autosaveTimeout);
 
-	WRITE_BOOL_PROP(touchWorkaround);
+    WRITE_BOOL_PROP(addHorizontalSpace);
+    WRITE_INT_PROP(addHorizontalSpaceAmount);
+    WRITE_BOOL_PROP(addVerticalSpace);
+    WRITE_INT_PROP(addVerticalSpaceAmount);
 
-	WRITE_INT_PROP(selectionBorderColor);
-	WRITE_INT_PROP(backgroundColor);
-	WRITE_INT_PROP(selectionMarkerColor);
-
-	WRITE_INT_PROP(pdfPageCacheSize);
-	WRITE_COMMENT("The count of rendered PDF pages which will be cached.");
-
-	WRITE_COMMENT("Config for new pages");
-	WRITE_STRING_PROP(pageTemplate);
-
-	WRITE_STRING_PROP(sizeUnit);
-
-	WRITE_STRING_PROP(audioFolder);
-	WRITE_INT_PROP(audioInputDevice);
-	WRITE_INT_PROP(audioOutputDevice);
-	WRITE_DOUBLE_PROP(audioSampleRate);
-	WRITE_DOUBLE_PROP(audioGain);
-
-	WRITE_STRING_PROP(pluginEnabled);
-	WRITE_STRING_PROP(pluginDisabled);
-
-	WRITE_INT_PROP(strokeFilterIgnoreTime);
-	WRITE_DOUBLE_PROP(strokeFilterIgnoreLength);
-	WRITE_INT_PROP(strokeFilterSuccessiveTime);
-
-	WRITE_BOOL_PROP(strokeFilterEnabled);
-	WRITE_BOOL_PROP(doActionOnStrokeFiltered);
-	WRITE_BOOL_PROP(trySelectOnStrokeFiltered);
-
-	WRITE_BOOL_PROP(experimentalInputSystemEnabled);
-	WRITE_BOOL_PROP(inputSystemTPCButton);
-	WRITE_BOOL_PROP(inputSystemDrawOutsideWindow);
-
-	xmlNodePtr xmlFont;
-	xmlFont = xmlNewChild(root, NULL, (const xmlChar*) "property", NULL);
-	xmlSetProp(xmlFont, (const xmlChar*) "name", (const xmlChar*) "font");
-	xmlSetProp(xmlFont, (const xmlChar*) "font", (const xmlChar*) this->font.getName().c_str());
-
-	char sSize[G_ASCII_DTOSTR_BUF_SIZE];
-
-	g_ascii_formatd(sSize, G_ASCII_DTOSTR_BUF_SIZE, Util::PRECISION_FORMAT_STRING, this->font.getSize());  // no locale
-	xmlSetProp(xmlFont, (const xmlChar*) "size", (const xmlChar*) sSize);
+    WRITE_BOOL_PROP(drawDirModsEnabled);
+    WRITE_INT_PROP(drawDirModsRadius);
 
 
-	for (std::map<string, SElement>::value_type p: data)
-	{
-		saveData(root, p.first, p.second);
-	}
+    WRITE_BOOL_PROP(snapRotation);
+    WRITE_DOUBLE_PROP(snapRotationTolerance);
+    WRITE_BOOL_PROP(snapGrid);
+    WRITE_DOUBLE_PROP(snapGridTolerance);
+    WRITE_DOUBLE_PROP(snapGridSize);
 
-	xmlSaveFormatFileEnc(filename.c_str(), doc, "UTF-8", 1);
-	xmlFreeDoc(doc);
+    WRITE_BOOL_PROP(touchDrawing);
+    WRITE_BOOL_PROP(pressureGuessing);
+
+    WRITE_UINT_PROP(selectionBorderColor);
+    WRITE_UINT_PROP(backgroundColor);
+    WRITE_UINT_PROP(selectionMarkerColor);
+
+    WRITE_DOUBLE_PROP(touchZoomStartThreshold);
+    WRITE_DOUBLE_PROP(pageRerenderThreshold);
+
+    WRITE_INT_PROP(pdfPageCacheSize);
+    WRITE_COMMENT("The count of rendered PDF pages which will be cached.");
+    WRITE_UINT_PROP(preloadPagesBefore);
+    WRITE_UINT_PROP(preloadPagesAfter);
+    WRITE_BOOL_PROP(eagerPageCleanup);
+
+    WRITE_COMMENT("Config for new pages");
+    WRITE_STRING_PROP(pageTemplate);
+
+    WRITE_STRING_PROP(sizeUnit);
+
+    WRITE_STRING_PROP(audioFolder);
+    WRITE_INT_PROP(audioInputDevice);
+    WRITE_INT_PROP(audioOutputDevice);
+    WRITE_DOUBLE_PROP(audioSampleRate);
+    WRITE_DOUBLE_PROP(audioGain);
+    WRITE_INT_PROP(defaultSeekTime);
+
+    WRITE_STRING_PROP(pluginEnabled);
+    WRITE_STRING_PROP(pluginDisabled);
+
+    WRITE_INT_PROP(strokeFilterIgnoreTime);
+    WRITE_DOUBLE_PROP(strokeFilterIgnoreLength);
+    WRITE_INT_PROP(strokeFilterSuccessiveTime);
+    WRITE_BOOL_PROP(strokeFilterEnabled);
+    WRITE_BOOL_PROP(doActionOnStrokeFiltered);
+    WRITE_BOOL_PROP(trySelectOnStrokeFiltered);
+
+    WRITE_BOOL_PROP(snapRecognizedShapesEnabled);
+    WRITE_BOOL_PROP(restoreLineWidthEnabled);
+
+    WRITE_INT_PROP(numIgnoredStylusEvents);
+
+    WRITE_BOOL_PROP(inputSystemTPCButton);
+    WRITE_BOOL_PROP(inputSystemDrawOutsideWindow);
+
+    WRITE_STRING_PROP(preferredLocale);
+
+    /**
+     * Stabilizer related settings
+     */
+    saveProperty("stabilizerAveragingMethod", static_cast<int>(stabilizerAveragingMethod), root);
+    saveProperty("stabilizerPreprocessor", static_cast<int>(stabilizerPreprocessor), root);
+    WRITE_UINT_PROP(stabilizerBuffersize);
+    WRITE_DOUBLE_PROP(stabilizerSigma);
+    WRITE_DOUBLE_PROP(stabilizerDeadzoneRadius);
+    WRITE_DOUBLE_PROP(stabilizerDrag);
+    WRITE_DOUBLE_PROP(stabilizerMass);
+    WRITE_BOOL_PROP(stabilizerCuspDetection);
+    WRITE_BOOL_PROP(stabilizerFinalizeStroke);
+    /**/
+
+    WRITE_BOOL_PROP(latexSettings.autoCheckDependencies);
+    // Inline WRITE_STRING_PROP(latexSettings.globalTemplatePath) since it
+    // breaks on Windows due to the native character representation being
+    // wchar_t instead of char
+    fs::path& p = latexSettings.globalTemplatePath;
+    xmlNode = saveProperty("latexSettings.globalTemplatePath", p.empty() ? "" : p.u8string().c_str(), root);
+    WRITE_STRING_PROP(latexSettings.genCmd);
+
+    xmlNodePtr xmlFont = nullptr;
+    xmlFont = xmlNewChild(root, nullptr, reinterpret_cast<const xmlChar*>("property"), nullptr);
+    xmlSetProp(xmlFont, reinterpret_cast<const xmlChar*>("name"), reinterpret_cast<const xmlChar*>("font"));
+    xmlSetProp(xmlFont, reinterpret_cast<const xmlChar*>("font"),
+               reinterpret_cast<const xmlChar*>(this->font.getName().c_str()));
+
+    char sSize[G_ASCII_DTOSTR_BUF_SIZE];
+
+    g_ascii_formatd(sSize, G_ASCII_DTOSTR_BUF_SIZE, Util::PRECISION_FORMAT_STRING, this->font.getSize());  // no locale
+    xmlSetProp(xmlFont, reinterpret_cast<const xmlChar*>("size"), reinterpret_cast<const xmlChar*>(sSize));
+
+
+    for (std::map<string, SElement>::value_type p: data) {
+        saveData(root, p.first, p.second);
+    }
+
+    xmlSaveFormatFileEnc(filepath.u8string().c_str(), doc, "UTF-8", 1);
+    xmlFreeDoc(doc);
 }
 
-void Settings::saveData(xmlNodePtr root, string name, SElement& elem)
-{
-	XOJ_CHECK_TYPE(Settings);
+void Settings::saveData(xmlNodePtr root, const string& name, SElement& elem) {
+    xmlNodePtr xmlNode = xmlNewChild(root, nullptr, reinterpret_cast<const xmlChar*>("data"), nullptr);
 
-	xmlNodePtr xmlNode = xmlNewChild(root, NULL, (const xmlChar*) "data", NULL);
+    xmlSetProp(xmlNode, reinterpret_cast<const xmlChar*>("name"), reinterpret_cast<const xmlChar*>(name.c_str()));
 
-	xmlSetProp(xmlNode, (const xmlChar*) "name", (const xmlChar*) name.c_str());
+    for (auto const& [aname, attrib]: elem.attributes()) {
+        string type;
+        string value;
 
-	for (std::map<string, SAttribute>::value_type p : elem.attributes())
-	{
-		string aname = p.first;
-		SAttribute& attrib = p.second;
+        if (attrib.type == ATTRIBUTE_TYPE_BOOLEAN) {
+            type = "boolean";
 
-		XOJ_CHECK_TYPE_OBJ(&attrib, SAttribute);
+            if (attrib.iValue) {
+                value = "true";
+            } else {
+                value = "false";
+            }
+        } else if (attrib.type == ATTRIBUTE_TYPE_INT) {
+            type = "int";
 
-		string type;
-		string value;
+            char* tmp = g_strdup_printf("%i", attrib.iValue);
+            value = tmp;
+            g_free(tmp);
+        } else if (attrib.type == ATTRIBUTE_TYPE_DOUBLE) {
+            type = "double";
 
-		if (attrib.type == ATTRIBUTE_TYPE_BOOLEAN)
-		{
-			type = "boolean";
+            char tmp[G_ASCII_DTOSTR_BUF_SIZE];
+            g_ascii_formatd(tmp, G_ASCII_DTOSTR_BUF_SIZE, Util::PRECISION_FORMAT_STRING, attrib.dValue);
+            value = tmp;
+        } else if (attrib.type == ATTRIBUTE_TYPE_INT_HEX) {
+            type = "hex";
 
-			if (attrib.iValue)
-			{
-				value = "true";
-			}
-			else
-			{
-				value = "false";
-			}
-		}
-		else if (attrib.type == ATTRIBUTE_TYPE_INT)
-		{
-			type = "int";
+            char* tmp = g_strdup_printf("%06x", attrib.iValue);
+            value = tmp;
+            g_free(tmp);
+        } else if (attrib.type == ATTRIBUTE_TYPE_STRING) {
+            type = "string";
+            value = attrib.sValue;
+        } else {
+            // Unknown type or empty attribute
+            continue;
+        }
 
-			char* tmp = g_strdup_printf("%i", attrib.iValue);
-			value = tmp;
-			g_free(tmp);
-		}
-		else if (attrib.type == ATTRIBUTE_TYPE_DOUBLE)
-		{
-			type = "double";
+        xmlNodePtr at = nullptr;
+        at = xmlNewChild(xmlNode, nullptr, reinterpret_cast<const xmlChar*>("attribute"), nullptr);
 
-			char tmp[G_ASCII_DTOSTR_BUF_SIZE];
-			g_ascii_formatd(tmp, G_ASCII_DTOSTR_BUF_SIZE, Util::PRECISION_FORMAT_STRING, attrib.dValue);
-			value = tmp;
-		}
-		else if (attrib.type == ATTRIBUTE_TYPE_INT_HEX)
-		{
-			type = "hex";
+        xmlSetProp(at, reinterpret_cast<const xmlChar*>("name"), reinterpret_cast<const xmlChar*>(aname.c_str()));
+        xmlSetProp(at, reinterpret_cast<const xmlChar*>("type"), reinterpret_cast<const xmlChar*>(type.c_str()));
+        xmlSetProp(at, reinterpret_cast<const xmlChar*>("value"), reinterpret_cast<const xmlChar*>(value.c_str()));
 
-			char* tmp = g_strdup_printf("%06x", attrib.iValue);
-			value = tmp;
-			g_free(tmp);
-		}
-		else if (attrib.type == ATTRIBUTE_TYPE_STRING)
-		{
-			type = "string";
-			value = attrib.sValue;
-		}
-		else
-		{
-			// Unknown type or empty attribute
-			continue;
-		}
+        if (!attrib.comment.empty()) {
+            xmlNodePtr com = xmlNewComment(reinterpret_cast<const xmlChar*>(attrib.comment.c_str()));
+            xmlAddPrevSibling(xmlNode, com);
+        }
+    }
 
-		xmlNodePtr at;
-		at = xmlNewChild(xmlNode, NULL, (const xmlChar*) "attribute", NULL);
-
-		xmlSetProp(at, (const xmlChar*) "name", (const xmlChar*) aname.c_str());
-		xmlSetProp(at, (const xmlChar*) "type", (const xmlChar*) type.c_str());
-		xmlSetProp(at, (const xmlChar*) "value", (const xmlChar*) value.c_str());
-
-		if (!attrib.comment.empty())
-		{
-			xmlNodePtr com = xmlNewComment((const xmlChar*) attrib.comment.c_str());
-			xmlAddPrevSibling(xmlNode, com);
-		}
-	}
-
-	for (std::map<string, SElement>::value_type p : elem.children())
-	{
-		saveData(xmlNode, p.first, p.second);
-	}
+    for (std::map<string, SElement>::value_type p: elem.children()) {
+        saveData(xmlNode, p.first, p.second);
+    }
 }
 
 // Getter- / Setter
-bool Settings::isPressureSensitivity() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::isPressureSensitivity() const -> bool { return this->pressureSensitivity; }
 
-	return this->pressureSensitivity;
+auto Settings::isZoomGesturesEnabled() const -> bool { return this->zoomGesturesEnabled; }
+
+void Settings::setZoomGesturesEnabled(bool enable) {
+    if (this->zoomGesturesEnabled == enable) {
+        return;
+    }
+    this->zoomGesturesEnabled = enable;
+    save();
 }
 
-bool Settings::isZoomGesturesEnabled() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::isSidebarOnRight() const -> bool { return this->sidebarOnRight; }
 
-	return this->zoomGesturesEnabled;
+void Settings::setSidebarOnRight(bool right) {
+    if (this->sidebarOnRight == right) {
+        return;
+    }
+
+    this->sidebarOnRight = right;
+
+    save();
 }
 
-void Settings::setZoomGesturesEnabled(bool enable)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::isScrollbarOnLeft() const -> bool { return this->scrollbarOnLeft; }
 
-	if (this->zoomGesturesEnabled == enable)
-	{
-		return;
-	}
-	this->zoomGesturesEnabled = enable;
-	save();
+void Settings::setScrollbarOnLeft(bool right) {
+    if (this->scrollbarOnLeft == right) {
+        return;
+    }
+
+    this->scrollbarOnLeft = right;
+
+    save();
 }
 
-bool Settings::isSidebarOnRight() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::isMenubarVisible() const -> bool { return this->menubarVisible; }
 
-	return this->sidebarOnRight;
+void Settings::setMenubarVisible(bool visible) {
+    if (this->menubarVisible == visible) {
+        return;
+    }
+
+    this->menubarVisible = visible;
+
+    save();
 }
 
-void Settings::setSidebarOnRight(bool right)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getAutosaveTimeout() const -> int { return this->autosaveTimeout; }
 
-	if (this->sidebarOnRight == right)
-	{
-		return;
-	}
+void Settings::setAutosaveTimeout(int autosave) {
+    if (this->autosaveTimeout == autosave) {
+        return;
+    }
 
-	this->sidebarOnRight = right;
+    this->autosaveTimeout = autosave;
 
-	save();
+    save();
 }
 
-bool Settings::isScrollbarOnLeft() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::isAutosaveEnabled() const -> bool { return this->autosaveEnabled; }
 
-	return this->scrollbarOnLeft;
+void Settings::setAutosaveEnabled(bool autosave) {
+    if (this->autosaveEnabled == autosave) {
+        return;
+    }
+
+    this->autosaveEnabled = autosave;
+
+    save();
 }
 
-void Settings::setScrollbarOnLeft(bool right)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getAddVerticalSpace() const -> bool { return this->addVerticalSpace; }
 
-	if (this->scrollbarOnLeft == right)
-	{
-		return;
-	}
+void Settings::setAddVerticalSpace(bool space) { this->addVerticalSpace = space; }
 
-	this->scrollbarOnLeft = right;
+auto Settings::getAddVerticalSpaceAmount() const -> int { return this->addVerticalSpaceAmount; }
 
-	save();
-}
+void Settings::setAddVerticalSpaceAmount(int pixels) {
+    if (this->addVerticalSpaceAmount == pixels) {
+        return;
+    }
 
-bool Settings::isMenubarVisible() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return this->menubarVisible;
-}
-
-void Settings::setMenubarVisible(bool visible)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	this->menubarVisible = visible;
-
-	save();
-}
-
-int Settings::getAutosaveTimeout() const
-{
-	return this->autosaveTimeout;
-}
-
-void Settings::setAutosaveTimeout(int autosave)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	if (this->autosaveTimeout == autosave)
-	{
-		return;
-	}
-
-	this->autosaveTimeout = autosave;
-
-	save();
-}
-
-bool Settings::isAutosaveEnabled() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return this->autosaveEnabled;
-}
-
-void Settings::setAutosaveEnabled(bool autosave)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	if (this->autosaveEnabled == autosave)
-	{
-		return;
-	}
-
-	this->autosaveEnabled = autosave;
-
-	save();
-}
-
-bool Settings::getAddVerticalSpace() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return this->addVerticalSpace;
-}
-
-void Settings::setAddVerticalSpace(bool space)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	this->addVerticalSpace = space;
-}
-
-int Settings::getAddVerticalSpaceAmount() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return this->addVerticalSpaceAmount;
-}
-
-void Settings::setAddVerticalSpaceAmount(int pixels)
-{
-	XOJ_CHECK_TYPE(Settings);
-	
-	if (this->addVerticalSpaceAmount == pixels)
-	{
-		return;
-	}
-
-	this->addVerticalSpaceAmount = pixels;
-	save();
+    this->addVerticalSpaceAmount = pixels;
+    save();
 }
 
 
-bool Settings::getAddHorizontalSpace() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getAddHorizontalSpace() const -> bool { return this->addHorizontalSpace; }
 
-	return this->addHorizontalSpace;
-}
+void Settings::setAddHorizontalSpace(bool space) { this->addHorizontalSpace = space; }
 
-void Settings::setAddHorizontalSpace(bool space)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getAddHorizontalSpaceAmount() const -> int { return this->addHorizontalSpaceAmount; }
 
-	this->addHorizontalSpace = space;
-}
+void Settings::setAddHorizontalSpaceAmount(int pixels) {
+    if (this->addHorizontalSpaceAmount == pixels) {
+        return;
+    }
 
-int Settings::getAddHorizontalSpaceAmount() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return this->addHorizontalSpaceAmount;
-}
-
-void Settings::setAddHorizontalSpaceAmount(int pixels)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	if (this->addHorizontalSpaceAmount == pixels)
-	{
-		return;
-	}
-
-	this->addHorizontalSpaceAmount = pixels;
-	save();
+    this->addHorizontalSpaceAmount = pixels;
+    save();
 }
 
 
-bool Settings::getDrawDirModsEnabled() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getDrawDirModsEnabled() const -> bool { return this->drawDirModsEnabled; }
 
-	return this->drawDirModsEnabled;
+void Settings::setDrawDirModsEnabled(bool enable) { this->drawDirModsEnabled = enable; }
+
+auto Settings::getDrawDirModsRadius() const -> int { return this->drawDirModsRadius; }
+
+void Settings::setDrawDirModsRadius(int pixels) {
+    if (this->drawDirModsRadius == pixels) {
+        return;
+    }
+
+    this->drawDirModsRadius = pixels;
+    save();
 }
 
-void Settings::setDrawDirModsEnabled(bool enable)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getStylusCursorType() const -> StylusCursorType { return this->stylusCursorType; }
 
-	this->drawDirModsEnabled = enable;
+void Settings::setStylusCursorType(StylusCursorType type) {
+    if (this->stylusCursorType == type) {
+        return;
+    }
+
+    this->stylusCursorType = type;
+
+    save();
 }
 
-int Settings::getDrawDirModsRadius() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::isHighlightPosition() const -> bool { return this->highlightPosition; }
 
-	return this->drawDirModsRadius;
+void Settings::setHighlightPosition(bool highlight) {
+    if (this->highlightPosition == highlight) {
+        return;
+    }
+
+    this->highlightPosition = highlight;
+    save();
 }
 
-void Settings::setDrawDirModsRadius(int pixels)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getCursorHighlightColor() const -> Color { return this->cursorHighlightColor; }
 
-	if (this->drawDirModsRadius == pixels)
-	{
-		return;
-	}
-
-	this->drawDirModsRadius = pixels;
-	save();
+void Settings::setCursorHighlightColor(Color color) {
+    if (this->cursorHighlightColor != color) {
+        this->cursorHighlightColor = color;
+        save();
+    }
 }
 
+auto Settings::getCursorHighlightRadius() const -> double { return this->cursorHighlightRadius; }
 
-bool Settings::isShowBigCursor() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return this->showBigCursor;
+void Settings::setCursorHighlightRadius(double radius) {
+    if (this->cursorHighlightRadius != radius) {
+        this->cursorHighlightRadius = radius;
+        save();
+    }
 }
 
-void Settings::setShowBigCursor(bool b)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getCursorHighlightBorderColor() const -> Color { return this->cursorHighlightBorderColor; }
 
-	if (this->showBigCursor == b)
-	{
-		return;
-	}
-
-	this->showBigCursor = b;
-	save();
+void Settings::setCursorHighlightBorderColor(Color color) {
+    if (this->cursorHighlightBorderColor != color) {
+        this->cursorHighlightBorderColor = color;
+        save();
+    }
 }
 
-bool Settings::isHighlightPosition() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getCursorHighlightBorderWidth() const -> double { return this->cursorHighlightBorderWidth; }
 
-	return this->highlightPosition;
-
+void Settings::setCursorHighlightBorderWidth(double radius) {
+    if (this->cursorHighlightBorderWidth != radius) {
+        this->cursorHighlightBorderWidth = radius;
+        save();
+    }
 }
 
-void Settings::setHighlightPosition(bool highlight)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::isSnapRotation() const -> bool { return this->snapRotation; }
 
-	if (this->highlightPosition == highlight)
-	{
-		return;
-	}
+void Settings::setSnapRotation(bool b) {
+    if (this->snapRotation == b) {
+        return;
+    }
 
-	this->highlightPosition = highlight;
-	save();
+    this->snapRotation = b;
+    save();
 }
 
-bool Settings::isSnapRotation() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getSnapRotationTolerance() const -> double { return this->snapRotationTolerance; }
 
-	return this->snapRotation;
+void Settings::setSnapRotationTolerance(double tolerance) {
+    this->snapRotationTolerance = tolerance;
+    save();
 }
 
-void Settings::setSnapRotation(bool b)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::isSnapGrid() const -> bool { return this->snapGrid; }
 
-	if (this->snapRotation == b)
-	{
-		return;
-	}
+void Settings::setSnapGrid(bool b) {
+    if (this->snapGrid == b) {
+        return;
+    }
 
-	this->snapRotation = b;
-	save();
+    this->snapGrid = b;
+    save();
 }
 
-double Settings::getSnapRotationTolerance() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return this->snapRotationTolerance;
+void Settings::setSnapGridTolerance(double tolerance) {
+    this->snapGridTolerance = tolerance;
+    save();
 }
 
-void Settings::setSnapRotationTolerance(double tolerance)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	this->snapRotationTolerance = tolerance;
-	save();
+auto Settings::getSnapGridTolerance() const -> double { return this->snapGridTolerance; }
+auto Settings::getSnapGridSize() const -> double { return this->snapGridSize; };
+void Settings::setSnapGridSize(double gridSize) {
+    if (this->snapGridSize == gridSize) {
+        return;
+    }
+    this->snapGridSize = gridSize;
+    save();
 }
 
-bool Settings::isSnapGrid() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getTouchDrawingEnabled() const -> bool { return this->touchDrawing; }
 
-	return this->snapGrid;
+void Settings::setTouchDrawingEnabled(bool b) {
+    if (this->touchDrawing == b) {
+        return;
+    }
+
+    this->touchDrawing = b;
+    save();
 }
 
-void Settings::setSnapGrid(bool b)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::isPressureGuessingEnabled() const -> bool { return this->pressureGuessing; }
+void Settings::setPressureGuessingEnabled(bool b) {
+    if (this->pressureGuessing == b) {
+        return;
+    }
 
-	if (this->snapGrid == b)
-	{
-		return;
-	}
-
-	this->snapGrid = b;
-	save();
+    this->pressureGuessing = b;
+    save();
 }
 
-void Settings::setSnapGridTolerance(double tolerance)
-{
-	XOJ_CHECK_TYPE(Settings);
+double Settings::getMinimumPressure() const { return this->minimumPressure; }
+void Settings::setMinimumPressure(double minimumPressure) {
+    if (this->minimumPressure == minimumPressure) {
+        return;
+    }
 
-	this->snapGridTolerance = tolerance;
-	save();
+    this->minimumPressure = minimumPressure;
+    save();
 }
 
-double Settings::getSnapGridTolerance() const
-{
-	XOJ_CHECK_TYPE(Settings);
+double Settings::getPressureMultiplier() const { return this->pressureMultiplier; }
+void Settings::setPressureMultiplier(double multiplier) {
+    if (this->pressureMultiplier == multiplier) {
+        return;
+    }
 
-	return this->snapGridTolerance;
+    this->pressureMultiplier = multiplier;
+    save();
 }
 
-bool Settings::isTouchWorkaround() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getScrollbarHideType() const -> ScrollbarHideType { return this->scrollbarHideType; }
 
-	return this->touchWorkaround;
+void Settings::setScrollbarHideType(ScrollbarHideType type) {
+    if (this->scrollbarHideType == type) {
+        return;
+    }
+
+    this->scrollbarHideType = type;
+
+    save();
 }
 
-void Settings::setTouchWorkaround(bool b)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::isAutloadPdfXoj() const -> bool { return this->autoloadPdfXoj; }
 
-	if (this->touchWorkaround == b)
-	{
-		return;
-	}
-
-	this->touchWorkaround = b;
-	save();
+void Settings::setAutoloadPdfXoj(bool load) {
+    if (this->autoloadPdfXoj == load) {
+        return;
+    }
+    this->autoloadPdfXoj = load;
+    save();
 }
 
-ScrollbarHideType Settings::getScrollbarHideType() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getDefaultSaveName() const -> string const& { return this->defaultSaveName; }
 
-	return this->scrollbarHideType;
+void Settings::setDefaultSaveName(const string& name) {
+    if (this->defaultSaveName == name) {
+        return;
+    }
+
+    this->defaultSaveName = name;
+
+    save();
 }
 
-void Settings::setScrollbarHideType(ScrollbarHideType type)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getPageTemplate() const -> string const& { return this->pageTemplate; }
 
-	if (this->scrollbarHideType == type)
-	{
-		return;
-	}
+void Settings::setPageTemplate(const string& pageTemplate) {
+    if (this->pageTemplate == pageTemplate) {
+        return;
+    }
 
-	this->scrollbarHideType = type;
+    this->pageTemplate = pageTemplate;
 
-	save();
+    save();
 }
 
-bool Settings::isAutloadPdfXoj() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getAudioFolder() const -> string const& { return this->audioFolder; }
 
-	return this->autoloadPdfXoj;
+void Settings::setAudioFolder(const string& audioFolder) {
+    if (this->audioFolder == audioFolder) {
+        return;
+    }
+
+    this->audioFolder = audioFolder;
+
+    save();
 }
 
-void Settings::setAutoloadPdfXoj(bool load)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getSizeUnit() const -> string const& { return sizeUnit; }
 
-	if (this->autoloadPdfXoj == load)
-	{
-		return;
-	}
-	this->autoloadPdfXoj = load;
-	save();
-}
+void Settings::setSizeUnit(const string& sizeUnit) {
+    if (this->sizeUnit == sizeUnit) {
+        return;
+    }
 
-string const& Settings::getDefaultSaveName() const
-{
-	XOJ_CHECK_TYPE(Settings);
+    this->sizeUnit = sizeUnit;
 
-	return this->defaultSaveName;
-}
-
-void Settings::setDefaultSaveName(string name)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	if (this->defaultSaveName == name)
-	{
-		return;
-	}
-
-	this->defaultSaveName = name;
-
-	save();
-}
-
-string const& Settings::getPageTemplate() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return this->pageTemplate;
-}
-
-void Settings::setPageTemplate(string pageTemplate)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	if (this->pageTemplate == pageTemplate)
-	{
-		return;
-	}
-
-	this->pageTemplate = pageTemplate;
-
-	save();
-}
-
-string const& Settings::getAudioFolder() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return this->audioFolder;
-}
-
-void Settings::setAudioFolder(string audioFolder)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	if (this->audioFolder == audioFolder)
-	{
-		return;
-	}
-
-	this->audioFolder = audioFolder;
-
-	save();
-}
-
-string const& Settings::getSizeUnit() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return sizeUnit;
-}
-
-void Settings::setSizeUnit(string sizeUnit)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	if (this->sizeUnit == sizeUnit)
-	{
-		return;
-	}
-
-	this->sizeUnit = sizeUnit;
-
-	save();
+    save();
 }
 
 /**
  * Get size index in XOJ_UNITS
  */
-int Settings::getSizeUnitIndex() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getSizeUnitIndex() const -> int {
+    string unit = getSizeUnit();
 
-	string unit = getSizeUnit();
+    for (int i = 0; i < XOJ_UNIT_COUNT; i++) {
+        if (unit == XOJ_UNITS[i].name) {
+            return i;
+        }
+    }
 
-	for (int i = 0; i < XOJ_UNIT_COUNT; i++)
-	{
-		if (unit == XOJ_UNITS[i].name)
-		{
-			return i;
-		}
-	}
-
-	return 0;
+    return 0;
 }
 
 /**
  * Set size index in XOJ_UNITS
  */
-void Settings::setSizeUnitIndex(int sizeUnitId)
-{
-	XOJ_CHECK_TYPE(Settings);
+void Settings::setSizeUnitIndex(int sizeUnitId) {
+    if (sizeUnitId < 0 || sizeUnitId >= XOJ_UNIT_COUNT) {
+        sizeUnitId = 0;
+    }
 
-	if (sizeUnitId < 0 || sizeUnitId >= XOJ_UNIT_COUNT)
-	{
-		sizeUnitId = 0;
-	}
-
-	setSizeUnit(XOJ_UNITS[sizeUnitId].name);
-}
-
-void Settings::setShowPairedPages(bool showPairedPages)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	if (this->showPairedPages == showPairedPages)
-	{
-		return;
-	}
-
-	this->showPairedPages = showPairedPages;
-	save();
-}
-
-bool Settings::isShowPairedPages() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return this->showPairedPages;
-}
-
-void Settings::setPresentationMode(bool presentationMode)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	if (this->presentationMode == presentationMode)
-	{
-		return;
-	}
-
-	this->presentationMode = presentationMode;
-	save();
-}
-
-bool Settings::isPresentationMode() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return this->presentationMode;
-}
-
-void Settings::setPressureSensitivity(gboolean presureSensitivity)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	if (this->pressureSensitivity == presureSensitivity)
-	{
-		return;
-	}
-	this->pressureSensitivity = presureSensitivity;
-
-	save();
-}
-
-void Settings::setPairsOffset(int numOffset)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	if (this->numPairsOffset == numOffset)
-	{
-		return;
-	}
-
-	this->numPairsOffset = numOffset;
-	save();
-}
-
-int Settings::getPairsOffset() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return this->numPairsOffset;
-}
-
-void Settings::setViewColumns(int numColumns)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	if (this->numColumns == numColumns)
-	{
-		return;
-	}
-
-	this->numColumns = numColumns;
-	save();
-}
-
-int Settings::getViewColumns() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return this->numColumns;
-}
-
-
-void Settings::setViewRows(int numRows)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	if (this->numRows == numRows)
-	{
-		return;
-	}
-
-	this->numRows = numRows;
-	save();
-}
-
-int Settings::getViewRows() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return this->numRows;
-}
-
-void Settings::setViewFixedRows(bool viewFixedRows)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	if (this->viewFixedRows == viewFixedRows)
-	{
-		return;
-	}
-
-	this->viewFixedRows = viewFixedRows;
-	save();
-}
-
-bool Settings::isViewFixedRows() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return this->viewFixedRows;
-}
-
-void Settings::setViewLayoutVert(bool vert)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	if (this->layoutVertical == vert)
-	{
-		return;
-	}
-
-	this->layoutVertical = vert;
-	save();
-}
-
-bool Settings::getViewLayoutVert() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return this->layoutVertical;
-}
-
-void Settings::setViewLayoutR2L(bool r2l)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	if (this->layoutRightToLeft == r2l)
-	{
-		return;
-	}
-
-	this->layoutRightToLeft = r2l;
-	save();
-}
-
-bool Settings::getViewLayoutR2L() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return this->layoutRightToLeft;
-}
-
-void Settings::setViewLayoutB2T(bool b2t)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	if (this->layoutBottomToTop == b2t)
-	{
-		return;
-	}
-
-	this->layoutBottomToTop = b2t;
-	save();
-}
-
-bool Settings::getViewLayoutB2T() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return this->layoutBottomToTop;
-}
-
-void Settings::setLastSavePath(Path p)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	this->lastSavePath = p;
-	save();
+    setSizeUnit(XOJ_UNITS[sizeUnitId].name);
 }
 
-Path const& Settings::getLastSavePath() const
-{
-	XOJ_CHECK_TYPE(Settings);
+void Settings::setShowPairedPages(bool showPairedPages) {
+    if (this->showPairedPages == showPairedPages) {
+        return;
+    }
 
-	return this->lastSavePath;
+    this->showPairedPages = showPairedPages;
+    save();
 }
 
-void Settings::setLastOpenPath(Path p)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::isShowPairedPages() const -> bool { return this->showPairedPages; }
 
-	this->lastOpenPath = p;
-	save();
-}
-
-Path const& Settings::getLastOpenPath() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return this->lastOpenPath;
-}
-
-void Settings::setLastImagePath(Path path)
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	if (this->lastImagePath == path)
-	{
-		return;
-	}
-	this->lastImagePath = path;
-	save();
-}
+void Settings::setPresentationMode(bool presentationMode) {
+    if (this->presentationMode == presentationMode) {
+        return;
+    }
 
-Path const& Settings::getLastImagePath() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return this->lastImagePath;
+    this->presentationMode = presentationMode;
+    save();
 }
-
-void Settings::setZoomStep(double zoomStep)
-{
-	XOJ_CHECK_TYPE(Settings);
 
-	if (this->zoomStep == zoomStep)
-	{
-		return;
-	}
-	this->zoomStep = zoomStep;
-	save();
-}
+auto Settings::isPresentationMode() const -> bool { return this->presentationMode; }
 
-double Settings::getZoomStep() const
-{
-	XOJ_CHECK_TYPE(Settings);
+void Settings::setPressureSensitivity(gboolean presureSensitivity) {
+    if (this->pressureSensitivity == presureSensitivity) {
+        return;
+    }
+    this->pressureSensitivity = presureSensitivity;
 
-	return this->zoomStep;
+    save();
 }
 
-void Settings::setZoomStepScroll(double zoomStepScroll)
-{
-	XOJ_CHECK_TYPE(Settings);
+void Settings::setPairsOffset(int numOffset) {
+    if (this->numPairsOffset == numOffset) {
+        return;
+    }
 
-	if (this->zoomStepScroll == zoomStepScroll)
-	{
-		return;
-	}
-	this->zoomStepScroll = zoomStepScroll;
-	save();
+    this->numPairsOffset = numOffset;
+    save();
 }
-
-double Settings::getZoomStepScroll() const
-{
-	XOJ_CHECK_TYPE(Settings);
 
-	return this->zoomStepScroll;
-}
+auto Settings::getPairsOffset() const -> int { return this->numPairsOffset; }
 
-void Settings::setDisplayDpi(int dpi)
-{
-	XOJ_CHECK_TYPE(Settings);
+void Settings::setViewColumns(int numColumns) {
+    if (this->numColumns == numColumns) {
+        return;
+    }
 
-	if (this->displayDpi == dpi)
-	{
-		return;
-	}
-	this->displayDpi = dpi;
-	save();
+    this->numColumns = numColumns;
+    save();
 }
 
-int Settings::getDisplayDpi() const
-{
-	return this->displayDpi;
-}
+auto Settings::getViewColumns() const -> int { return this->numColumns; }
 
-void Settings::setDarkTheme(bool dark)
-{
-	XOJ_CHECK_TYPE(Settings);
-	if (this->darkTheme == dark)
-	{
-		return;
-	}
-	this->darkTheme = dark;
-	save();
-}
 
-bool Settings::isDarkTheme() const
-{
-	XOJ_CHECK_TYPE(Settings);
+void Settings::setViewRows(int numRows) {
+    if (this->numRows == numRows) {
+        return;
+    }
 
-	return this->darkTheme;
+    this->numRows = numRows;
+    save();
 }
-
-bool Settings::isSidebarVisible() const
-{
-	XOJ_CHECK_TYPE(Settings);
 
-	return this->showSidebar;
-}
+auto Settings::getViewRows() const -> int { return this->numRows; }
 
-void Settings::setSidebarVisible(bool visible)
-{
-	XOJ_CHECK_TYPE(Settings);
+void Settings::setViewFixedRows(bool viewFixedRows) {
+    if (this->viewFixedRows == viewFixedRows) {
+        return;
+    }
 
-	if (this->showSidebar == visible)
-	{
-		return;
-	}
-	this->showSidebar = visible;
-	save();
+    this->viewFixedRows = viewFixedRows;
+    save();
 }
 
-int Settings::getSidebarWidth() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return this->sidebarWidth;
-}
+auto Settings::isViewFixedRows() const -> bool { return this->viewFixedRows; }
 
-void Settings::setSidebarWidth(int width)
-{
-	XOJ_CHECK_TYPE(Settings);
-	width = std::max(width, 50);
+void Settings::setViewLayoutVert(bool vert) {
+    if (this->layoutVertical == vert) {
+        return;
+    }
 
-	if (this->sidebarWidth == width)
-	{
-		return;
-	}
-	this->sidebarWidth = width;
-	save();
+    this->layoutVertical = vert;
+    save();
 }
 
-void Settings::setMainWndSize(int width, int height)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getViewLayoutVert() const -> bool { return this->layoutVertical; }
 
-	this->mainWndWidth = width;
-	this->mainWndHeight = height;
+void Settings::setViewLayoutR2L(bool r2l) {
+    if (this->layoutRightToLeft == r2l) {
+        return;
+    }
 
-	save();
+    this->layoutRightToLeft = r2l;
+    save();
 }
 
-int Settings::getMainWndWidth() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getViewLayoutR2L() const -> bool { return this->layoutRightToLeft; }
 
-	return this->mainWndWidth;
-}
-
-int Settings::getMainWndHeight() const
-{
-	XOJ_CHECK_TYPE(Settings);
+void Settings::setViewLayoutB2T(bool b2t) {
+    if (this->layoutBottomToTop == b2t) {
+        return;
+    }
 
-	return this->mainWndHeight;
+    this->layoutBottomToTop = b2t;
+    save();
 }
 
-bool Settings::isMainWndMaximized() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getViewLayoutB2T() const -> bool { return this->layoutBottomToTop; }
 
-	return this->maximized;
+void Settings::setLastSavePath(fs::path p) {
+    this->lastSavePath = std::move(p);
+    save();
 }
 
-void Settings::setMainWndMaximized(bool max)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getLastSavePath() const -> fs::path const& { return this->lastSavePath; }
 
-	this->maximized = max;
+void Settings::setLastOpenPath(fs::path p) {
+    this->lastOpenPath = std::move(p);
+    save();
 }
 
-void Settings::setSelectedToolbar(string name)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getLastOpenPath() const -> fs::path const& { return this->lastOpenPath; }
 
-	if (this->selectedToolbar == name)
-	{
-		return;
-	}
-	this->selectedToolbar = name;
-	save();
+void Settings::setLastImagePath(const fs::path& path) {
+    if (this->lastImagePath == path) {
+        return;
+    }
+    this->lastImagePath = path;
+    save();
 }
 
-string const& Settings::getSelectedToolbar() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getLastImagePath() const -> fs::path const& { return this->lastImagePath; }
 
-	return this->selectedToolbar;
+void Settings::setZoomStep(double zoomStep) {
+    if (this->zoomStep == zoomStep) {
+        return;
+    }
+    this->zoomStep = zoomStep;
+    save();
 }
 
-SElement& Settings::getCustomElement(string name)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getZoomStep() const -> double { return this->zoomStep; }
 
-	return this->data[name];
+void Settings::setZoomStepScroll(double zoomStepScroll) {
+    if (this->zoomStepScroll == zoomStepScroll) {
+        return;
+    }
+    this->zoomStepScroll = zoomStepScroll;
+    save();
 }
 
-void Settings::customSettingsChanged()
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getZoomStepScroll() const -> double { return this->zoomStepScroll; }
 
-	save();
+void Settings::setDisplayDpi(int dpi) {
+    if (this->displayDpi == dpi) {
+        return;
+    }
+    this->displayDpi = dpi;
+    save();
 }
 
-ButtonConfig* Settings::getButtonConfig(int id)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getDisplayDpi() const -> int { return this->displayDpi; }
 
-	if (id < 0 || id >= BUTTON_COUNT)
-	{
-		g_error("Settings::getButtonConfig try to get id=%i out of range!", id);
-		return NULL;
-	}
-	return this->buttonConfig[id];
+void Settings::setDarkTheme(bool dark) {
+    if (this->darkTheme == dark) {
+        return;
+    }
+    this->darkTheme = dark;
+    save();
 }
 
-ButtonConfig* Settings::getEraserButtonConfig()
-{
-	XOJ_CHECK_TYPE(Settings);
-
-    return this->buttonConfig[BUTTON_ERASER];
-}
+auto Settings::isDarkTheme() const -> bool { return this->darkTheme; }
 
-ButtonConfig* Settings::getMiddleButtonConfig()
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::isSidebarVisible() const -> bool { return this->showSidebar; }
 
-    return this->buttonConfig[BUTTON_MIDDLE];
+void Settings::setSidebarVisible(bool visible) {
+    if (this->showSidebar == visible) {
+        return;
+    }
+    this->showSidebar = visible;
+    save();
 }
 
-ButtonConfig* Settings::getRightButtonConfig()
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::isToolbarVisible() const -> bool { return this->showToolbar; }
 
-    return this->buttonConfig[BUTTON_RIGHT];
+void Settings::setToolbarVisible(bool visible) {
+    if (this->showToolbar == visible) {
+        return;
+    }
+    this->showToolbar = visible;
+    save();
 }
 
-ButtonConfig* Settings::getTouchButtonConfig()
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getSidebarWidth() const -> int { return this->sidebarWidth; }
 
-    return this->buttonConfig[BUTTON_TOUCH];
-}
-
-ButtonConfig* Settings::getDefaultButtonConfig()
-{
-	XOJ_CHECK_TYPE(Settings);
+void Settings::setSidebarWidth(int width) {
+    width = std::max(width, 50);
 
-    return this->buttonConfig[BUTTON_DEFAULT];
+    if (this->sidebarWidth == width) {
+        return;
+    }
+    this->sidebarWidth = width;
+    save();
 }
 
-ButtonConfig* Settings::getStylusButton1Config()
-{
-	XOJ_CHECK_TYPE(Settings);
+void Settings::setMainWndSize(int width, int height) {
+    this->mainWndWidth = width;
+    this->mainWndHeight = height;
 
-    return this->buttonConfig[BUTTON_STYLUS];
+    save();
 }
 
-ButtonConfig* Settings::getStylusButton2Config()
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getMainWndWidth() const -> int { return this->mainWndWidth; }
 
-    return this->buttonConfig[BUTTON_STYLUS2];
-}
+auto Settings::getMainWndHeight() const -> int { return this->mainWndHeight; }
 
-string const& Settings::getFullscreenHideElements() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::isMainWndMaximized() const -> bool { return this->maximized; }
 
-	return this->fullscreenHideElements;
-}
+void Settings::setMainWndMaximized(bool max) { this->maximized = max; }
 
-void Settings::setFullscreenHideElements(string elements)
-{
-	this->fullscreenHideElements = elements;
-	save();
+void Settings::setSelectedToolbar(const string& name) {
+    if (this->selectedToolbar == name) {
+        return;
+    }
+    this->selectedToolbar = name;
+    save();
 }
 
-string const& Settings::getPresentationHideElements() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getSelectedToolbar() const -> string const& { return this->selectedToolbar; }
 
-	return this->presentationHideElements;
-}
+auto Settings::getCustomElement(const string& name) -> SElement& { return this->data[name]; }
 
-void Settings::setPresentationHideElements(string elements)
-{
-	XOJ_CHECK_TYPE(Settings);
+void Settings::customSettingsChanged() { save(); }
 
-	this->presentationHideElements = elements;
-	save();
+auto Settings::getButtonConfig(int id) -> ButtonConfig* {
+    if (id < 0 || id >= BUTTON_COUNT) {
+        g_error("Settings::getButtonConfig try to get id=%i out of range!", id);
+        return nullptr;
+    }
+    return this->buttonConfig[id];
 }
 
-int Settings::getPdfPageCacheSize() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getFullscreenHideElements() const -> string const& { return this->fullscreenHideElements; }
 
-	return this->pdfPageCacheSize;
+void Settings::setFullscreenHideElements(string elements) {
+    this->fullscreenHideElements = std::move(elements);
+    save();
 }
 
-void Settings::setPdfPageCacheSize(int size)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getPresentationHideElements() const -> string const& { return this->presentationHideElements; }
 
-	if (this->pdfPageCacheSize == size)
-	{
-		return;
-	}
-	this->pdfPageCacheSize = size;
-	save();
+void Settings::setPresentationHideElements(string elements) {
+    this->presentationHideElements = std::move(elements);
+    save();
 }
 
-int Settings::getBorderColor() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getTouchZoomStartThreshold() const -> double { return this->touchZoomStartThreshold; }
+void Settings::setTouchZoomStartThreshold(double threshold) {
+    if (this->touchZoomStartThreshold == threshold) {
+        return;
+    }
 
-	return this->selectionBorderColor;
+    this->touchZoomStartThreshold = threshold;
+    save();
 }
-
-void Settings::setBorderColor(int color)
-{
-	XOJ_CHECK_TYPE(Settings);
 
-	if (this->selectionBorderColor == color)
-	{
-		return;
-	}
-	this->selectionBorderColor = color;
-	save();
-}
 
-int Settings::getSelectionColor() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getPDFPageRerenderThreshold() const -> double { return this->pageRerenderThreshold; }
+void Settings::setPDFPageRerenderThreshold(double threshold) {
+    if (this->pageRerenderThreshold == threshold) {
+        return;
+    }
 
-	return this->selectionMarkerColor;
+    this->pageRerenderThreshold = threshold;
+    save();
 }
 
-void Settings::setSelectionColor(int color)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getPdfPageCacheSize() const -> int { return this->pdfPageCacheSize; }
 
-	if (this->selectionMarkerColor == color)
-	{
-		return;
-	}
-	this->selectionMarkerColor = color;
-	save();
+void Settings::setPdfPageCacheSize(int size) {
+    if (this->pdfPageCacheSize == size) {
+        return;
+    }
+    this->pdfPageCacheSize = size;
+    save();
 }
 
-int Settings::getBackgroundColor() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getPreloadPagesBefore() const -> unsigned int { return this->preloadPagesBefore; }
 
-	return this->backgroundColor;
+void Settings::setPreloadPagesBefore(unsigned int n) {
+    if (this->preloadPagesBefore == n) {
+        return;
+    }
+    this->preloadPagesBefore = n;
+    save();
 }
 
-void Settings::setBackgroundColor(int color)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getPreloadPagesAfter() const -> unsigned int { return this->preloadPagesAfter; }
 
-	if (this->backgroundColor == color)
-	{
-		return;
-	}
-	this->backgroundColor = color;
-	save();
+void Settings::setPreloadPagesAfter(unsigned int n) {
+    if (this->preloadPagesAfter == n) {
+        return;
+    }
+    this->preloadPagesAfter = n;
+    save();
 }
 
-XojFont& Settings::getFont()
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::isEagerPageCleanup() const -> bool { return this->eagerPageCleanup; }
 
-	return this->font;
+void Settings::setEagerPageCleanup(bool b) {
+    if (this->eagerPageCleanup == b) {
+        return;
+    }
+    this->eagerPageCleanup = b;
+    save();
 }
 
-void Settings::setFont(const XojFont& font)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getBorderColor() const -> Color { return this->selectionBorderColor; }
 
-	this->font = font;
-	save();
+void Settings::setBorderColor(Color color) {
+    if (this->selectionBorderColor == color) {
+        return;
+    }
+    this->selectionBorderColor = color;
+    save();
 }
-
 
-PaDeviceIndex Settings::getAudioInputDevice() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getSelectionColor() const -> Color { return this->selectionMarkerColor; }
 
-	return this->audioInputDevice;
+void Settings::setSelectionColor(Color color) {
+    if (this->selectionMarkerColor == color) {
+        return;
+    }
+    this->selectionMarkerColor = color;
+    save();
 }
 
-void Settings::setAudioInputDevice(PaDeviceIndex deviceIndex)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getBackgroundColor() const -> Color { return this->backgroundColor; }
 
-	if (this->audioInputDevice == deviceIndex)
-	{
-		return;
-	}
-	this->audioInputDevice = deviceIndex;
-	save();
+void Settings::setBackgroundColor(Color color) {
+    if (this->backgroundColor == color) {
+        return;
+    }
+    this->backgroundColor = color;
+    save();
 }
 
-PaDeviceIndex Settings::getAudioOutputDevice() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getFont() -> XojFont& { return this->font; }
 
-	return this->audioOutputDevice;
+void Settings::setFont(const XojFont& font) {
+    this->font = font;
+    save();
 }
 
-void Settings::setAudioOutputDevice(PaDeviceIndex deviceIndex)
-{
-	XOJ_CHECK_TYPE(Settings);
 
-	if (this->audioOutputDevice == deviceIndex)
-	{
-		return;
-	}
-	this->audioOutputDevice = deviceIndex;
-	save();
-}
+auto Settings::getAudioInputDevice() const -> PaDeviceIndex { return this->audioInputDevice; }
 
-double Settings::getAudioSampleRate() const
-{
-	XOJ_CHECK_TYPE(Settings);
-
-	return this->audioSampleRate;
+void Settings::setAudioInputDevice(PaDeviceIndex deviceIndex) {
+    if (this->audioInputDevice == deviceIndex) {
+        return;
+    }
+    this->audioInputDevice = deviceIndex;
+    save();
 }
 
-void Settings::setAudioSampleRate(double sampleRate)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getAudioOutputDevice() const -> PaDeviceIndex { return this->audioOutputDevice; }
 
-	if (this->audioSampleRate == sampleRate)
-	{
-		return;
-	}
-	this->audioSampleRate = sampleRate;
-	save();
+void Settings::setAudioOutputDevice(PaDeviceIndex deviceIndex) {
+    if (this->audioOutputDevice == deviceIndex) {
+        return;
+    }
+    this->audioOutputDevice = deviceIndex;
+    save();
 }
 
-double Settings::getAudioGain() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getAudioSampleRate() const -> double { return this->audioSampleRate; }
 
-	return this->audioGain;
+void Settings::setAudioSampleRate(double sampleRate) {
+    if (this->audioSampleRate == sampleRate) {
+        return;
+    }
+    this->audioSampleRate = sampleRate;
+    save();
 }
 
-void Settings::setAudioGain(double gain)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getAudioGain() const -> double { return this->audioGain; }
 
-	if (this->audioGain == gain)
-	{
-		return;
-	}
-	this->audioGain = gain;
-	save();
+void Settings::setAudioGain(double gain) {
+    if (this->audioGain == gain) {
+        return;
+    }
+    this->audioGain = gain;
+    save();
 }
 
-string const& Settings::getPluginEnabled() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getDefaultSeekTime() const -> unsigned int { return this->defaultSeekTime; }
 
-	return this->pluginEnabled;
+void Settings::setDefaultSeekTime(unsigned int t) {
+    if (this->defaultSeekTime == t) {
+        return;
+    }
+    this->defaultSeekTime = t;
+    save();
 }
 
-void Settings::setPluginEnabled(string pluginEnabled)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getPluginEnabled() const -> string const& { return this->pluginEnabled; }
 
-	if (this->pluginEnabled == pluginEnabled)
-	{
-		return;
-	}
-	this->pluginEnabled = pluginEnabled;
-	save();
+void Settings::setPluginEnabled(const string& pluginEnabled) {
+    if (this->pluginEnabled == pluginEnabled) {
+        return;
+    }
+    this->pluginEnabled = pluginEnabled;
+    save();
 }
 
-string const& Settings::getPluginDisabled() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getPluginDisabled() const -> string const& { return this->pluginDisabled; }
 
-	return this->pluginDisabled;
+void Settings::setPluginDisabled(const string& pluginDisabled) {
+    if (this->pluginDisabled == pluginDisabled) {
+        return;
+    }
+    this->pluginDisabled = pluginDisabled;
+    save();
 }
 
-void Settings::setPluginDisabled(string pluginDisabled)
-{
-	XOJ_CHECK_TYPE(Settings);
 
-	if (this->pluginDisabled == pluginDisabled)
-	{
-		return;
-	}
-	this->pluginDisabled = pluginDisabled;
-	save();
+void Settings::getStrokeFilter(int* ignoreTime, double* ignoreLength, int* successiveTime) const {
+    *ignoreTime = this->strokeFilterIgnoreTime;
+    *ignoreLength = this->strokeFilterIgnoreLength;
+    *successiveTime = this->strokeFilterSuccessiveTime;
 }
-
 
-void Settings::getStrokeFilter(int* ignoreTime, double* ignoreLength, int* successiveTime) const
-{
-	XOJ_CHECK_TYPE(Settings);
-	*ignoreTime = this->strokeFilterIgnoreTime;
-	*ignoreLength = this->strokeFilterIgnoreLength;
-	*successiveTime = this->strokeFilterSuccessiveTime;
-
+void Settings::setStrokeFilter(int ignoreTime, double ignoreLength, int successiveTime) {
+    this->strokeFilterIgnoreTime = ignoreTime;
+    this->strokeFilterIgnoreLength = ignoreLength;
+    this->strokeFilterSuccessiveTime = successiveTime;
 }
 
-void Settings::setStrokeFilter( int ignoreTime, double ignoreLength, int successiveTime)
-{
-	XOJ_CHECK_TYPE(Settings);
-	this->strokeFilterIgnoreTime = ignoreTime;
-	this->strokeFilterIgnoreLength = ignoreLength;
-	this->strokeFilterSuccessiveTime = successiveTime;
+void Settings::setStrokeFilterEnabled(bool enabled) { this->strokeFilterEnabled = enabled; }
 
-}
+auto Settings::getStrokeFilterEnabled() const -> bool { return this->strokeFilterEnabled; }
 
-void Settings::setStrokeFilterEnabled(bool enabled)
-{
-	XOJ_CHECK_TYPE(Settings);
-	this->strokeFilterEnabled = enabled;
-}
+void Settings::setDoActionOnStrokeFiltered(bool enabled) { this->doActionOnStrokeFiltered = enabled; }
 
-bool Settings::getStrokeFilterEnabled() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getDoActionOnStrokeFiltered() const -> bool { return this->doActionOnStrokeFiltered; }
 
-	return this->strokeFilterEnabled;
-}
+void Settings::setTrySelectOnStrokeFiltered(bool enabled) { this->trySelectOnStrokeFiltered = enabled; }
 
-void Settings::setDoActionOnStrokeFiltered(bool enabled)
-{
-	XOJ_CHECK_TYPE(Settings);
-	this->doActionOnStrokeFiltered = enabled;
-}
+auto Settings::getTrySelectOnStrokeFiltered() const -> bool { return this->trySelectOnStrokeFiltered; }
 
-bool Settings::getDoActionOnStrokeFiltered() const
-{
-	XOJ_CHECK_TYPE(Settings);
-	return this->doActionOnStrokeFiltered;
-}
+void Settings::setSnapRecognizedShapesEnabled(bool enabled) { this->snapRecognizedShapesEnabled = enabled; }
 
-void Settings::setTrySelectOnStrokeFiltered(bool enabled)
-{
-	XOJ_CHECK_TYPE(Settings);
-	this->trySelectOnStrokeFiltered = enabled;
-}
+auto Settings::getSnapRecognizedShapesEnabled() const -> bool { return this->snapRecognizedShapesEnabled; }
 
-bool Settings::getTrySelectOnStrokeFiltered() const
-{
-	XOJ_CHECK_TYPE(Settings);
-	return this->trySelectOnStrokeFiltered;
-}
 
+void Settings::setRestoreLineWidthEnabled(bool enabled) { this->restoreLineWidthEnabled = enabled; }
 
-void Settings::setExperimentalInputSystemEnabled(bool systemEnabled)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getRestoreLineWidthEnabled() const -> bool { return this->restoreLineWidthEnabled; }
 
-	if (this->experimentalInputSystemEnabled == systemEnabled)
-	{
-		return;
-	}
-	this->experimentalInputSystemEnabled = systemEnabled;
-	save();
-}
+auto Settings::setPreferredLocale(std::string const& locale) -> void { this->preferredLocale = locale; }
 
-bool Settings::getExperimentalInputSystemEnabled() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getPreferredLocale() const -> std::string { return this->preferredLocale; }
 
-	return this->experimentalInputSystemEnabled;
+void Settings::setIgnoredStylusEvents(int numEvents) {
+    if (this->numIgnoredStylusEvents == numEvents) {
+        return;
+    }
+    this->numIgnoredStylusEvents = std::max<int>(numEvents, 0);
+    save();
 }
 
-void Settings::setInputSystemTPCButtonEnabled(bool tpcButtonEnabled)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getIgnoredStylusEvents() const -> int { return this->numIgnoredStylusEvents; }
 
-	if (this->inputSystemTPCButton == tpcButtonEnabled)
-	{
-		return;
-	}
-	this->inputSystemTPCButton = tpcButtonEnabled;
-	save();
+void Settings::setInputSystemTPCButtonEnabled(bool tpcButtonEnabled) {
+    if (this->inputSystemTPCButton == tpcButtonEnabled) {
+        return;
+    }
+    this->inputSystemTPCButton = tpcButtonEnabled;
+    save();
 }
 
-bool Settings::getInputSystemTPCButtonEnabled() const
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getInputSystemTPCButtonEnabled() const -> bool { return this->inputSystemTPCButton; }
 
-	return this->inputSystemTPCButton;
+void Settings::setInputSystemDrawOutsideWindowEnabled(bool drawOutsideWindowEnabled) {
+    if (this->inputSystemDrawOutsideWindow == drawOutsideWindowEnabled) {
+        return;
+    }
+    this->inputSystemDrawOutsideWindow = drawOutsideWindowEnabled;
+    save();
 }
 
-void Settings::setInputSystemDrawOutsideWindowEnabled(bool drawOutsideWindowEnabled)
-{
-	XOJ_CHECK_TYPE(Settings);
+auto Settings::getInputSystemDrawOutsideWindowEnabled() const -> bool { return this->inputSystemDrawOutsideWindow; }
 
-	if (this->inputSystemDrawOutsideWindow == drawOutsideWindowEnabled)
-	{
-		return;
-	}
-	this->inputSystemDrawOutsideWindow = drawOutsideWindowEnabled;
-	save();
+void Settings::setDeviceClassForDevice(GdkDevice* device, InputDeviceTypeOption deviceClass) {
+    this->setDeviceClassForDevice(gdk_device_get_name(device), gdk_device_get_source(device), deviceClass);
 }
-
-bool Settings::getInputSystemDrawOutsideWindowEnabled() const
-{
-	XOJ_CHECK_TYPE(Settings);
 
-	return this->inputSystemDrawOutsideWindow;
+void Settings::setDeviceClassForDevice(const string& deviceName, GdkInputSource deviceSource,
+                                       InputDeviceTypeOption deviceClass) {
+    auto it = inputDeviceClasses.find(deviceName);
+    if (it != inputDeviceClasses.end()) {
+        it->second.first = deviceClass;
+        it->second.second = deviceSource;
+    } else {
+        inputDeviceClasses.emplace(deviceName, std::make_pair(deviceClass, deviceSource));
+    }
 }
 
-void Settings::setDeviceClassForDevice(GdkDevice* device, int deviceClass)
-{
-	this->setDeviceClassForDevice(gdk_device_get_name(device), gdk_device_get_source(device), deviceClass);
+auto Settings::getKnownInputDevices() const -> std::vector<InputDevice> {
+    std::vector<InputDevice> inputDevices;
+    for (auto pair: inputDeviceClasses) {
+        const std::string& name = pair.first;
+        GdkInputSource& source = pair.second.second;
+        inputDevices.emplace_back(name, source);
+    }
+    return inputDevices;
 }
 
-void Settings::setDeviceClassForDevice(const string& deviceName, GdkInputSource deviceSource, int deviceClass)
-{
-	auto it = inputDeviceClasses.find(deviceName);
-	if (it != inputDeviceClasses.end())
-	{
-		it->second.first = deviceClass;
-		it->second.second = deviceSource;
-	}
-	else
-	{
-		inputDeviceClasses.insert(std::pair<string, std::pair<int, GdkInputSource>>(
-		        deviceName, std::pair<int, GdkInputSource>(deviceClass, deviceSource)));
-	}
+auto Settings::getDeviceClassForDevice(GdkDevice* device) const -> InputDeviceTypeOption {
+    return this->getDeviceClassForDevice(gdk_device_get_name(device), gdk_device_get_source(device));
 }
 
-std::vector<InputDevice> Settings::getKnownInputDevices() const
-{
-	std::vector<InputDevice> inputDevices;
-	for (std::pair<string, std::pair<int, GdkInputSource>> device: inputDeviceClasses)
-	{
-		inputDevices.emplace_back(device.first, device.second.second);
-	}
-	return inputDevices;
-}
+auto Settings::getDeviceClassForDevice(const string& deviceName, GdkInputSource deviceSource) const
+        -> InputDeviceTypeOption {
+    auto search = inputDeviceClasses.find(deviceName);
+    if (search != inputDeviceClasses.end()) {
+        return search->second.first;
+    }
 
-int Settings::getDeviceClassForDevice(GdkDevice* device) const
-{
-	return this->getDeviceClassForDevice(gdk_device_get_name(device), gdk_device_get_source(device));
-}
 
-int Settings::getDeviceClassForDevice(const string& deviceName, GdkInputSource deviceSource) const
-{
-	auto search = inputDeviceClasses.find(deviceName);
-	if (search != inputDeviceClasses.end())
-	{
-		return search->second.first;
-	}
-	else
-	{
-		guint deviceType = 0;
-		switch (deviceSource)
-		{
-			case GDK_SOURCE_CURSOR:
+    InputDeviceTypeOption deviceType = InputDeviceTypeOption::Disabled;
+    switch (deviceSource) {
+        case GDK_SOURCE_CURSOR:
 #if (GDK_MAJOR_VERSION >= 3 && GDK_MINOR_VERSION >= 22)
-			case GDK_SOURCE_TABLET_PAD:
+        case GDK_SOURCE_TABLET_PAD:
 #endif
-			case GDK_SOURCE_KEYBOARD:
-				deviceType = 0;
-				break;
-			case GDK_SOURCE_MOUSE:
-			case GDK_SOURCE_TOUCHPAD:
+        case GDK_SOURCE_KEYBOARD:
+            deviceType = InputDeviceTypeOption::Disabled;
+            break;
+        case GDK_SOURCE_MOUSE:
+        case GDK_SOURCE_TOUCHPAD:
 #if (GDK_MAJOR_VERSION >= 3 && GDK_MINOR_VERSION >= 22)
-			case GDK_SOURCE_TRACKPOINT:
+        case GDK_SOURCE_TRACKPOINT:
 #endif
-				deviceType = 1;
-				break;
-			case GDK_SOURCE_PEN:
-				deviceType = 2;
-				break;
-			case GDK_SOURCE_ERASER:
-				deviceType = 3;
-				break;
-			case GDK_SOURCE_TOUCHSCREEN:
-				deviceType = 4;
-				break;
-		    default:
-			    deviceType = 0;
-		}
-		return deviceType;
-	}
+            deviceType = InputDeviceTypeOption::Mouse;
+            break;
+        case GDK_SOURCE_PEN:
+            deviceType = InputDeviceTypeOption::Pen;
+            break;
+        case GDK_SOURCE_ERASER:
+            deviceType = InputDeviceTypeOption::Eraser;
+            break;
+        case GDK_SOURCE_TOUCHSCREEN:
+            deviceType = InputDeviceTypeOption::Touchscreen;
+            break;
+        default:
+            deviceType = InputDeviceTypeOption::Disabled;
+    }
+    return deviceType;
 }
 
-bool Settings::isScrollbarFadeoutDisabled() const
-{
-	return disableScrollbarFadeout;
-}
+auto Settings::isScrollbarFadeoutDisabled() const -> bool { return disableScrollbarFadeout; }
 
-void Settings::setScrollbarFadeoutDisabled(bool disable)
-{
-	if (disableScrollbarFadeout == disable) return;
-	disableScrollbarFadeout = disable;
-	save();
+void Settings::setScrollbarFadeoutDisabled(bool disable) {
+    if (disableScrollbarFadeout == disable) {
+        return;
+    }
+    disableScrollbarFadeout = disable;
+    save();
 }
 
 //////////////////////////////////////////////////
 
-SAttribute::SAttribute()
-{
-	XOJ_INIT_TYPE(SAttribute);
-
-	this->dValue = 0;
-	this->iValue = 0;
-	this->type = ATTRIBUTE_TYPE_NONE;
+SAttribute::SAttribute() {
+    this->dValue = 0;
+    this->iValue = 0;
+    this->type = ATTRIBUTE_TYPE_NONE;
 }
 
-SAttribute::SAttribute(const SAttribute& attrib)
-{
-	XOJ_INIT_TYPE(SAttribute);
+SAttribute::SAttribute(const SAttribute& attrib) { *this = attrib; }
 
-	*this = attrib;
-}
-
-SAttribute::~SAttribute()
-{
-	XOJ_CHECK_TYPE(SAttribute);
-
-	this->iValue = 0;
-	this->type = ATTRIBUTE_TYPE_NONE;
-
-	XOJ_RELEASE_TYPE(SAttribute);
+SAttribute::~SAttribute() {
+    this->iValue = 0;
+    this->type = ATTRIBUTE_TYPE_NONE;
 }
 
 //////////////////////////////////////////////////
 
-__RefSElement::__RefSElement()
-{
-	XOJ_INIT_TYPE(__RefSElement);
+auto SElement::attributes() -> std::map<string, SAttribute>& { return this->element->attributes; }
 
-	this->refcount = 0;
+auto SElement::children() -> std::map<string, SElement>& { return this->element->children; }
+
+void SElement::clear() {
+    this->element->attributes.clear();
+    this->element->children.clear();
 }
 
-__RefSElement::~__RefSElement()
-{
-	XOJ_RELEASE_TYPE(__RefSElement);
+auto SElement::child(const string& name) -> SElement& { return this->element->children[name]; }
+
+void SElement::setComment(const string& name, const string& comment) {
+    SAttribute& attrib = this->element->attributes[name];
+    attrib.comment = comment;
 }
 
-void __RefSElement::ref()
-{
-	XOJ_CHECK_TYPE(__RefSElement);
-
-	this->refcount++;
+void SElement::setIntHex(const string& name, const int value) {
+    SAttribute& attrib = this->element->attributes[name];
+    attrib.iValue = value;
+    attrib.type = ATTRIBUTE_TYPE_INT_HEX;
 }
 
-void __RefSElement::unref()
-{
-	XOJ_CHECK_TYPE(__RefSElement);
-
-	this->refcount--;
-	if (this->refcount == 0)
-	{
-		delete this;
-	}
+void SElement::setInt(const string& name, const int value) {
+    SAttribute& attrib = this->element->attributes[name];
+    attrib.iValue = value;
+    attrib.type = ATTRIBUTE_TYPE_INT;
 }
 
-SElement::SElement()
-{
-	XOJ_INIT_TYPE(SElement);
-
-	this->element = new __RefSElement();
-	this->element->ref();
+void SElement::setBool(const string& name, const bool value) {
+    SAttribute& attrib = this->element->attributes[name];
+    attrib.iValue = value;
+    attrib.type = ATTRIBUTE_TYPE_BOOLEAN;
 }
 
-SElement::SElement(const SElement& elem)
-{
-	XOJ_INIT_TYPE(SElement);
-
-	this->element = elem.element;
-	this->element->ref();
+void SElement::setString(const string& name, const string& value) {
+    SAttribute& attrib = this->element->attributes[name];
+    attrib.sValue = value;
+    attrib.type = ATTRIBUTE_TYPE_STRING;
 }
 
-SElement::~SElement()
-{
-	XOJ_CHECK_TYPE(SElement);
-
-	this->element->unref();
-	this->element = NULL;
-
-	XOJ_RELEASE_TYPE(SElement);
+void SElement::setDouble(const string& name, const double value) {
+    SAttribute& attrib = this->element->attributes[name];
+    attrib.dValue = value;
+    attrib.type = ATTRIBUTE_TYPE_DOUBLE;
 }
 
-void SElement::operator=(const SElement& elem)
-{
-	XOJ_CHECK_TYPE(SElement);
+auto SElement::getDouble(const string& name, double& value) -> bool {
+    SAttribute& attrib = this->element->attributes[name];
+    if (attrib.type == ATTRIBUTE_TYPE_NONE) {
+        this->element->attributes.erase(name);
+        return false;
+    }
 
-	this->element = elem.element;
-	this->element->ref();
+    if (attrib.type != ATTRIBUTE_TYPE_DOUBLE) {
+        return false;
+    }
+
+    value = attrib.dValue;
+
+    return true;
 }
 
-std::map<string, SAttribute>& SElement::attributes()
-{
-	XOJ_CHECK_TYPE(SElement);
+auto SElement::getInt(const string& name, int& value) -> bool {
+    SAttribute& attrib = this->element->attributes[name];
+    if (attrib.type == ATTRIBUTE_TYPE_NONE) {
+        this->element->attributes.erase(name);
+        return false;
+    }
 
-	return this->element->attributes;
+    if (attrib.type != ATTRIBUTE_TYPE_INT && attrib.type != ATTRIBUTE_TYPE_INT_HEX) {
+        return false;
+    }
+
+    value = attrib.iValue;
+
+    return true;
 }
 
-std::map<string, SElement>& SElement::children()
-{
-	XOJ_CHECK_TYPE(SElement);
+auto SElement::getBool(const string& name, bool& value) -> bool {
+    SAttribute& attrib = this->element->attributes[name];
+    if (attrib.type == ATTRIBUTE_TYPE_NONE) {
+        this->element->attributes.erase(name);
+        return false;
+    }
 
-	return this->element->children;
+    if (attrib.type != ATTRIBUTE_TYPE_BOOLEAN) {
+        return false;
+    }
+
+    value = attrib.iValue;
+
+    return true;
 }
 
-void SElement::clear()
-{
-	XOJ_CHECK_TYPE(SElement);
+auto SElement::getString(const string& name, string& value) -> bool {
+    SAttribute& attrib = this->element->attributes[name];
+    if (attrib.type == ATTRIBUTE_TYPE_NONE) {
+        this->element->attributes.erase(name);
+        return false;
+    }
 
-	this->element->attributes.clear();
-	this->element->children.clear();
+    if (attrib.type != ATTRIBUTE_TYPE_STRING) {
+        return false;
+    }
+
+    value = attrib.sValue;
+
+    return true;
 }
 
-SElement& SElement::child(string name)
-{
-	XOJ_CHECK_TYPE(SElement);
-
-	return this->element->children[name];
+/**
+ * Stabilizer related getters and setters
+ */
+auto Settings::getStabilizerCuspDetection() const -> bool { return stabilizerCuspDetection; }
+auto Settings::getStabilizerFinalizeStroke() const -> bool { return stabilizerFinalizeStroke; }
+auto Settings::getStabilizerBuffersize() const -> size_t { return stabilizerBuffersize; }
+auto Settings::getStabilizerDeadzoneRadius() const -> double { return stabilizerDeadzoneRadius; }
+auto Settings::getStabilizerDrag() const -> double { return stabilizerDrag; }
+auto Settings::getStabilizerMass() const -> double { return stabilizerMass; }
+auto Settings::getStabilizerSigma() const -> double { return stabilizerSigma; }
+auto Settings::getStabilizerAveragingMethod() const -> StrokeStabilizer::AveragingMethod {
+    return stabilizerAveragingMethod;
 }
+auto Settings::getStabilizerPreprocessor() const -> StrokeStabilizer::Preprocessor { return stabilizerPreprocessor; }
 
-void SElement::setComment(const string name, const string comment)
-{
-	XOJ_CHECK_TYPE(SElement);
-
-	SAttribute& attrib = this->element->attributes[name];
-
-	XOJ_CHECK_TYPE_OBJ(&attrib, SAttribute);
-
-	attrib.comment = comment;
+void Settings::setStabilizerCuspDetection(bool cuspDetection) {
+    if (stabilizerCuspDetection == cuspDetection) {
+        return;
+    }
+    stabilizerCuspDetection = cuspDetection;
+    save();
 }
-
-void SElement::setIntHex(const string name, const int value)
-{
-	XOJ_CHECK_TYPE(SElement);
-
-	SAttribute& attrib = this->element->attributes[name];
-
-	XOJ_CHECK_TYPE_OBJ(&attrib, SAttribute);
-
-	attrib.iValue = value;
-	attrib.type = ATTRIBUTE_TYPE_INT_HEX;
+void Settings::setStabilizerFinalizeStroke(bool finalizeStroke) {
+    if (stabilizerFinalizeStroke == finalizeStroke) {
+        return;
+    }
+    stabilizerFinalizeStroke = finalizeStroke;
+    save();
 }
-
-void SElement::setInt(const string name, const int value)
-{
-	XOJ_CHECK_TYPE(SElement);
-
-	SAttribute& attrib = this->element->attributes[name];
-
-	XOJ_CHECK_TYPE_OBJ(&attrib, SAttribute);
-
-	attrib.iValue = value;
-	attrib.type = ATTRIBUTE_TYPE_INT;
+void Settings::setStabilizerBuffersize(size_t buffersize) {
+    if (stabilizerBuffersize == buffersize) {
+        return;
+    }
+    stabilizerBuffersize = buffersize;
+    save();
 }
-
-void SElement::setBool(const string name, const bool value)
-{
-	XOJ_CHECK_TYPE(SElement);
-
-	SAttribute& attrib = this->element->attributes[name];
-
-	XOJ_CHECK_TYPE_OBJ(&attrib, SAttribute);
-
-	attrib.iValue = value;
-	attrib.type = ATTRIBUTE_TYPE_BOOLEAN;
+void Settings::setStabilizerDeadzoneRadius(double deadzoneRadius) {
+    if (stabilizerDeadzoneRadius == deadzoneRadius) {
+        return;
+    }
+    stabilizerDeadzoneRadius = deadzoneRadius;
+    save();
 }
-
-void SElement::setString(const string name, const string value)
-{
-	XOJ_CHECK_TYPE(SElement);
-
-	SAttribute& attrib = this->element->attributes[name];
-
-	XOJ_CHECK_TYPE_OBJ(&attrib, SAttribute);
-
-	attrib.sValue = value;
-	attrib.type = ATTRIBUTE_TYPE_STRING;
+void Settings::setStabilizerDrag(double drag) {
+    if (stabilizerDrag == drag) {
+        return;
+    }
+    stabilizerDrag = drag;
+    save();
 }
-
-void SElement::setDouble(const string name, const double value)
-{
-	XOJ_CHECK_TYPE(SElement);
-
-	SAttribute& attrib = this->element->attributes[name];
-
-	XOJ_CHECK_TYPE_OBJ(&attrib, SAttribute);
-
-	attrib.dValue = value;
-	attrib.type = ATTRIBUTE_TYPE_DOUBLE;
+void Settings::setStabilizerMass(double mass) {
+    if (stabilizerMass == mass) {
+        return;
+    }
+    stabilizerMass = mass;
+    save();
 }
-
-bool SElement::getDouble(const string name, double& value)
-{
-	XOJ_CHECK_TYPE(SElement);
-
-	SAttribute& attrib = this->element->attributes[name];
-
-	XOJ_CHECK_TYPE_OBJ(&attrib, SAttribute);
-
-	if (attrib.type == ATTRIBUTE_TYPE_NONE)
-	{
-		this->element->attributes.erase(name);
-		return false;
-	}
-
-	if (attrib.type != ATTRIBUTE_TYPE_DOUBLE)
-	{
-		return false;
-	}
-
-	value = attrib.dValue;
-
-	return true;
+void Settings::setStabilizerSigma(double sigma) {
+    if (stabilizerSigma == sigma) {
+        return;
+    }
+    stabilizerSigma = sigma;
+    save();
 }
+void Settings::setStabilizerAveragingMethod(StrokeStabilizer::AveragingMethod averagingMethod) {
+    const StrokeStabilizer::AveragingMethod method =
+            StrokeStabilizer::isValid(averagingMethod) ? averagingMethod : StrokeStabilizer::AveragingMethod::NONE;
 
-bool SElement::getInt(const string name, int& value)
-{
-	XOJ_CHECK_TYPE(SElement);
-
-	SAttribute& attrib = this->element->attributes[name];
-
-	XOJ_CHECK_TYPE_OBJ(&attrib, SAttribute);
-
-	if (attrib.type == ATTRIBUTE_TYPE_NONE)
-	{
-		this->element->attributes.erase(name);
-		return false;
-	}
-
-	if (attrib.type != ATTRIBUTE_TYPE_INT && attrib.type != ATTRIBUTE_TYPE_INT_HEX)
-	{
-		return false;
-	}
-
-	value = attrib.iValue;
-
-	return true;
+    if (stabilizerAveragingMethod == method) {
+        return;
+    }
+    stabilizerAveragingMethod = method;
+    save();
 }
+void Settings::setStabilizerPreprocessor(StrokeStabilizer::Preprocessor preprocessor) {
+    const StrokeStabilizer::Preprocessor p =
+            StrokeStabilizer::isValid(preprocessor) ? preprocessor : StrokeStabilizer::Preprocessor::NONE;
 
-bool SElement::getBool(const string name, bool& value)
-{
-	XOJ_CHECK_TYPE(SElement);
-
-	SAttribute& attrib = this->element->attributes[name];
-
-	XOJ_CHECK_TYPE_OBJ(&attrib, SAttribute);
-
-	if (attrib.type == ATTRIBUTE_TYPE_NONE)
-	{
-		this->element->attributes.erase(name);
-		return false;
-	}
-
-	if (attrib.type != ATTRIBUTE_TYPE_BOOLEAN)
-	{
-		return false;
-	}
-
-	value = attrib.iValue;
-
-	return true;
+    if (stabilizerPreprocessor == p) {
+        return;
+    }
+    stabilizerPreprocessor = p;
+    save();
 }
-
-bool SElement::getString(const string name, string& value)
-{
-	XOJ_CHECK_TYPE(SElement);
-
-	SAttribute& attrib = this->element->attributes[name];
-
-	XOJ_CHECK_TYPE_OBJ(&attrib, SAttribute);
-
-	if (attrib.type == ATTRIBUTE_TYPE_NONE)
-	{
-		this->element->attributes.erase(name);
-		return false;
-	}
-
-	if (attrib.type != ATTRIBUTE_TYPE_STRING)
-	{
-		return false;
-	}
-
-	value = attrib.sValue;
-
-	return true;
-
-}
-

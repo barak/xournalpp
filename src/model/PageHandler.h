@@ -11,35 +11,34 @@
 
 #pragma once
 
-#include <XournalType.h>
-
 #include <list>
+#include <string>
+#include <vector>
+
+#include "Rectangle.h"
+#include "XournalType.h"
 
 class Element;
 class PageListener;
 class Range;
-class Rectangle;
 
-class PageHandler
-{
+class PageHandler {
 public:
-	PageHandler();
-	virtual ~PageHandler();
+    PageHandler();
+    virtual ~PageHandler();
 
 public:
-	void fireRectChanged(Rectangle& rect);
-	void fireRangeChanged(Range &range);
-	void fireElementChanged(Element* elem);
-	void firePageChanged();
+    void fireRectChanged(Rectangle<double>& rect);
+    void fireRangeChanged(Range& range);
+    void fireElementChanged(Element* elem);
+    void firePageChanged();
 
 private:
-	void addListener(PageListener* l);
-	void removeListener(PageListener* l);
+    void addListener(PageListener* l);
+    void removeListener(PageListener* l);
 
 private:
-	XOJ_TYPE_ATTRIB;
+    std::list<PageListener*> listener;
 
-	std::list<PageListener*> listener;
-
-	friend class PageListener;
+    friend class PageListener;
 };

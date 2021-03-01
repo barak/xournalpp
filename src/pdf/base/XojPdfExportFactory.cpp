@@ -4,18 +4,10 @@
 
 #include "XojCairoPdfExport.h"
 
-XojPdfExportFactory::XojPdfExportFactory()
-{
-	XOJ_INIT_TYPE(XojPdfExportFactory);
-}
+XojPdfExportFactory::XojPdfExportFactory() = default;
 
-XojPdfExportFactory::~XojPdfExportFactory()
-{
-	XOJ_RELEASE_TYPE(XojPdfExportFactory);
-}
+XojPdfExportFactory::~XojPdfExportFactory() = default;
 
-XojPdfExport* XojPdfExportFactory::createExport(Document* doc, ProgressListener* listener)
-{
-	return new XojCairoPdfExport(doc, listener);
+auto XojPdfExportFactory::createExport(Document* doc, ProgressListener* listener) -> XojPdfExport* {
+    return new XojCairoPdfExport(doc, listener);
 }
-

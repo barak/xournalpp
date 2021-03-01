@@ -11,35 +11,17 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include <config.h>
-#include <XournalType.h>
+
+#include "XournalType.h"
+#include "filesystem.h"
 
 class GladeSearchpath;
 class Control;
 
-class XournalMain
-{
-public:
-	XournalMain();
-	virtual ~XournalMain();
-
-public:
-	int run(int argc, char* argv[]);
-
-private:
-	void initLocalisation();
-
-	void checkForErrorlog();
-	void checkForEmergencySave(Control* control);
-
-	int exportPdf(const char* input, const char* output);
-	int exportImg(const char* input, const char* output);
-
-	void initSettingsPath();
-	void initResourcePath(GladeSearchpath* gladePath);
-	void initResourcePath(GladeSearchpath* gladePath, const gchar* relativePathAndFile, bool failIfNotFound = true);
-	string findResourcePath(string searchFile);
-
-private:
-	XOJ_TYPE_ATTRIB;
-};
+namespace XournalMain {
+auto run(int argc, char** argv) -> int;
+}

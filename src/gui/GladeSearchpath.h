@@ -11,32 +11,33 @@
 
 #pragma once
 
-#include <XournalType.h>
+#include <string>
+#include <vector>
 
-class GladeSearchpath
-{
+#include "XournalType.h"
+#include "filesystem.h"
+
+class GladeSearchpath {
 public:
-	GladeSearchpath();
-	virtual ~GladeSearchpath();
+    GladeSearchpath();
+    virtual ~GladeSearchpath();
 
 public:
-	void addSearchDirectory(string directory);
+    void addSearchDirectory(fs::path const& directory);
 
-	/**
-	 * Searches for a path, return the path, an empty string if not found
-	 */
-	string findFile(string subdir, string file);
+    /**
+     * Searches for a path, return the path, an empty string if not found
+     */
+    fs::path findFile(fs::path const& subdir, fs::path const& file);
 
-	/**
-	 * @return The first search path
-	 */
-	string getFirstSearchPath();
+    /**
+     * @return The first search path
+     */
+    fs::path getFirstSearchPath() const;
 
 private:
-	XOJ_TYPE_ATTRIB;
-
-	/**
-	 * Search directory for icons and Glade files
-	 */
-	vector<string> directories;
+    /**
+     * Search directory for icons and Glade files
+     */
+    vector<fs::path> directories;
 };

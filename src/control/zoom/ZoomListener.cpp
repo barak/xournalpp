@@ -1,9 +1,5 @@
 #include "ZoomListener.h"
 
-ZoomListener::~ZoomListener()
-{
-}
+ZoomListener::~ZoomListener() = default;
 
-void ZoomListener::zoomRangeValuesChanged()
-{
-}
+void ZoomListener::zoomRangeValuesChanged() {}

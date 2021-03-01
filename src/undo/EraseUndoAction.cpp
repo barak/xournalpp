@@ -1,178 +1,128 @@
 #include "EraseUndoAction.h"
 
-#include "PageLayerPosEntry.h"
-
 #include "gui/Redrawable.h"
-#include "model/eraser/EraseableStroke.h"
 #include "model/Layer.h"
 #include "model/Stroke.h"
+#include "model/eraser/EraseableStroke.h"
 
-#include <i18n.h>
+#include "PageLayerPosEntry.h"
+#include "i18n.h"
 
-EraseUndoAction::EraseUndoAction(PageRef page)
- : UndoAction("EraseUndoAction")
-{
-	XOJ_INIT_TYPE(EraseUndoAction);
+EraseUndoAction::EraseUndoAction(const PageRef& page): UndoAction("EraseUndoAction") { this->page = page; }
 
-	this->page = page;
+EraseUndoAction::~EraseUndoAction() {
+    for (GList* l = this->original; l != nullptr; l = l->next) {
+        auto* e = static_cast<PageLayerPosEntry<Stroke>*>(l->data);
+        if (!undone) {
+            delete e->element;
+        }
+        delete e;
+    }
+    g_list_free(this->original);
+    this->original = nullptr;
+
+    for (GList* l = this->edited; l != nullptr; l = l->next) {
+        auto* e = static_cast<PageLayerPosEntry<Stroke>*>(l->data);
+        if (undone) {
+            delete e->element;
+        }
+        delete e;
+    }
+    g_list_free(this->edited);
+    this->edited = nullptr;
 }
 
-EraseUndoAction::~EraseUndoAction()
-{
-	XOJ_CHECK_TYPE(EraseUndoAction);
-
-	for (GList* l = this->original; l != NULL; l = l->next)
-	{
-		PageLayerPosEntry<Stroke>* e = (PageLayerPosEntry<Stroke>*) l->data;
-		if (!undone)
-		{
-			delete e->element;
-		}
-		delete e;
-	}
-	g_list_free(this->original);
-	this->original = NULL;
-
-	for (GList* l = this->edited; l != NULL; l = l->next)
-	{
-		PageLayerPosEntry<Stroke>* e = (PageLayerPosEntry<Stroke>*) l->data;
-		if (undone)
-		{
-			delete e->element;
-		}
-		delete e;
-	}
-	g_list_free(this->edited);
-	this->edited = NULL;
-
-	XOJ_RELEASE_TYPE(EraseUndoAction);
+void EraseUndoAction::addOriginal(Layer* layer, Stroke* element, int pos) {
+    this->original = g_list_insert_sorted(this->original, new PageLayerPosEntry<Stroke>(layer, element, pos),
+                                          reinterpret_cast<GCompareFunc>(PageLayerPosEntry<Stroke>::cmp));
 }
 
-void EraseUndoAction::addOriginal(Layer* layer, Stroke* element, int pos)
-{
-	XOJ_CHECK_TYPE(EraseUndoAction);
-
-	this->original = g_list_insert_sorted(this->original, new PageLayerPosEntry<Stroke> (layer, element, pos),
-										  (GCompareFunc) PageLayerPosEntry<Stroke>::cmp);
+void EraseUndoAction::addEdited(Layer* layer, Stroke* element, int pos) {
+    this->edited = g_list_insert_sorted(this->edited, new PageLayerPosEntry<Stroke>(layer, element, pos),
+                                        reinterpret_cast<GCompareFunc>(PageLayerPosEntry<Stroke>::cmp));
 }
 
-void EraseUndoAction::addEdited(Layer* layer, Stroke* element, int pos)
-{
-	XOJ_CHECK_TYPE(EraseUndoAction);
-
-	this->edited = g_list_insert_sorted(this->edited, new PageLayerPosEntry<Stroke> (layer, element, pos),
-										(GCompareFunc) PageLayerPosEntry<Stroke>::cmp);
+void EraseUndoAction::removeEdited(Stroke* element) {
+    for (GList* l = this->edited; l != nullptr; l = l->next) {
+        auto* p = static_cast<PageLayerPosEntry<Stroke>*>(l->data);
+        if (p->element == element) {
+            this->edited = g_list_delete_link(this->edited, l);
+            delete p;
+            p = nullptr;
+            return;
+        }
+    }
 }
 
-void EraseUndoAction::removeEdited(Stroke* element)
-{
-	XOJ_CHECK_TYPE(EraseUndoAction);
+void EraseUndoAction::finalize() {
+    for (GList* l = this->original; l != nullptr;) {
+        auto* p = static_cast<PageLayerPosEntry<Stroke>*>(l->data);
+        GList* del = l;
+        l = l->next;
 
-	for (GList* l = this->edited; l != NULL; l = l->next)
-	{
-		PageLayerPosEntry<Stroke>* p = (PageLayerPosEntry<Stroke>*) l->data;
-		if (p->element == element)
-		{
-			this->edited = g_list_delete_link(this->edited, l);
-			delete p;
-			p = NULL;
-			return;
-		}
-	}
+        if (p->element->getPointCount() == 0) {
+            this->edited = g_list_delete_link(this->edited, del);
+            delete p;
+            p = nullptr;
+        } else {
+
+            // Remove the original and add the copy
+            int pos = p->layer->removeElement(p->element, false);
+
+            EraseableStroke* e = p->element->getEraseable();
+            GList* stroke = e->getStroke(p->element);
+            for (GList* ls = stroke; ls != nullptr; ls = ls->next) {
+                auto* copy = static_cast<Stroke*>(ls->data);
+                p->layer->insertElement(copy, pos);
+                this->addEdited(p->layer, copy, pos);
+                pos++;
+            }
+
+            delete e;
+            e = nullptr;
+            p->element->setEraseable(nullptr);
+        }
+    }
+
+    this->page->firePageChanged();
 }
 
-void EraseUndoAction::finalize()
-{
-	XOJ_CHECK_TYPE(EraseUndoAction);
+auto EraseUndoAction::getText() -> string { return _("Erase stroke"); }
 
-	for (GList* l = this->original; l != NULL;)
-	{
-		PageLayerPosEntry<Stroke>* p = (PageLayerPosEntry<Stroke>*) l->data;
-		GList* del = l;
-		l = l->next;
+auto EraseUndoAction::undo(Control* control) -> bool {
+    for (GList* l = this->edited; l != nullptr; l = l->next) {
+        auto* e = static_cast<PageLayerPosEntry<Stroke>*>(l->data);
 
-		if (p->element->getPointCount() == 0)
-		{
-			this->edited = g_list_delete_link(this->edited, del);
-			delete p;
-			p = NULL;
-		}
-		else
-		{
+        e->layer->removeElement(e->element, false);
+        this->page->fireElementChanged(e->element);
+    }
 
-			// Remove the original and add the copy
-			int pos = p->layer->removeElement(p->element, false);
+    for (GList* l = this->original; l != nullptr; l = l->next) {
+        auto* e = static_cast<PageLayerPosEntry<Stroke>*>(l->data);
 
-			EraseableStroke* e = p->element->getEraseable();
-			GList* stroke = e->getStroke(p->element);
-			for (GList* ls = stroke; ls != NULL; ls = ls->next)
-			{
-				Stroke* copy = (Stroke*) ls->data;
-				p->layer->insertElement(copy, pos);
-				this->addEdited(p->layer, copy, pos);
-				pos++;
-			}
+        e->layer->insertElement(e->element, e->pos);
+        this->page->fireElementChanged(e->element);
+    }
 
-			delete e;
-			e = NULL;
-			p->element->setEraseable(NULL);
-		}
-	}
-
-	this->page->firePageChanged();
+    this->undone = true;
+    return true;
 }
 
-string EraseUndoAction::getText()
-{
-	XOJ_CHECK_TYPE(EraseUndoAction);
+auto EraseUndoAction::redo(Control* control) -> bool {
+    for (GList* l = this->original; l != nullptr; l = l->next) {
+        auto* e = static_cast<PageLayerPosEntry<Stroke>*>(l->data);
 
-	return _("Erase stroke");
-}
+        e->layer->removeElement(e->element, false);
+        this->page->fireElementChanged(e->element);
+    }
 
-bool EraseUndoAction::undo(Control* control)
-{
-	XOJ_CHECK_TYPE(EraseUndoAction);
+    for (GList* l = this->edited; l != nullptr; l = l->next) {
+        auto* e = static_cast<PageLayerPosEntry<Stroke>*>(l->data);
 
-	for (GList* l = this->edited; l != NULL; l = l->next)
-	{
-		PageLayerPosEntry<Stroke>* e = (PageLayerPosEntry<Stroke>*) l->data;
+        e->layer->insertElement(e->element, e->pos);
+        this->page->fireElementChanged(e->element);
+    }
 
-		e->layer->removeElement(e->element, false);
-		this->page->fireElementChanged(e->element);
-	}
-
-	for (GList* l = this->original; l != NULL; l = l->next)
-	{
-		PageLayerPosEntry<Stroke>* e = (PageLayerPosEntry<Stroke>*) l->data;
-
-		e->layer->insertElement(e->element, e->pos);
-		this->page->fireElementChanged(e->element);
-	}
-
-	this->undone = true;
-	return true;
-}
-
-bool EraseUndoAction::redo(Control* control)
-{
-	XOJ_CHECK_TYPE(EraseUndoAction);
-
-	for (GList* l = this->original; l != NULL; l = l->next)
-	{
-		PageLayerPosEntry<Stroke>* e = (PageLayerPosEntry<Stroke>*) l->data;
-
-		e->layer->removeElement(e->element, false);
-		this->page->fireElementChanged(e->element);
-	}
-
-	for (GList* l = this->edited; l != NULL; l = l->next)
-	{
-		PageLayerPosEntry<Stroke>* e = (PageLayerPosEntry<Stroke>*) l->data;
-
-		e->layer->insertElement(e->element, e->pos);
-		this->page->fireElementChanged(e->element);
-	}
-
-	this->undone = false;
-	return true;
+    this->undone = false;
+    return true;
 }

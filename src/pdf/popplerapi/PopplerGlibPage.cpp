@@ -1,117 +1,80 @@
 #include "PopplerGlibPage.h"
 
 
-PopplerGlibPage::PopplerGlibPage(PopplerPage* page)
- : page(page)
-{
-	XOJ_INIT_TYPE(PopplerGlibPage);
-
-	if (page != NULL)
-	{
-		g_object_ref(page);
-	}
+PopplerGlibPage::PopplerGlibPage(PopplerPage* page): page(page) {
+    if (page != nullptr) {
+        g_object_ref(page);
+    }
 }
 
-PopplerGlibPage::PopplerGlibPage(const PopplerGlibPage& other)
- : page(other.page)
-{
-	XOJ_INIT_TYPE(PopplerGlibPage);
-
-	if (page != NULL)
-	{
-		g_object_ref(page);
-	}
+PopplerGlibPage::PopplerGlibPage(const PopplerGlibPage& other): page(other.page) {
+    if (page != nullptr) {
+        g_object_ref(page);
+    }
 }
 
-PopplerGlibPage::~PopplerGlibPage()
-{
-	XOJ_CHECK_TYPE(PopplerGlibPage);
-
-	if (page)
-	{
-		g_object_unref(page);
-		page = NULL;
-	}
-
-	XOJ_RELEASE_TYPE(PopplerGlibPage);
+PopplerGlibPage::~PopplerGlibPage() {
+    if (page) {
+        g_object_unref(page);
+        page = nullptr;
+    }
 }
 
-void PopplerGlibPage::operator=(const PopplerGlibPage& other)
-{
-	XOJ_CHECK_TYPE(PopplerGlibPage);
+PopplerGlibPage& PopplerGlibPage::operator=(const PopplerGlibPage& other) {
+    if (&other == this) {
+        return *this;
+    }
+    if (page) {
+        g_object_unref(page);
+        page = nullptr;
+    }
 
-	if (page)
-	{
-		g_object_unref(page);
-		page = NULL;
-	}
-
-	page = other.page;
-	if (page != NULL)
-	{
-		g_object_ref(page);
-	}
+    page = other.page;
+    if (page != nullptr) {
+        g_object_ref(page);
+    }
+    return *this;
 }
 
-double PopplerGlibPage::getWidth()
-{
-	XOJ_CHECK_TYPE(PopplerGlibPage);
+auto PopplerGlibPage::getWidth() -> double {
+    double width = 0;
+    poppler_page_get_size(page, &width, nullptr);
 
-	double width = 0;
-	poppler_page_get_size(page, &width, NULL);
-
-	return width;
+    return width;
 }
 
-double PopplerGlibPage::getHeight()
-{
-	XOJ_CHECK_TYPE(PopplerGlibPage);
+auto PopplerGlibPage::getHeight() -> double {
+    double height = 0;
+    poppler_page_get_size(page, nullptr, &height);
 
-	double height = 0;
-	poppler_page_get_size(page, NULL, &height);
-
-	return height;
+    return height;
 }
 
-void PopplerGlibPage::render(cairo_t* cr, bool forPrinting)
+void PopplerGlibPage::render(cairo_t* cr, bool forPrinting)  // NOLINT(google-default-arguments)
 {
-	XOJ_CHECK_TYPE(PopplerGlibPage);
-
-	if (forPrinting)
-	{
-		poppler_page_render_for_printing(page, cr);
-	}
-	else
-	{
-		poppler_page_render(page, cr);
-	}
+    if (forPrinting) {
+        poppler_page_render_for_printing(page, cr);
+    } else {
+        poppler_page_render(page, cr);
+    }
 }
 
-int PopplerGlibPage::getPageId()
-{
-	XOJ_CHECK_TYPE(PopplerGlibPage);
+auto PopplerGlibPage::getPageId() -> int { return poppler_page_get_index(page); }
 
-	return poppler_page_get_index(page);
-}
+auto PopplerGlibPage::findText(string& text) -> vector<XojPdfRectangle> {
+    vector<XojPdfRectangle> findings;
 
-vector<XojPdfRectangle> PopplerGlibPage::findText(string& text)
-{
-	XOJ_CHECK_TYPE(PopplerGlibPage);
+    double height = getHeight();
+    GList* matches = poppler_page_find_text(page, text.c_str());
 
-	vector<XojPdfRectangle> findings;
+    for (GList* l = matches; l && l->data; l = g_list_next(l)) {
+        auto* rect = static_cast<PopplerRectangle*>(l->data);
 
-	double height = getHeight();
-	GList* matches = poppler_page_find_text(page, text.c_str());
+        findings.emplace_back(rect->x1, height - rect->y1, rect->x2, height - rect->y2);
 
-	for (GList* l = matches; l && l->data; l = g_list_next(l))
-	{
-		PopplerRectangle* rect = (PopplerRectangle*) l->data;
+        poppler_rectangle_free(rect);
+    }
+    g_list_free(matches);
 
-		findings.push_back(XojPdfRectangle(rect->x1, height - rect->y1, rect->x2, height - rect->y2));
-
-		poppler_rectangle_free(rect);
-	}
-	g_list_free(matches);
-
-	return findings;
+    return findings;
 }

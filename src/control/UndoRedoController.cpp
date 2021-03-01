@@ -1,103 +1,81 @@
 #include "UndoRedoController.h"
 
-#include "Control.h"
-
 #include "gui/XournalView.h"
 
-UndoRedoController::UndoRedoController(Control* control)
- : control(control)
-{
-	XOJ_INIT_TYPE(UndoRedoController);
+#include "Control.h"
+
+UndoRedoController::UndoRedoController(Control* control): control(control) {}
+
+UndoRedoController::~UndoRedoController() {
+    this->control = nullptr;
+    this->layer = nullptr;
+    elements.clear();
 }
 
-UndoRedoController::~UndoRedoController()
-{
-	XOJ_CHECK_TYPE(UndoRedoController);
+void UndoRedoController::before() {
+    EditSelection* selection = control->getWindow()->getXournal()->getSelection();
+    if (selection != nullptr) {
+        layer = selection->getSourceLayer();
+        for (Element* e: *selection->getElements()) {
+            elements.push_back(e);
+        }
+    }
 
-	this->control = NULL;
-	this->layer = NULL;
-	elements.clear();
-
-	XOJ_RELEASE_TYPE(UndoRedoController);
+    control->clearSelection();
 }
 
-void UndoRedoController::before()
-{
-	XOJ_CHECK_TYPE(UndoRedoController);
+void UndoRedoController::after() {
+    control->resetShapeRecognizer();
 
-	EditSelection* selection = control->getWindow()->getXournal()->getSelection();
-	if (selection != NULL)
-	{
-		layer = selection->getSourceLayer();
-		for (Element* e: *selection->getElements())
-		{
-			elements.push_back(e);
-		}
-	}
+    // Restore selection, if any
 
-	control->clearSelection();
+    if (layer == nullptr) {
+        // No layer - no selection
+        return;
+    }
+
+    Document* doc = control->getDocument();
+
+    PageRef page = control->getCurrentPage();
+    size_t pageNo = doc->indexOf(page);
+    XojPageView* view = control->getWindow()->getXournal()->getViewFor(pageNo);
+
+    if (!view || !page) {
+        return;
+    }
+
+    vector<Element*> visibleElements;
+    for (Element* e: elements) {
+        if (layer->indexOf(e) == -1) {
+            // Element is gone - so it's not selectable
+            continue;
+        }
+
+        visibleElements.push_back(e);
+    }
+    if (!visibleElements.empty()) {
+        auto* selection = new EditSelection(control->getUndoRedoHandler(), visibleElements, view, page);
+        control->getWindow()->getXournal()->setSelection(selection);
+    }
 }
 
-void UndoRedoController::after()
-{
-	XOJ_CHECK_TYPE(UndoRedoController);
+void UndoRedoController::undo(Control* control) {
+    UndoRedoController handler(control);
+    handler.before();
 
-	control->resetShapeRecognizer();
+    // Move out of text mode to allow textboxundo to work
+    control->clearSelectionEndText();
 
-	// Restore selection, if any
+    control->getUndoRedoHandler()->undo();
 
-	if (layer == NULL)
-	{
-		// No layer - no selection
-		return;
-	}
-
-	Document* doc = control->getDocument();
-
-	PageRef page = control->getCurrentPage();
-	size_t pageNo = doc->indexOf(page);
-	XojPageView* view = control->getWindow()->getXournal()->getViewFor(pageNo);
-
-	if (!view || !page)
-	{
-		return;
-	}
-
-	vector<Element*> visibleElements;
-	for (Element* e : elements)
-	{
-		if (layer->indexOf(e) == -1)
-		{
-			// Element is gone - so it's not selectable
-			continue;
-		}
-
-		visibleElements.push_back(e);
-	}
-
-	EditSelection* selection = new EditSelection(control->getUndoRedoHandler(), visibleElements, view, page);
-	control->getWindow()->getXournal()->setSelection(selection);
+    handler.after();
 }
 
-void UndoRedoController::undo(Control* control)
-{
-	UndoRedoController handler(control);
-	handler.before();
+void UndoRedoController::redo(Control* control) {
+    UndoRedoController handler(control);
+    handler.before();
 
-	// Move out of text mode to allow textboxundo to work
-	control->clearSelectionEndText();
+    control->getUndoRedoHandler()->redo();
 
-	control->getUndoRedoHandler()->undo();
-
-	handler.after();
-}
-
-void UndoRedoController::redo(Control* control)
-{
-	UndoRedoController handler(control);
-	handler.before();
-
-	control->getUndoRedoHandler()->redo();
-
-	handler.after();
+    handler.after();
 }

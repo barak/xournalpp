@@ -11,55 +11,55 @@
 
 #pragma once
 
-#include <XournalType.h>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "Plugin.h"
+#include "filesystem.h"
 
 class Control;
-class Plugin;
 
-class PluginController
-{
+class PluginController final {
 public:
-	PluginController(Control* control);
-	virtual ~PluginController();
+    explicit PluginController(Control* control);
 
 public:
-	/**
-	 * Load all plugins within this folder
-	 *
-	 * @param path The path which contains the plugin folders
-	 */
-	void loadPluginsFrom(string path);
+    /**
+     * Load all plugins within this folder
+     *
+     * @param path The path which contains the plugin folders
+     */
+    void loadPluginsFrom(fs::path const& path);
 
-	/**
-	 * Register toolbar item and all other UI stuff
-	 */
-	void registerToolbar();
+    /**
+     * Register toolbar item and all other UI stuff
+     */
+    void registerToolbar();
 
-	/**
-	 * Show Plugin manager Dialog
-	 */
-	void showPluginManager();
+    /**
+     * Register menu stuff
+     */
+    void registerMenu();
 
-	/**
-	 * Register menu stuff
-	 */
-	void registerMenu();
+    /**
+     * Show Plugin manager Dialog
+     */
+    void showPluginManager() const;
 
-	/**
-	 * Return the plugin list
-	 */
-	vector<Plugin*>& getPlugins();
+    /**
+     * Return the plugin list
+     */
+    auto getPlugins() const -> std::vector<Plugin*>;
 
 private:
-	XOJ_TYPE_ATTRIB;
+    /**
+     * The main controller
+     */
+    Control* control;
 
-	/**
-	 * The main controller
-	 */
-	Control* control;
-
-	/**
-	 * All loaded Plugins
-	 */
-	vector<Plugin*> plugins;
+    /**
+     * All loaded Plugins
+     */
+    std::vector<std::unique_ptr<Plugin>> plugins;
 };

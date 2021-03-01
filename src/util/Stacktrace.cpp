@@ -1,21 +1,23 @@
 #include "Stacktrace.h"
 
-#ifdef WIN32
+#include <array>
+#include <climits>
+#include <iostream>
+
+#ifdef _WIN32
 #include <Windows.h>
 #else
+
 #include <execinfo.h>
 #include <unistd.h>
-#include <limits.h>
 #endif
 
 #ifdef __APPLE__
+#include <glib.h>
 #include <mach-o/dyld.h>
 #endif
 
-#include <Path.h>
 
-
-#include <iostream>
 using std::endl;
 
 /**
@@ -24,85 +26,75 @@ using std::endl;
  * Another solution would be backtrace-symbols.c from cairo/util, but its really complicated
  */
 
-Stacktrace::Stacktrace() { }
+Stacktrace::Stacktrace() = default;
 
-Stacktrace::~Stacktrace() { }
+Stacktrace::~Stacktrace() = default;
 
-#ifdef WIN32
-std::string Stacktrace::getExePath()
-{
-	char szFileName[MAX_PATH + 1];
-	GetModuleFileNameA(NULL, szFileName, MAX_PATH + 1);
+#ifdef _WIN32
+fs::path Stacktrace::getExePath() {
+    char szFileName[MAX_PATH + 1];
+    GetModuleFileNameA(nullptr, szFileName, MAX_PATH + 1);
 
-	return szFileName;
+    return fs::path{szFileName};
 }
-void Stacktrace::printStracktrace(std::ostream& stream)
-{
-	// Stracktrace is currently not implemented for Windows
-	// Currently this is only needed for developing, so this is no issue
+void Stacktrace::printStracktrace(std::ostream& stream) {
+    // Stracktrace is currently not implemented for Windows
+    // Currently this is only needed for developing, so this is no issue
 }
 #else
 
 #ifdef __APPLE__
 
-std::string Stacktrace::getExePath()
-{
-	char c;
-	uint32_t size = 0;
-	_NSGetExecutablePath(&c, &size);
+#include "filesystem.h"
 
-	char* path = new char[size + 1];
-	if (_NSGetExecutablePath(path, &size) == 0)
-	{
-		Path p(path);
-		delete[] path;
-		return p.getParentPath().str();
-	}
+fs::path Stacktrace::getExePath() {
+    char c;
+    uint32_t size = 0;
+    _NSGetExecutablePath(&c, &size);
 
-	g_error("Could not executable path!");
+    char* path = new char[size + 1];
+    if (_NSGetExecutablePath(path, &size) == 0) {
+        fs::path p(path);
+        delete[] path;
+        return p.parent_path();
+    }
 
-	delete[] path;
-	return "";
+    g_error("Could not executable path!");
+
+    delete[] path;
+    return "";
 }
 #else
-std::string Stacktrace::getExePath()
-{
-	char result[PATH_MAX];
-	ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
-	return std::string(result, (count > 0) ? count : 0);
+auto Stacktrace::getExePath() -> fs::path {
+    std::array<char, PATH_MAX> result{};
+    ssize_t count = readlink("/proc/self/exe", result.data(), PATH_MAX);
+    return fs::path{std::string(result.data(), std::max(ssize_t{0}, count))};
 }
 #endif
 
-void Stacktrace::printStracktrace(std::ostream& stream)
-{
-	void* trace[32];
-	char** messages = (char**) NULL;
-	char buff[2048];
+void Stacktrace::printStracktrace(std::ostream& stream) {
+    std::array<void*, 32> trace{};
+    std::array<char, 2048> buff{};
 
-	int trace_size = backtrace(trace, 32);
-	messages = backtrace_symbols(trace, trace_size);
+    int trace_size = backtrace(trace.data(), trace.size());
+    char** messages = backtrace_symbols(trace.data(), trace_size);
 
-	std::string exeName = getExePath();
+    std::string exeName = getExePath();
 
-	// skip first stack frame (points here)
-	for (int i = 1; i < trace_size; ++i)
-	{
-		stream << "[bt] #" << i << " " << messages[i] << endl;
+    // skip first stack frame (points here)
+    for (int i = 1; i < trace_size; ++i) {
+        stream << "[bt] #" << i << " " << messages[i] << endl;
 
-		char syscom[1024];
+        std::array<char, 1024> syscom{};
 
-		sprintf(syscom, "addr2line %p -e %s", trace[i], exeName.c_str());
-		FILE* fProc = popen(syscom, "r");
-		while (fgets(buff, sizeof(buff), fProc) != NULL)
-		{
-			stream << buff;
-		}
-		pclose(fProc);
-	}
+        snprintf(syscom.data(), syscom.size(), "addr2line %p -e %s", trace[i], exeName.c_str());
+        FILE* fProc = popen(syscom.data(), "r");
+        while (fgets(buff.data(), buff.size(), fProc) != nullptr) {
+            stream << buff.data();
+        }
+        pclose(fProc);
+    }
 }
 #endif
 
-void Stacktrace::printStracktrace()
-{
-	printStracktrace(std::cerr);
-}
+void Stacktrace::printStracktrace() { printStracktrace(std::cerr); }

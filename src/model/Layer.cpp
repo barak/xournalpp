@@ -1,169 +1,120 @@
 #include "Layer.h"
 
-#include <Stacktrace.h>
+#include "Stacktrace.h"
 
-Layer::Layer()
-{
-	XOJ_INIT_TYPE(Layer);
+Layer::Layer() = default;
+
+Layer::~Layer() {
+    for (Element* e: this->elements) {
+        delete e;
+    }
+    this->elements.clear();
 }
 
-Layer::~Layer()
-{
-	XOJ_CHECK_TYPE(Layer);
+auto Layer::clone() -> Layer* {
+    auto* layer = new Layer();
 
-	for (Element* e : this->elements)
-	{
-		delete e;
-	}
-	this->elements.clear();
+    if (hasName()) {
+        layer->setName(getName());
+    }
 
-	XOJ_RELEASE_TYPE(Layer);
+    for (Element* e: this->elements) {
+        layer->addElement(e->clone());
+    }
+
+    return layer;
 }
 
-Layer* Layer::clone()
-{
-	XOJ_CHECK_TYPE(Layer);
+void Layer::addElement(Element* e) {
+    if (e == nullptr) {
+        g_warning("addElement(nullptr)!");
+        Stacktrace::printStracktrace();
+        return;
+    }
 
-	Layer* layer = new Layer();
+    for (Element* elem2: this->elements) {
+        if (e == elem2) {
+            g_warning("Layer::addElement: Element is already on this layer!");
+            return;
+        }
+    }
 
-	for (Element* e : this->elements)
-	{
-		layer->addElement(e->clone());
-	}
-
-	return layer;
+    this->elements.push_back(e);
 }
 
-void Layer::addElement(Element* e)
-{
-	XOJ_CHECK_TYPE(Layer);
+void Layer::insertElement(Element* e, ElementIndex pos) {
+    if (e == nullptr) {
+        g_warning("insertElement(nullptr)!");
+        Stacktrace::printStracktrace();
+        return;
+    }
 
-	if (e == NULL)
-	{
-		g_warning("addElement(NULL)!");
-		Stacktrace::printStracktrace();
-		return;
-	}
+    for (Element* elem2: this->elements) {
+        if (e == elem2) {
+            g_warning("Layer::insertElement() try to add an element twice!");
+            Stacktrace::printStracktrace();
+            return;
+        }
+    }
 
-	for (Element* elem2 : this->elements)
-	{
-		if (e == elem2)
-		{
-			g_warning("Layer::addElement: Element is already on this layer!");
-			return;
-		}
-	}
+    // prevent crash, even if this never should happen,
+    // but there was a bug before which cause this error
+    if (pos < 0) {
+        pos = 0;
+    }
 
-	this->elements.push_back(e);
+    // If the element should be inserted at the top
+    if (pos >= static_cast<int>(this->elements.size())) {
+        this->elements.push_back(e);
+    } else {
+        this->elements.insert(this->elements.begin() + pos, e);
+    }
 }
 
-void Layer::insertElement(Element* e, int pos)
-{
-	XOJ_CHECK_TYPE(Layer);
+auto Layer::indexOf(Element* e) -> ElementIndex {
+    for (unsigned int i = 0; i < this->elements.size(); i++) {
+        if (this->elements[i] == e) {
+            return i;
+        }
+    }
 
-	if (e == NULL)
-	{
-		g_warning("insertElement(NULL)!");
-		Stacktrace::printStracktrace();
-		return;
-	}
-
-	for (Element* elem2 : this->elements)
-	{
-		if (e == elem2)
-		{
-			g_warning("Layer::insertElement() try to add an element twice!");
-			Stacktrace::printStracktrace();
-			return;
-		}
-	}
-
-	// prevent crash, even if this never should happen,
-	// but there was a bug before which cause this error
-	if (pos < 0)
-	{
-		pos = 0;
-	}
-
-	// If the element should be inserted at the top
-	if (pos >= (int)this->elements.size())
-	{
-		this->elements.push_back(e);
-	}
-	else
-	{
-		this->elements.insert(this->elements.begin() + pos, e);
-	}
+    return InvalidElementIndex;
 }
 
-int Layer::indexOf(Element* e)
-{
-	XOJ_CHECK_TYPE(Layer);
-	
-	for (unsigned int i = 0; i < this->elements.size(); i++)
-	{
-		if (this->elements[i] == e)
-		{
-			return i;
-		}
-	}
-	
-	return -1;
+auto Layer::removeElement(Element* e, bool free) -> ElementIndex {
+    for (unsigned int i = 0; i < this->elements.size(); i++) {
+        if (e == this->elements[i]) {
+            this->elements.erase(this->elements.begin() + i);
+
+            if (free) {
+                delete e;
+            }
+            return i;
+        }
+    }
+
+    g_warning("Could not remove element from layer, it's not on the layer!");
+    Stacktrace::printStracktrace();
+    return InvalidElementIndex;
 }
 
-int Layer::removeElement(Element* e, bool free)
-{
-	XOJ_CHECK_TYPE(Layer);
-
-	for (unsigned int i = 0; i < this->elements.size(); i++)
-	{
-		if (e == this->elements[i])
-		{
-			this->elements.erase(this->elements.begin() + i);
-			
-			if (free)
-			{
-				delete e;
-			}
-			return i;
-		}
-	}
-	
-	g_warning("Could not remove element from layer, it's not on the layer!");
-	Stacktrace::printStracktrace();
-	return -1;
-}
-
-bool Layer::isAnnotated()
-{
-	XOJ_CHECK_TYPE(Layer);
-
-	return !this->elements.empty();
-}
+auto Layer::isAnnotated() -> bool { return !this->elements.empty(); }
 
 /**
  * @return true if the layer is visible
  */
-bool Layer::isVisible()
-{
-	XOJ_CHECK_TYPE(Layer);
-
-	return visible;
-}
+auto Layer::isVisible() const -> bool { return visible; }
 
 /**
  * @return true if the layer is visible
  */
-void Layer::setVisible(bool visible)
-{
-	XOJ_CHECK_TYPE(Layer);
+void Layer::setVisible(bool visible) { this->visible = visible; }
 
-	this->visible = visible;
-}
+auto Layer::getElements() -> vector<Element*>* { return &this->elements; }
 
-vector<Element*>* Layer::getElements()
-{
-	XOJ_CHECK_TYPE(Layer);
 
-	return &this->elements;
-}
+auto Layer::hasName() const -> bool { return name.has_value(); }
+
+auto Layer::getName() const -> string { return name.value_or(""); }
+
+void Layer::setName(const string& newName) { this->name = newName; }

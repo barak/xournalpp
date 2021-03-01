@@ -11,36 +11,27 @@
 
 #pragma once
 
-#include <XournalType.h>
+#include <atomic>
+#include <thread>
+#include <utility>
+
+#include <sndfile.h>
 
 #include "AudioQueue.h"
 #include "DeviceInfo.h"
 
-#include <sndfile.h>
+struct VorbisProducer final {
+    explicit VorbisProducer(AudioQueue<float>& audioQueue): audioQueue(audioQueue) {}
 
-#include <thread>
-#include <utility>
-
-class VorbisProducer
-{
-public:
-	explicit VorbisProducer(AudioQueue<float>* audioQueue);
-	~VorbisProducer();
-
-public:
-	bool start(string filename, unsigned int timestamp);
-	void abort();
-	void stop();
+    bool start(const std::string& filename, unsigned int timestamp);
+    void abort();
+    void stop();
+    void seek(int seconds);
 
 private:
-	const int sample_buffer_size = 16384;
-	XOJ_TYPE_ATTRIB;
+    AudioQueue<float>& audioQueue;
+    std::thread producerThread{};
 
-protected:
-	bool stopProducer = false;
-	SF_INFO sfInfo;
-	SNDFILE_tag* sfFile = nullptr;
-
-	AudioQueue<float>* audioQueue = nullptr;
-	std::thread* producerThread = nullptr;
+    std::atomic<bool> stopProducer{false};
+    std::atomic<int> seekSeconds{0};
 };

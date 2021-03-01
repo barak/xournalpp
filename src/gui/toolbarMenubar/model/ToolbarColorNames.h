@@ -12,32 +12,37 @@
 
 #pragma once
 
-#include <XournalType.h>
+#include <string>
+#include <unordered_map>
 
-class ToolbarColorNames
-{
-private:
-	ToolbarColorNames();
-	virtual ~ToolbarColorNames();
+#include "util/Color.h"
 
-public:
-	static ToolbarColorNames& getInstance();
-	static void freeInstance();
+#include "filesystem.h"
+
+class ToolbarColorNames final {
+    explicit ToolbarColorNames(fs::path path);
 
 public:
-	void loadFile(const string file);
-	void saveFile(const string file);
+    static ToolbarColorNames& getInstance();
 
-	void addColor(int color, string name, bool predefined);
+    ~ToolbarColorNames() noexcept;
+    ToolbarColorNames(ToolbarColorNames const&) = delete;
+    ToolbarColorNames(ToolbarColorNames&&) = delete;
+    ToolbarColorNames& operator=(ToolbarColorNames const&) = delete;
+    ToolbarColorNames& operator=(ToolbarColorNames&&) = delete;
 
-	string getColorName(int color);
+public:
+    void addColor(Color color, const std::string& name, bool predefined);
+    std::string getColorName(Color color);
+
+    void load();
+    void save() const noexcept;
 
 private:
-	void initPredefinedColors();
+    void initPredefinedColors();
 
 private:
-	XOJ_TYPE_ATTRIB;
-
-	GKeyFile* config;
-	GHashTable* predefinedColorNames;
+    GKeyFile* config;
+    std::unordered_map<Color, std::string> predefinedColorNames{};
+    fs::path file;
 };

@@ -11,36 +11,32 @@
 
 #pragma once
 
-#include <XournalType.h>
-#include <control/settings/Settings.h>
+#include <atomic>
+#include <fstream>
+#include <thread>
+#include <utility>
+
+#include <sndfile.h>
+
+#include "control/settings/Settings.h"
 
 #include "AudioQueue.h"
 #include "DeviceInfo.h"
 
-#include <sndfile.h>
-
-#include <thread>
-#include <utility>
-#include <fstream>
-
-class VorbisConsumer
-{
+class VorbisConsumer final {
 public:
-	explicit VorbisConsumer(Settings* settings, AudioQueue<float>* audioQueue);
-	~VorbisConsumer();
+    explicit VorbisConsumer(Settings& settings, AudioQueue<float>& audioQueue):
+            settings(settings), audioQueue(audioQueue) {}
 
 public:
-	bool start(string filename);
-	void join();
-	void stop();
+    bool start(const string& filename);
+    void join();
+    void stop();
 
 private:
-	XOJ_TYPE_ATTRIB;
+    Settings& settings;
+    AudioQueue<float>& audioQueue;
 
-protected:
-	bool stopConsumer = false;
-
-	Settings* settings = nullptr;
-	AudioQueue<float>* audioQueue = nullptr;
-	std::thread* consumerThread = nullptr;
+    std::thread consumerThread{};
+    std::atomic<bool> stopConsumer{false};
 };

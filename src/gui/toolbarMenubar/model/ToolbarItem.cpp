@@ -1,58 +1,32 @@
 #include "ToolbarItem.h"
 
+#include <utility>
+
 int ToolbarItem::sid = 0;
 
-ToolbarItem::ToolbarItem(string name)
-{
-	XOJ_INIT_TYPE(ToolbarItem);
+ToolbarItem::ToolbarItem(string name) {
+    this->name = std::move(name);
+    this->id = ToolbarItem::sid++;
 
-	this->name = name;
-	this->id = ToolbarItem::sid++;
-
-	if (ToolbarItem::sid < 0)
-	{
-		ToolbarItem::sid = 0;
-	}
+    if (ToolbarItem::sid < 0) {
+        ToolbarItem::sid = 0;
+    }
 }
 
-ToolbarItem::ToolbarItem(const ToolbarItem& item)
-{
-	XOJ_INIT_TYPE(ToolbarItem);
-
-	this->id = item.id;
-	this->name = item.name;
+ToolbarItem::ToolbarItem(const ToolbarItem& item) {
+    this->id = item.id;
+    this->name = item.name;
 }
 
-ToolbarItem::ToolbarItem()
-{
-	XOJ_INIT_TYPE(ToolbarItem);
-
-	this->name = "";
-	this->id = -100;
+ToolbarItem::ToolbarItem() {
+    this->name = "";
+    this->id = -100;
 }
 
-ToolbarItem::~ToolbarItem()
-{
-	XOJ_RELEASE_TYPE(ToolbarItem);
-}
+ToolbarItem::~ToolbarItem() = default;
 
-string ToolbarItem::getName()
-{
-	XOJ_CHECK_TYPE(ToolbarItem);
+auto ToolbarItem::getName() -> string { return this->name; }
 
-	return this->name;
-}
+auto ToolbarItem::operator==(ToolbarItem& other) -> bool { return this->name == other.name; }
 
-bool ToolbarItem::operator==(ToolbarItem& other)
-{
-	XOJ_CHECK_TYPE(ToolbarItem);
-
-	return this->name == other.name;
-}
-
-int ToolbarItem::getId()
-{
-	XOJ_CHECK_TYPE(ToolbarItem);
-
-	return this->id;
-}
+auto ToolbarItem::getId() const -> int { return this->id; }

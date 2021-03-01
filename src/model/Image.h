@@ -11,48 +11,48 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "Element.h"
-#include <XournalType.h>
+#include "XournalType.h"
 
-class Image : public Element
-{
+class Image: public Element {
 public:
-	Image();
-	virtual ~Image();
-
-public:
-	void setWidth(double width);
-	void setHeight(double height);
-
-	void setImage(string data);
-	void setImage(cairo_surface_t* image);
-	void setImage(GdkPixbuf* img);
-	cairo_surface_t* getImage();
-
-	virtual void scale(double x0, double y0, double fx, double fy);
-	virtual void rotate(double x0, double y0, double xo, double yo, double th);
-
-	/**
-	 * @overwrite
-	 */
-	virtual Element* clone();
+    Image();
+    virtual ~Image();
 
 public:
-	// Serialize interface
-	void serialize(ObjectOutputStream& out);
-	void readSerialized(ObjectInputStream& in);
+    void setWidth(double width);
+    void setHeight(double height);
+
+    void setImage(string data);
+    void setImage(cairo_surface_t* image);
+    void setImage(GdkPixbuf* img);
+    cairo_surface_t* getImage();
+
+    virtual void scale(double x0, double y0, double fx, double fy, double rotation, bool restoreLineWidth);
+    virtual void rotate(double x0, double y0, double th);
+
+    /**
+     * @overwrite
+     */
+    virtual Element* clone();
+
+public:
+    // Serialize interface
+    void serialize(ObjectOutputStream& out);
+    void readSerialized(ObjectInputStream& in);
 
 private:
-	virtual void calcSize();
+    void calcSize() const override;
 
-	static cairo_status_t cairoReadFunction(Image* image, unsigned char* data, unsigned int length);
+    static cairo_status_t cairoReadFunction(Image* image, unsigned char* data, unsigned int length);
+
 private:
-	XOJ_TYPE_ATTRIB;
+    cairo_surface_t* image = nullptr;
 
+    string data;
 
-	cairo_surface_t* image = NULL;
-
-	string data;
-
-	string::size_type read = false;
+    string::size_type read = false;
 };

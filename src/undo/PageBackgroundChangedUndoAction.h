@@ -11,37 +11,34 @@
 
 #pragma once
 
-#include "UndoAction.h"
-
 #include "model/BackgroundImage.h"
 #include "model/PageRef.h"
 
+#include "UndoAction.h"
 
-class PageBackgroundChangedUndoAction : public UndoAction
-{
+
+class PageBackgroundChangedUndoAction: public UndoAction {
 public:
-	PageBackgroundChangedUndoAction(PageRef page, PageType origType, int origPdfPage,
-									BackgroundImage origBackgroundImage, double origW, double origH);
-	virtual ~PageBackgroundChangedUndoAction();
+    PageBackgroundChangedUndoAction(const PageRef& page, const PageType& origType, int origPdfPage,
+                                    BackgroundImage origBackgroundImage, double origW, double origH);
+    virtual ~PageBackgroundChangedUndoAction();
 
 public:
-	virtual bool undo(Control* control);
-	virtual bool redo(Control* control);
+    virtual bool undo(Control* control);
+    virtual bool redo(Control* control);
 
-	virtual string getText();
+    virtual string getText();
 
 private:
-	XOJ_TYPE_ATTRIB;
+    PageType origType;
+    int origPdfPage;
+    BackgroundImage origBackgroundImage;
+    double origW;
+    double origH;
 
-	PageType origType;
-	int origPdfPage;
-	BackgroundImage origBackgroundImage;
-	double origW;
-	double origH;
-
-	PageType newType;
-	int newPdfPage = -1;
-	BackgroundImage newBackgroundImage;
-	double newW = 0;
-	double newH = 0;
+    PageType newType;
+    int newPdfPage = -1;
+    BackgroundImage newBackgroundImage;
+    double newW = 0;
+    double newH = 0;
 };

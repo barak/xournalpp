@@ -1,66 +1,41 @@
 #include "GladeSearchpath.h"
 
-GladeSearchpath::GladeSearchpath()
-{
-	XOJ_INIT_TYPE(GladeSearchpath);
-}
+GladeSearchpath::GladeSearchpath() = default;
 
-GladeSearchpath::~GladeSearchpath()
-{
-	XOJ_CHECK_TYPE(GladeSearchpath);
+GladeSearchpath::~GladeSearchpath() { directories.clear(); }
 
-	directories.clear();
+auto GladeSearchpath::findFile(fs::path const& subdir, fs::path const& file) -> fs::path {
+    fs::path filepath;
+    if (subdir.empty()) {
+        filepath = file;
+    } else {
+        filepath = subdir / file;
+    }
 
-	XOJ_RELEASE_TYPE(GladeSearchpath);
-}
+    // We step through each directory to find it.
+    for (const auto& dir: directories) {
+        auto pathname = dir / filepath;
 
-string GladeSearchpath::findFile(string subdir, string file)
-{
-	XOJ_CHECK_TYPE(GladeSearchpath);
+        if (fs::exists(pathname)) {
+            return pathname;
+        }
+    }
 
-	string filename;
-	if (subdir == "")
-	{
-		filename = file;
-	}
-	else
-	{
-		filename = subdir + G_DIR_SEPARATOR_S + file;
-	}
-
-	// We step through each directory to find it.
-	for (string dir : directories)
-	{
-		string pathname = dir + G_DIR_SEPARATOR_S + filename;
-
-		if (g_file_test(pathname.c_str(), G_FILE_TEST_EXISTS))
-		{
-			return pathname;
-		}
-	}
-
-	return "";
+    return fs::path{};
 }
 
 /**
  * @return The first search path
  */
-string GladeSearchpath::getFirstSearchPath()
-{
-	if (this->directories.size() < 1)
-	{
-		return "";
-	}
+auto GladeSearchpath::getFirstSearchPath() const -> fs::path {
+    if (this->directories.empty()) {
+        return {};
+    }
 
-	return this->directories[0];
+    return this->directories[0];
 }
 
 /**
  * Use this function to set the directory containing installed pixmaps and Glade XML files.
  */
-void GladeSearchpath::addSearchDirectory(string directory)
-{
-	XOJ_CHECK_TYPE(GladeSearchpath);
-
-	this->directories.push_back(directory);
-}
+void GladeSearchpath::addSearchDirectory(fs::path const& directory) { this->directories.push_back(directory); }

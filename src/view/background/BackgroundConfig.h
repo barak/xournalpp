@@ -11,25 +11,24 @@
 
 #pragma once
 
-#include <XournalType.h>
-
 #include <map>
+#include <string>
+
+#include "XournalType.h"
 using std::map;
 
-class BackgroundConfig
-{
+class BackgroundConfig {
 public:
-	BackgroundConfig(string config);
-	virtual ~BackgroundConfig();
+    BackgroundConfig(const string& config);
+    virtual ~BackgroundConfig();
 
 public:
-	bool loadValue(string key, string& value);
-	bool loadValue(string key, int& value);
-	bool loadValue(string key, double& value);
-	bool loadValueHex(string key, int& value);
+    bool loadValue(const string& key, string& value) const;
+    bool loadValue(const string& key, int& value) const;
+    bool loadValue(const string& key, double& value) const;
+    bool loadValueHex(const string& key, int& value) const;
+    bool loadValueHex(const string& key, uint32_t& value) const;
 
 private:
-	XOJ_TYPE_ATTRIB;
-
-	map<string, string> data;
+    map<string, string> data;
 };

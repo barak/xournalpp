@@ -1,74 +1,56 @@
 #include "ScaleUndoAction.h"
 
+#include <cmath>
+
 #include "model/Element.h"
 #include "model/PageRef.h"
 
-#include <i18n.h>
-#include <Range.h>
+#include "Range.h"
+#include "i18n.h"
 
-ScaleUndoAction::ScaleUndoAction(PageRef page, vector<Element*>* elements, double x0, double y0, double fx, double fy)
- : UndoAction("ScaleUndoAction")
-{
-	XOJ_INIT_TYPE(ScaleUndoAction);
-
-	this->page = page;
-	this->elements = *elements;
-	this->x0 = x0;
-	this->y0 = y0;
-	this->fx = fx;
-	this->fy = fy;
+ScaleUndoAction::ScaleUndoAction(const PageRef& page, vector<Element*>* elements, double x0, double y0, double fx,
+                                 double fy, double rotation, bool restoreLineWidth):
+        UndoAction("ScaleUndoAction") {
+    this->page = page;
+    this->elements = *elements;
+    this->x0 = x0;
+    this->y0 = y0;
+    this->fx = std::isfinite(fx) ? fx : 1.0;
+    this->fy = std::isfinite(fy) ? fy : 1.0;
+    this->rotation = rotation;
+    this->restoreLineWidth = restoreLineWidth;
 }
 
-ScaleUndoAction::~ScaleUndoAction()
-{
-	XOJ_CHECK_TYPE(ScaleUndoAction);
+ScaleUndoAction::~ScaleUndoAction() { this->page = nullptr; }
 
-	this->page = NULL;
-
-	XOJ_RELEASE_TYPE(ScaleUndoAction);
+auto ScaleUndoAction::undo(Control* control) -> bool {
+    applyScale(1 / this->fx, 1 / this->fy, restoreLineWidth);
+    this->undone = true;
+    return true;
 }
 
-bool ScaleUndoAction::undo(Control* control)
-{
-	XOJ_CHECK_TYPE(ScaleUndoAction);
-
-	applyScale(1 / this->fx, 1 / this->fy);
-	this->undone = true;
-	return true;
+auto ScaleUndoAction::redo(Control* control) -> bool {
+    applyScale(this->fx, this->fy, restoreLineWidth);
+    this->undone = false;
+    return true;
 }
 
-bool ScaleUndoAction::redo(Control* control)
-{
-	XOJ_CHECK_TYPE(ScaleUndoAction);
+void ScaleUndoAction::applyScale(double fx, double fy, bool restoreLineWidth) {
+    if (this->elements.empty()) {
+        return;
+    }
 
-	applyScale(this->fx, this->fy);
-	this->undone = false;
-	return true;
+    Range r(elements.front()->getX(), elements.front()->getY());
+
+    for (Element* e: this->elements) {
+        r.addPoint(e->getX(), e->getY());
+        r.addPoint(e->getX() + e->getElementWidth(), e->getY() + e->getElementHeight());
+        e->scale(this->x0, this->y0, fx, fy, this->rotation, restoreLineWidth);
+        r.addPoint(e->getX(), e->getY());
+        r.addPoint(e->getX() + e->getElementWidth(), e->getY() + e->getElementHeight());
+    }
+
+    this->page->fireRangeChanged(r);
 }
 
-void ScaleUndoAction::applyScale(double fx, double fy)
-{
-	XOJ_CHECK_TYPE(ScaleUndoAction);
-
-	if (this->elements.empty()) return;
-
-	Range r(elements.front()->getX(), elements.front()->getY());
-
-	for (Element* e : this->elements)
-	{
-		r.addPoint(e->getX(), e->getY());
-		r.addPoint(e->getX() + e->getElementWidth(), e->getY() + e->getElementHeight());
-		e->scale(this->x0, this->y0, fx, fy);
-		r.addPoint(e->getX(), e->getY());
-		r.addPoint(e->getX() + e->getElementWidth(), e->getY() + e->getElementHeight());
-	}
-
-	this->page->fireRangeChanged(r);
-}
-
-string ScaleUndoAction::getText()
-{
-	XOJ_CHECK_TYPE(ScaleUndoAction);
-
-	return _("Scale");
-}
+auto ScaleUndoAction::getText() -> string { return _("Scale"); }

@@ -1,74 +1,41 @@
 #include "Font.h"
 
-#include <serializing/ObjectInputStream.h>
-#include <serializing/ObjectOutputStream.h>
+#include <utility>
 
-XojFont::XojFont()
-{
-	XOJ_INIT_TYPE(XojFont);
+#include "serializing/ObjectInputStream.h"
+#include "serializing/ObjectOutputStream.h"
+
+XojFont::XojFont() = default;
+
+XojFont::~XojFont() = default;
+
+auto XojFont::getName() const -> string { return this->name; }
+
+void XojFont::setName(string name) { this->name = std::move(name); }
+
+auto XojFont::getSize() const -> double { return size; }
+
+void XojFont::setSize(double size) { this->size = size; }
+
+void XojFont::operator=(const XojFont& font) {
+    this->name = font.name;
+    this->size = font.size;
 }
 
-XojFont::~XojFont()
-{
-	XOJ_RELEASE_TYPE(XojFont);
+void XojFont::serialize(ObjectOutputStream& out) {
+    out.writeObject("XojFont");
+
+    out.writeString(this->name);
+    out.writeDouble(this->size);
+
+    out.endObject();
 }
 
-string XojFont::getName()
-{
-	XOJ_CHECK_TYPE(XojFont);
+void XojFont::readSerialized(ObjectInputStream& in) {
+    in.readObject("XojFont");
 
-	return this->name;
-}
+    this->name = in.readString();
+    this->size = in.readDouble();
 
-void XojFont::setName(string name)
-{
-	XOJ_CHECK_TYPE(XojFont);
-
-	this->name = name;
-}
-
-double XojFont::getSize()
-{
-	XOJ_CHECK_TYPE(XojFont);
-
-	return size;
-}
-
-void XojFont::setSize(double size)
-{
-	XOJ_CHECK_TYPE(XojFont);
-
-	this->size = size;
-}
-
-void XojFont::operator=(const XojFont& font)
-{
-	XOJ_CHECK_TYPE(XojFont);
-
-	this->name = font.name;
-	this->size = font.size;
-}
-
-void XojFont::serialize(ObjectOutputStream& out)
-{
-	XOJ_CHECK_TYPE(XojFont);
-
-	out.writeObject("XojFont");
-
-	out.writeString(this->name);
-	out.writeDouble(this->size);
-
-	out.endObject();
-}
-
-void XojFont::readSerialized(ObjectInputStream& in)
-{
-	XOJ_CHECK_TYPE(XojFont);
-
-	in.readObject("XojFont");
-
-	this->name = in.readString();
-	this->size = in.readDouble();
-
-	in.endObject();
+    in.endObject();
 }

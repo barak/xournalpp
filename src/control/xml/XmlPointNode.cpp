@@ -1,58 +1,38 @@
-#include "Util.h"
 #include "XmlPointNode.h"
 
-XmlPointNode::XmlPointNode(const char* tag)
- : XmlAudioNode(tag),
-   points(NULL)
-{
-	XOJ_INIT_TYPE(XmlPointNode);
+#include "Util.h"
+
+XmlPointNode::XmlPointNode(const char* tag): XmlAudioNode(tag), points(nullptr) {}
+
+XmlPointNode::~XmlPointNode() {
+    for (GList* l = this->points; l != nullptr; l = l->next) {
+        auto* p = static_cast<Point*>(l->data);
+        delete p;
+    }
+    g_list_free(this->points);
+    this->points = nullptr;
 }
 
-XmlPointNode::~XmlPointNode()
-{
-	XOJ_CHECK_TYPE(XmlPointNode);
+void XmlPointNode::addPoint(const Point* point) { this->points = g_list_append(this->points, new Point(*point)); }
 
-	for (GList* l = this->points; l != NULL; l = l->next)
-	{
-		Point* p = (Point*) l->data;
-		delete p;
-	}
-	g_list_free(this->points);
-	this->points = NULL;
+void XmlPointNode::writeOut(OutputStream* out) {
+    /** Write stroke and its attributes */
+    out->write("<");
+    out->write(tag);
+    writeAttributes(out);
 
-	XOJ_RELEASE_TYPE(XmlPointNode);
-}
+    out->write(">");
 
-void XmlPointNode::addPoint(const Point* point)
-{
-	XOJ_CHECK_TYPE(XmlPointNode);
+    for (GList* l = this->points; l != nullptr; l = l->next) {
+        auto* p = static_cast<Point*>(l->data);
+        if (l != this->points) {
+            out->write(" ");
+        }
 
-	this->points = g_list_append(this->points, new Point(*point));
-}
+        Util::writeCoordinateString(out, p->x, p->y);
+    }
 
-void XmlPointNode::writeOut(OutputStream* out)
-{
-	XOJ_CHECK_TYPE(XmlPointNode);
-
-	/** Write stroke and its attributes */
-	out->write("<");
-	out->write(tag);
-	writeAttributes(out);
-
-	out->write(">");
-
-	for (GList* l = this->points; l != NULL; l = l->next)
-	{
-		Point* p = (Point*) l->data;
-		if (l != this->points)
-		{
-			out->write(" ");
-		}
-
-		Util::writeCoordinateString(out, p->x, p->y);
-	}
-
-	out->write("</");
-	out->write(tag);
-	out->write(">\n");
+    out->write("</");
+    out->write(tag);
+    out->write(">\n");
 }

@@ -16,69 +16,72 @@
 
 class SidebarPreviewBase;
 
-class SidebarPreviewLayerEntry : public SidebarPreviewBaseEntry
-{
+class SidebarPreviewLayerEntry: public SidebarPreviewBaseEntry {
 public:
-	SidebarPreviewLayerEntry(SidebarPreviewBase* sidebar, PageRef page, int layer, size_t index);
-	virtual ~SidebarPreviewLayerEntry();
+    SidebarPreviewLayerEntry(SidebarPreviewBase* sidebar, const PageRef& page, int layer, const string& layerName,
+                             size_t index, bool stacked);
+    virtual ~SidebarPreviewLayerEntry();
 
 public:
-	virtual int getHeight();
+    virtual int getHeight();
 
-	/**
-	 * @return What should be rendered
-	 * @override
-	 */
-	virtual PreviewRenderType getRenderType();
+    /**
+     * @return What should be rendered
+     * @override
+     */
+    virtual PreviewRenderType getRenderType();
 
-	/**
-	 * @return The layer to be rendered
-	 */
-	int getLayer();
+    /**
+     * @return The layer to be rendered
+     */
+    int getLayer() const;
 
-	virtual GtkWidget* getWidget();
+    virtual GtkWidget* getWidget();
 
-	/**
-	 * Set the value of the visible checkbox
-	 */
-	void setVisibleCheckbox(bool enabled);
+    /**
+     * Set the value of the visible checkbox
+     */
+    void setVisibleCheckbox(bool enabled);
 
 protected:
-	virtual void mouseButtonPressCallback();
-	void checkboxToggled();
+    virtual void mouseButtonPressCallback();
+    void checkboxToggled();
 
 private:
-	XOJ_TYPE_ATTRIB;
+    /**
+     * Layer preview index
+     */
+    size_t index;
 
-	/**
-	 * Layer preview index
-	 */
-	size_t index;
+    /**
+     * Layer to render
+     */
+    int layer;
 
-	/**
-	 * Layer to render
-	 */
-	int layer;
+    /**
+     * Toolbar with controls
+     */
+    int toolbarHeight = 0;
 
-	/**
-	 * Toolbar with controls
-	 */
-	int toolbarHeight = 0;
+    /**
+     * Container box for the preview and the button
+     */
+    GtkWidget* box;
 
-	/**
-	 * Container box for the preview and the button
-	 */
-	GtkWidget* box;
+    /**
+     * Visible checkbox
+     */
+    GtkWidget* cbVisible = nullptr;
 
-	/**
-	 * Visible checkbox
-	 */
-	GtkWidget* cbVisible = NULL;
+    /**
+     * Ignore events
+     */
+    bool inUpdate = false;
 
-	/**
-	 * Ignore events
-	 */
-	bool inUpdate = false;
+    /**
+     * render as stacked
+     */
+    bool stacked = false;
 
-	friend class PreviewJob;
+    friend class PreviewJob;
 };

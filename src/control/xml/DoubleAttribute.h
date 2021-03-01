@@ -11,20 +11,20 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "Attribute.h"
-#include <XournalType.h>
+#include "XournalType.h"
 
-class DoubleAttribute : public XMLAttribute
-{
+class DoubleAttribute: public XMLAttribute {
 public:
-	DoubleAttribute(const char* name, double value);
-	virtual ~DoubleAttribute();
+    DoubleAttribute(const char* name, double value);
+    virtual ~DoubleAttribute();
 
 public:
-	virtual void writeOut(OutputStream* out);
+    virtual void writeOut(OutputStream* out);
 
 private:
-	XOJ_TYPE_ATTRIB;
-
-	double value;
+    double value;
 };

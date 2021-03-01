@@ -11,27 +11,29 @@
 
 #pragma once
 
-#include <PageRange.h>
-#include <Path.h>
-#include <XournalType.h>
+#include <string>
+#include <vector>
 
-class XojPdfExport
-{
+#include "control/jobs/BaseExportJob.h"
+
+#include "PageRange.h"
+#include "XournalType.h"
+#include "filesystem.h"
+
+class XojPdfExport {
 public:
-	XojPdfExport();
-	virtual ~XojPdfExport();
+    XojPdfExport();
+    virtual ~XojPdfExport();
 
 public:
-	virtual bool createPdf(Path file) = 0;
-	virtual bool createPdf(Path file, PageRangeVector& range) = 0;
-	virtual string getLastError() = 0;
+    virtual bool createPdf(fs::path const& file, bool progressiveMode) = 0;
+    virtual bool createPdf(fs::path const& file, PageRangeVector& range, bool progressiveMode) = 0;
+    virtual string getLastError() = 0;
 
-	/**
-	 * Export without background
-	 */
-	virtual void setNoBackgroundExport(bool noBackgroundExport);
+    /**
+     * Export without background
+     */
+    virtual void setExportBackground(ExportBackgroundType exportBackground);
 
 private:
-	XOJ_TYPE_ATTRIB;
 };
-

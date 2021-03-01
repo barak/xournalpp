@@ -11,47 +11,47 @@
 
 #pragma once
 
-#include "XournalType.h"
+#include <memory>
+#include <string>
+#include <vector>
 
 #include <gtk/gtk.h>
 
-#include <memory>
+#include "XournalType.h"
+#include "filesystem.h"
 
-struct BackgroundImage
-{
-	BackgroundImage();
-	BackgroundImage(const BackgroundImage& img);
-	BackgroundImage(BackgroundImage&& img) noexcept;
-	~BackgroundImage();
+struct BackgroundImage {
+    BackgroundImage();
+    BackgroundImage(const BackgroundImage& img);
+    BackgroundImage(BackgroundImage&& img) noexcept;
+    ~BackgroundImage();
 
-	BackgroundImage& operator=(const BackgroundImage& img) = default;
-	BackgroundImage& operator=(BackgroundImage&& img) = default;
+    BackgroundImage& operator=(const BackgroundImage& img) = default;
+    BackgroundImage& operator=(BackgroundImage&& img) = default;
 
 
-	bool operator==(const BackgroundImage& img);
+    bool operator==(const BackgroundImage& img);
 
-	void free();
+    void free();
 
-	void loadFile(string filename, GError** error);
-	void loadFile(GInputStream* stream, string filename, GError** error);
+    void loadFile(fs::path const& filepath, GError** error);
+    void loadFile(GInputStream* stream, fs::path const& filepath, GError** error);
 
-	int getCloneId();
-	void setCloneId(int id);
-	void clearSaveState();
+    int getCloneId();
+    void setCloneId(int id);
+    void clearSaveState();
 
-	string getFilename();
-	void setFilename(string filename);
+    fs::path getFilepath();
+    void setFilepath(fs::path filepath);
 
-	bool isAttached();
-	void setAttach(bool attach);
+    bool isAttached();
+    void setAttach(bool attach);
 
-	GdkPixbuf* getPixbuf();
+    GdkPixbuf* getPixbuf();
 
-	bool isEmpty();
+    bool isEmpty();
 
 private:
-	struct Content;
-
-	XOJ_TYPE_ATTRIB;
-	std::shared_ptr<Content> img;
+    struct Content;
+    std::shared_ptr<Content> img;
 };

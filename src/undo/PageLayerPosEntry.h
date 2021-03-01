@@ -11,34 +11,22 @@
 
 #pragma once
 
-template<class T>
-class PageLayerPosEntry
-{
+template <class T>
+class PageLayerPosEntry {
 public:
-	PageLayerPosEntry(Layer* layer, T* element, int pos)
-	{
-		XOJ_INIT_TYPE(PageLayerPosEntry);
-		
-		this->element = element;
-		this->pos = pos;
-		this->layer = layer;
-	}
-	
-	~PageLayerPosEntry()
-	{
-		XOJ_RELEASE_TYPE(PageLayerPosEntry);
-	}
+    PageLayerPosEntry(Layer* layer, T* element, int pos) {
+        this->element = element;
+        this->pos = pos;
+        this->layer = layer;
+    }
+
+    ~PageLayerPosEntry() {}
 
 private:
-	XOJ_TYPE_ATTRIB;
-
 public:
-	Layer* layer;
-	T* element;
-	int pos;
+    Layer* layer;
+    T* element;
+    int pos;
 
-	static int cmp(PageLayerPosEntry<T>* a, PageLayerPosEntry<T>* b)
-	{
-		return a->pos - b->pos;
-	}
+    static int cmp(PageLayerPosEntry<T>* a, PageLayerPosEntry<T>* b) { return a->pos - b->pos; }
 };

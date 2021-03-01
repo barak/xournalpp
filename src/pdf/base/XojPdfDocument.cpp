@@ -4,110 +4,42 @@
 
 #include "pdf/popplerapi/PopplerGlibDocument.h"
 
-XojPdfDocument::XojPdfDocument()
- : doc(new PopplerGlibDocument())
-{
-	XOJ_INIT_TYPE(XojPdfDocument);
+#include "filesystem.h"
+
+XojPdfDocument::XojPdfDocument(): doc(new PopplerGlibDocument()) {}
+
+XojPdfDocument::XojPdfDocument(const XojPdfDocument& doc): doc(new PopplerGlibDocument()) {}
+
+XojPdfDocument::~XojPdfDocument() {
+    delete doc;
+    doc = nullptr;
 }
 
-XojPdfDocument::XojPdfDocument(const XojPdfDocument& doc)
- : doc(new PopplerGlibDocument())
-{
-	XOJ_INIT_TYPE(XojPdfDocument);
+auto XojPdfDocument::operator=(const XojPdfDocument& doc) -> XojPdfDocument& {
+    this->doc->assign(doc.doc);
+    return *this;
 }
 
-XojPdfDocument::~XojPdfDocument()
-{
-	XOJ_CHECK_TYPE(XojPdfDocument);
+auto XojPdfDocument::operator==(XojPdfDocument& doc) -> bool { return this->doc->equals(doc.doc); }
 
-	delete doc;
-	doc = NULL;
+void XojPdfDocument::assign(XojPdfDocumentInterface* doc) { this->doc->assign(doc); }
 
-	XOJ_RELEASE_TYPE(XojPdfDocument);
+auto XojPdfDocument::equals(XojPdfDocumentInterface* doc) -> bool { return this->doc->equals(doc); }
+
+auto XojPdfDocument::save(fs::path const& file, GError** error) -> bool { return doc->save(file, error); }
+
+auto XojPdfDocument::load(fs::path const& file, string password, GError** error) -> bool {
+    return doc->load(file, password, error);
 }
 
-XojPdfDocument& XojPdfDocument::operator=(const XojPdfDocument& doc)
-{
-	XOJ_CHECK_TYPE(XojPdfDocument);
-
-	this->doc->assign(doc.doc);
-	return *this;
+auto XojPdfDocument::load(gpointer data, gsize length, string password, GError** error) -> bool {
+    return doc->load(data, length, password, error);
 }
 
-bool XojPdfDocument::operator==(XojPdfDocument& doc)
-{
-	XOJ_CHECK_TYPE(XojPdfDocument);
+auto XojPdfDocument::isLoaded() -> bool { return doc->isLoaded(); }
 
-	return this->doc->equals(doc.doc);
-}
+auto XojPdfDocument::getPage(size_t page) -> XojPdfPageSPtr { return doc->getPage(page); }
 
-void XojPdfDocument::assign(XojPdfDocumentInterface* doc)
-{
-	XOJ_CHECK_TYPE(XojPdfDocument);
+auto XojPdfDocument::getPageCount() -> size_t { return doc->getPageCount(); }
 
-	this->doc->assign(doc);
-}
-
-bool XojPdfDocument::equals(XojPdfDocumentInterface* doc)
-{
-	XOJ_CHECK_TYPE(XojPdfDocument);
-
-	return this->doc->equals(doc);
-}
-
-bool XojPdfDocument::save(Path filename, GError** error)
-{
-	XOJ_CHECK_TYPE(XojPdfDocument);
-
-	return doc->save(filename, error);
-}
-
-bool XojPdfDocument::load(Path filename, string password, GError** error)
-{
-	XOJ_CHECK_TYPE(XojPdfDocument);
-
-	return doc->load(filename, password, error);
-}
-
-bool XojPdfDocument::load(gpointer data, gsize length, string password, GError** error)
-{
-	XOJ_CHECK_TYPE(XojPdfDocument);
-
-	return doc->load(data, length, password, error);
-}
-
-bool XojPdfDocument::isLoaded()
-{
-	XOJ_CHECK_TYPE(XojPdfDocument);
-
-	return doc->isLoaded();
-}
-
-XojPdfPageSPtr XojPdfDocument::getPage(size_t page)
-{
-	XOJ_CHECK_TYPE(XojPdfDocument);
-
-	return doc->getPage(page);
-}
-
-size_t XojPdfDocument::getPageCount()
-{
-	XOJ_CHECK_TYPE(XojPdfDocument);
-
-	return doc->getPageCount();
-}
-
-XojPdfDocumentInterface* XojPdfDocument::getDocumentInterface()
-{
-	XOJ_CHECK_TYPE(XojPdfDocument);
-
-	return doc;
-}
-
-XojPdfBookmarkIterator* XojPdfDocument::getContentsIter()
-{
-	XOJ_CHECK_TYPE(XojPdfDocument);
-
-	return doc->getContentsIter();
-}
-
+auto XojPdfDocument::getContentsIter() -> XojPdfBookmarkIterator* { return doc->getContentsIter(); }

@@ -11,23 +11,23 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "UndoAction.h"
-#include <XournalType.h>
+#include "XournalType.h"
 
-class CopyUndoAction : public UndoAction
-{
+class CopyUndoAction: public UndoAction {
 public:
-	CopyUndoAction(PageRef pageref, int pageNr);
-	virtual ~CopyUndoAction();
+    CopyUndoAction(const PageRef& pageref, int pageNr);
+    virtual ~CopyUndoAction();
 
 public:
-	virtual bool undo(Control* control);
-	virtual bool redo(Control* control);
+    virtual bool undo(Control* control);
+    virtual bool redo(Control* control);
 
-	virtual string getText();
+    virtual string getText();
 
 private:
-	XOJ_TYPE_ATTRIB;
-
-	int pageNr;
+    int pageNr;
 };

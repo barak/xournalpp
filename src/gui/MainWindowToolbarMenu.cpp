@@ -1,183 +1,134 @@
 #include "MainWindowToolbarMenu.h"
-#include "MainWindow.h"
 
 #include "gui/toolbarMenubar/ToolMenuHandler.h"
 #include "gui/toolbarMenubar/model/ToolbarData.h"
 #include "gui/toolbarMenubar/model/ToolbarModel.h"
 
-class MenuSelectToolbarData
-{
-public:
-	MenuSelectToolbarData(MainWindowToolbarMenu* tbm, GtkWidget* item, ToolbarData* d, int index)
-	{
-		this->tbm = tbm;
-		this->item = item;
-		this->d = d;
-		this->index = index;
-	}
+#include "MainWindow.h"
 
-	MainWindowToolbarMenu* tbm;
-	GtkWidget* item;
-	ToolbarData* d;
-	int index;
+class MenuSelectToolbarData {
+public:
+    MenuSelectToolbarData(MainWindowToolbarMenu* tbm, GtkWidget* item, ToolbarData* d, int index) {
+        this->tbm = tbm;
+        this->item = item;
+        this->d = d;
+        this->index = index;
+    }
+
+    MainWindowToolbarMenu* tbm;
+    GtkWidget* item;
+    ToolbarData* d;
+    int index;
 };
 
 
-MainWindowToolbarMenu::MainWindowToolbarMenu(MainWindow* win)
- : win(win)
-{
-	XOJ_INIT_TYPE(MainWindowToolbarMenu);
+MainWindowToolbarMenu::MainWindowToolbarMenu(MainWindow* win): win(win) {}
+
+MainWindowToolbarMenu::~MainWindowToolbarMenu() {
+    menuitems.clear();
+    freeToolMenu();
 }
 
-MainWindowToolbarMenu::~MainWindowToolbarMenu()
-{
-	XOJ_CHECK_TYPE(MainWindowToolbarMenu);
-
-	menuitems.clear();
-	freeToolMenu();
-
-	XOJ_RELEASE_TYPE(MainWindowToolbarMenu);
+void MainWindowToolbarMenu::freeToolMenu() {
+    for (MenuSelectToolbarData* data: toolbarMenuData) {
+        delete data;
+    }
+    this->toolbarMenuData.clear();
 }
 
-void MainWindowToolbarMenu::freeToolMenu()
-{
-	XOJ_CHECK_TYPE(MainWindowToolbarMenu);
-
-	for (MenuSelectToolbarData* data : toolbarMenuData)
-	{
-		delete data;
-	}
-	this->toolbarMenuData.clear();
+void MainWindowToolbarMenu::setTmpDisabled(bool disabled) {
+    for (MenuSelectToolbarData* data: this->toolbarMenuData) {
+        gtk_widget_set_sensitive(data->item, !disabled);
+    }
 }
 
-void MainWindowToolbarMenu::setTmpDisabled(bool disabled)
-{
-	XOJ_CHECK_TYPE(MainWindowToolbarMenu);
+void MainWindowToolbarMenu::selectToolbar(Settings* settings, ToolMenuHandler* toolbar) {
+    selectedToolbar = nullptr;
 
-	for (MenuSelectToolbarData* data : this->toolbarMenuData)
-	{
-		gtk_widget_set_sensitive(data->item, !disabled);
-	}
+    const string& selectedId = settings->getSelectedToolbar();
+
+    for (ToolbarData* d: *toolbar->getModel()->getToolbars()) {
+        if (selectedToolbar == nullptr) {
+            selectedToolbar = d;
+        }
+
+        if (selectedId == d->getId()) {
+            selectedToolbar = d;
+            break;
+        }
+    }
 }
 
-void MainWindowToolbarMenu::selectToolbar(Settings* settings, ToolMenuHandler* toolbar)
-{
-	XOJ_CHECK_TYPE(MainWindowToolbarMenu);
+auto MainWindowToolbarMenu::getSelectedToolbar() -> ToolbarData* { return selectedToolbar; }
 
-	selectedToolbar = NULL;
+void MainWindowToolbarMenu::removeOldElements(GtkMenuShell* menubar) {
+    for (GtkWidget* w: menuitems) {
+        gtk_container_remove(GTK_CONTAINER(menubar), w);
+    }
+    menuitems.clear();
 
-	string selectedId = settings->getSelectedToolbar();
-
-	for (ToolbarData* d : *toolbar->getModel()->getToolbars())
-	{
-		if (selectedToolbar == NULL)
-		{
-			selectedToolbar = d;
-		}
-
-		if (selectedId == d->getId())
-		{
-			selectedToolbar = d;
-			break;
-		}
-	}
+    freeToolMenu();
 }
 
-ToolbarData* MainWindowToolbarMenu::getSelectedToolbar()
-{
-	XOJ_CHECK_TYPE(MainWindowToolbarMenu);
-
-	return selectedToolbar;
+void MainWindowToolbarMenu::tbSelectMenuitemActivated(GtkCheckMenuItem* checkmenuitem, MenuSelectToolbarData* data) {
+    data->tbm->menuClicked(checkmenuitem, data);
 }
 
-void MainWindowToolbarMenu::removeOldElements(GtkMenuShell* menubar)
-{
-	XOJ_CHECK_TYPE(MainWindowToolbarMenu);
+void MainWindowToolbarMenu::menuClicked(GtkCheckMenuItem* menuitem, MenuSelectToolbarData* data) {
+    if (!gtk_check_menu_item_get_active(menuitem)) {
+        // Ignore disabled menus
+        return;
+    }
 
-	for (GtkWidget* w : menuitems)
-	{
-		gtk_container_remove(GTK_CONTAINER(menubar), w);
-	}
-	menuitems.clear();
+    win->toolbarSelected(data->d);
 
-	freeToolMenu();
+    for (int i = 0; i < static_cast<int>(this->toolbarMenuData.size()); i++) {
+        if (data->index == i) {
+            continue;
+        }
+
+        GtkWidget* w = this->toolbarMenuData[i]->item;
+
+        if (GTK_IS_CHECK_MENU_ITEM(w)) {
+            gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(w), false);
+        }
+    }
 }
 
-void MainWindowToolbarMenu::tbSelectMenuitemActivated(GtkCheckMenuItem* checkmenuitem, MenuSelectToolbarData* data)
-{
-	data->tbm->menuClicked(checkmenuitem, data);
+void MainWindowToolbarMenu::addToolbarMenuEntry(ToolbarData* d, GtkMenuShell* menubar, int& menuPos) {
+    GtkWidget* item = gtk_check_menu_item_new_with_label(d->getName().c_str());
+    gtk_check_menu_item_set_draw_as_radio(GTK_CHECK_MENU_ITEM(item), true);
+    gtk_widget_show(item);
+    gtk_menu_shell_insert(menubar, item, menuPos);
+
+    menuitems.push_back(item);
+
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(item), d == selectedToolbar);
+
+    auto* data = new MenuSelectToolbarData(this, item, d, toolbarMenuData.size());
+    toolbarMenuData.push_back(data);
+
+    g_signal_connect(item, "toggled", G_CALLBACK(tbSelectMenuitemActivated), data);
+
+    if (inPredefinedSection && !d->isPredefined()) {
+        GtkWidget* separator = gtk_separator_menu_item_new();
+        gtk_widget_show(separator);
+        gtk_menu_shell_insert(menubar, separator, menuPos++);
+
+        inPredefinedSection = false;
+        menuitems.push_back(separator);
+    }
 }
 
-void MainWindowToolbarMenu::menuClicked(GtkCheckMenuItem* menuitem, MenuSelectToolbarData* data)
-{
-	XOJ_CHECK_TYPE(MainWindowToolbarMenu);
+void MainWindowToolbarMenu::updateToolbarMenu(GtkMenuShell* menubar, Settings* settings, ToolMenuHandler* toolbar) {
+    selectToolbar(settings, toolbar);
+    removeOldElements(menubar);
 
-	if (!gtk_check_menu_item_get_active(menuitem))
-	{
-		// Ignore disabled menus
-		return;
-	}
+    inPredefinedSection = true;
 
-	win->toolbarSelected(data->d);
-
-	for (int i = 0; i < (int)this->toolbarMenuData.size(); i++)
-	{
-		if (data->index == i)
-		{
-			continue;
-		}
-
-		GtkWidget* w = this->toolbarMenuData[i]->item;
-
-		if (GTK_IS_CHECK_MENU_ITEM(w))
-		{
-			gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(w), false);
-		}
-	}
-}
-
-void MainWindowToolbarMenu::addToolbarMenuEntry(ToolbarData* d, GtkMenuShell* menubar, int& menuPos)
-{
-	XOJ_CHECK_TYPE(MainWindowToolbarMenu);
-
-	GtkWidget* item = gtk_check_menu_item_new_with_label(d->getName().c_str());
-	gtk_check_menu_item_set_draw_as_radio(GTK_CHECK_MENU_ITEM(item), true);
-	gtk_widget_show(item);
-	gtk_menu_shell_insert(menubar, item, menuPos);
-
-	menuitems.push_back(item);
-
-	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(item), d == selectedToolbar);
-
-	MenuSelectToolbarData* data = new MenuSelectToolbarData(this, item, d, toolbarMenuData.size());
-	toolbarMenuData.push_back(data);
-
-	g_signal_connect(item, "toggled", G_CALLBACK(tbSelectMenuitemActivated), data);
-
-	if (inPredefinedSection && !d->isPredefined())
-	{
-		GtkWidget* separator = gtk_separator_menu_item_new();
-		gtk_widget_show(separator);
-		gtk_menu_shell_insert(menubar, separator, menuPos++);
-
-		inPredefinedSection = false;
-		menuitems.push_back(separator);
-	}
-}
-
-void MainWindowToolbarMenu::updateToolbarMenu(GtkMenuShell* menubar, Settings* settings, ToolMenuHandler* toolbar)
-{
-	XOJ_CHECK_TYPE(MainWindowToolbarMenu);
-
-	selectToolbar(settings, toolbar);
-	removeOldElements(menubar);
-
-	inPredefinedSection = true;
-
-	int menuPos = 0;
-	for (ToolbarData* d : *toolbar->getModel()->getToolbars())
-	{
-		addToolbarMenuEntry(d, menubar, menuPos);
-		menuPos++;
-	}
+    int menuPos = 0;
+    for (ToolbarData* d: *toolbar->getModel()->getToolbars()) {
+        addToolbarMenuEntry(d, menubar, menuPos);
+        menuPos++;
+    }
 }

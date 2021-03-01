@@ -14,24 +14,19 @@
 
 #include "XmlNode.h"
 
-class XmlAudioNode : public XmlNode
-{
+class XmlAudioNode: public XmlNode {
 public:
-	XmlAudioNode(const char* tag);
-	virtual ~XmlAudioNode();
+    XmlAudioNode(const char* tag);
+    virtual ~XmlAudioNode();
 
 private:
-	XmlAudioNode(const XmlAudioNode& node);
-	void operator=(const XmlAudioNode& node);
+    XmlAudioNode(const XmlAudioNode& node);
+    void operator=(const XmlAudioNode& node);
 
 public:
-	string getAudioFilename();
-	void setAudioFilename(string filename);
+    [[maybe_unused]] fs::path getAudioFilepath();
+    [[maybe_unused]] void setAudioFilepath(fs::path filepath);
 
 private:
-	XOJ_TYPE_ATTRIB;
-
-	string audioFilename;
+    fs::path audioFilepath;
 };
-
-

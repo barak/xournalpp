@@ -11,25 +11,25 @@
 
 #pragma once
 
-#include <XournalType.h>
+#include <string>
+#include <vector>
+
+#include "XournalType.h"
 
 class LayerController;
 
-class LayerCtrlListener
-{
+class LayerCtrlListener {
 public:
-	LayerCtrlListener();
-	virtual ~LayerCtrlListener();
+    LayerCtrlListener();
+    virtual ~LayerCtrlListener();
 
 public:
-	void registerListener(LayerController* handler);
-	void unregisterListener();
+    void registerListener(LayerController* handler);
+    void unregisterListener();
 
-	virtual void rebuildLayerMenu();
-	virtual void layerVisibilityChanged();
+    virtual void rebuildLayerMenu();
+    virtual void layerVisibilityChanged();
 
 private:
-	XOJ_TYPE_ATTRIB;
-
-	LayerController* handler;
+    LayerController* handler;
 };

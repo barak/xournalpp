@@ -11,53 +11,54 @@
 
 #pragma once
 
-#include "control/settings/Settings.h"
-#include "gui/GladeGui.h"
 #include "control/pagetype/PageTypeMenu.h"
 #include "control/settings/PageTemplateSettings.h"
+#include "control/settings/Settings.h"
+#include "gui/GladeGui.h"
 
 class PageTypeHandler;
 class PageTypeMenu;
 class PageTypeInfo;
 class PopupMenuButton;
 
-class PageTemplateDialog : public GladeGui, public PageTypeMenuChangeListener
-{
+class PageTemplateDialog: public GladeGui, public PageTypeMenuChangeListener {
 public:
-	PageTemplateDialog(GladeSearchpath* gladeSearchPath, Settings* settings, PageTypeHandler* types);
-	virtual ~PageTemplateDialog();
+    PageTemplateDialog(GladeSearchpath* gladeSearchPath, Settings* settings, PageTypeHandler* types);
+    PageTemplateDialog(PageTemplateDialog&) = delete;
+    PageTemplateDialog(PageTemplateDialog&&) = delete;
+    PageTemplateDialog& operator=(PageTemplateDialog&) = delete;
+    PageTemplateDialog&& operator=(PageTemplateDialog&&) = delete;
+    virtual ~PageTemplateDialog();
 
 public:
-	virtual void show(GtkWindow* parent);
+    virtual void show(GtkWindow* parent);
 
-	/**
-	 * The dialog was confirmed / saved
-	 */
-	bool isSaved();
+    /**
+     * The dialog was confirmed / saved
+     */
+    bool isSaved() const;
 
-	void changeCurrentPageBackground(PageTypeInfo* info);
+    void changeCurrentPageBackground(PageTypeInfo* info);
 
 private:
-	void showPageSizeDialog();
-	void updatePageSize();
-	void saveToFile();
-	void loadFromFile();
-	void updateDataFromModel();
-	void saveToModel();
+    void showPageSizeDialog();
+    void updatePageSize();
+    void saveToFile();
+    void loadFromFile();
+    void updateDataFromModel();
+    void saveToModel();
 
 private:
-	XOJ_TYPE_ATTRIB;
+    Settings* settings;
 
-	Settings* settings;
+    PageTemplateSettings model;
 
-	PageTemplateSettings model;
+    std::unique_ptr<PageTypeMenu> pageMenu;
 
-	PageTypeMenu* pageMenu;
+    std::unique_ptr<PopupMenuButton> popupMenuButton;
 
-	PopupMenuButton* popupMenuButton;
-
-	/**
-	 * The dialog was confirmed / saved
-	 */
-	bool saved = false;
+    /**
+     * The dialog was confirmed / saved
+     */
+    bool saved = false;
 };

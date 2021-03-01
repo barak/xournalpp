@@ -13,15 +13,13 @@
 
 #include "gui/GladeGui.h"
 
-class AboutDialog : public GladeGui
-{
+class AboutDialog: public GladeGui {
 public:
-	AboutDialog(GladeSearchpath* gladeSearchPath);
-	virtual ~AboutDialog();
+    AboutDialog(GladeSearchpath* gladeSearchPath);
+    ~AboutDialog() override;
 
 public:
-	virtual void show(GtkWindow* parent);
+    void show(GtkWindow* parent) override;
 
 private:
-	XOJ_TYPE_ATTRIB;
 };

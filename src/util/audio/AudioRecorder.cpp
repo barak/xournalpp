@@ -1,74 +1,32 @@
-#include <utility>
-
 #include "AudioRecorder.h"
 
-AudioRecorder::AudioRecorder(Settings* settings)
-		: settings(settings)
-{
-	XOJ_INIT_TYPE(AudioRecorder);
+#include <utility>
 
-	this->audioQueue = new AudioQueue<float>();
-	this->portAudioProducer = new PortAudioProducer(settings, this->audioQueue);
-	this->vorbisConsumer = new VorbisConsumer(settings, this->audioQueue);
+AudioRecorder::~AudioRecorder() { this->stop(); }
+
+auto AudioRecorder::start(const string& filename) -> bool {
+    // Start recording
+    bool status = this->portAudioProducer->startRecording();
+
+    // Start the consumer for writing the data
+    status = status && this->vorbisConsumer->start(filename);
+
+    return status;
 }
 
-AudioRecorder::~AudioRecorder()
-{
-	XOJ_CHECK_TYPE(AudioRecorder);
+void AudioRecorder::stop() {
+    // Stop recording audio
+    this->portAudioProducer->stopRecording();
 
-	this->stop();
+    // Wait for libsox to write all the data
+    this->vorbisConsumer->join();
 
-	delete this->portAudioProducer;
-	this->portAudioProducer = nullptr;
-
-	delete this->vorbisConsumer;
-	this->vorbisConsumer = nullptr;
-
-	delete this->audioQueue;
-	this->audioQueue = nullptr;
-
-	XOJ_RELEASE_TYPE(AudioRecorder);
+    // Reset the queue for the next recording
+    this->audioQueue->reset();
 }
 
-bool AudioRecorder::start(string filename)
-{
-	XOJ_CHECK_TYPE(AudioRecorder);
+auto AudioRecorder::isRecording() const -> bool { return this->portAudioProducer->isRecording(); }
 
-	// Start recording
-	bool status = this->portAudioProducer->startRecording();
-
-	// Start the consumer for writing the data
-	status = status && this->vorbisConsumer->start(std::move(filename));
-
-	return status;
-}
-
-void AudioRecorder::stop()
-{
-	XOJ_CHECK_TYPE(AudioRecorder);
-
-	// Stop recording audio
-	this->portAudioProducer->stopRecording();
-
-	// Wait for libsox to write all the data
-	this->vorbisConsumer->join();
-
-	// Reset the queue for the next recording
-	this->audioQueue->reset();
-}
-
-bool AudioRecorder::isRecording()
-{
-	XOJ_CHECK_TYPE(AudioRecorder);
-
-	return this->portAudioProducer->isRecording();
-}
-
-std::vector<DeviceInfo> AudioRecorder::getInputDevices()
-{
-	XOJ_CHECK_TYPE(AudioRecorder);
-
-	std::list<DeviceInfo> deviceList = this->portAudioProducer->getInputDevices();
-	return vector<DeviceInfo>{std::make_move_iterator(std::begin(deviceList)),
-							  std::make_move_iterator(std::end(deviceList))};
+auto AudioRecorder::getInputDevices() const -> std::vector<DeviceInfo> {
+    return this->portAudioProducer->getInputDevices();
 }

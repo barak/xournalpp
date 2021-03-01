@@ -11,143 +11,78 @@
  * No xournal memory leak tests necessary, because we use smart ptrs to ensure memory correctness
  */
 
-struct BackgroundImage::Content
-{
-	Content(string filename, GError** error)
-			: filename(std::move(filename)), pixbuf(gdk_pixbuf_new_from_file(this->filename.c_str(), error))
-	{
-	}
+struct BackgroundImage::Content {
+    Content(fs::path path, GError** error):
+            path(std::move(path)), pixbuf(gdk_pixbuf_new_from_file(this->path.u8string().c_str(), error)) {}
 
-	Content(GInputStream* stream, string filename, GError** error)
-			: filename(std::move(filename)), pixbuf(gdk_pixbuf_new_from_stream(stream, nullptr, error))
-	{
-	}
+    Content(GInputStream* stream, fs::path path, GError** error):
+            path(std::move(path)), pixbuf(gdk_pixbuf_new_from_stream(stream, nullptr, error)) {}
 
-	~Content()
-	{
-		g_object_unref(this->pixbuf);
-		this->pixbuf = nullptr;
-	};
+    ~Content() {
+        g_object_unref(this->pixbuf);
+        this->pixbuf = nullptr;
+    };
 
-	Content(const Content&) = delete;
-	Content(Content&&) = default;
-	Content& operator=(const Content&) = delete;
-	Content& operator=(Content&&) = default;
+    Content(const Content&) = delete;
+    Content(Content&&) = default;
+    auto operator=(const Content&) -> Content& = delete;
+    auto operator=(Content &&) -> Content& = default;
 
-	string filename;
-	GdkPixbuf* pixbuf = nullptr;
-	int pageId = -1;
-	bool attach = false;
+    fs::path path;
+    GdkPixbuf* pixbuf = nullptr;
+    int pageId = -1;
+    bool attach = false;
 };
 
-BackgroundImage::BackgroundImage()
-{
-	XOJ_INIT_TYPE(BackgroundImage);
+BackgroundImage::BackgroundImage() = default;
+
+BackgroundImage::BackgroundImage(const BackgroundImage& img) = default;
+
+BackgroundImage::BackgroundImage(BackgroundImage&& img) noexcept: img(std::move(img.img)) {}
+
+BackgroundImage::~BackgroundImage() = default;
+
+auto BackgroundImage::operator==(const BackgroundImage& img) -> bool { return this->img == img.img; }
+
+void BackgroundImage::free() { this->img.reset(); }
+
+void BackgroundImage::loadFile(fs::path const& path, GError** error) {
+    this->img = std::make_shared<Content>(path, error);
 }
 
-BackgroundImage::BackgroundImage(const BackgroundImage& img) : img(img.img)
-{
-	XOJ_INIT_TYPE(BackgroundImage);
-	XOJ_CHECK_TYPE_OBJ((&img), BackgroundImage);
+void BackgroundImage::loadFile(GInputStream* stream, fs::path const& path, GError** error) {
+    this->img = std::make_shared<Content>(stream, path, error);
 }
 
-BackgroundImage::BackgroundImage(BackgroundImage&& img) noexcept : img(std::move(img.img))
-{
-	XOJ_INIT_TYPE(BackgroundImage);
-	XOJ_CHECK_TYPE_OBJ((&img), BackgroundImage);
+auto BackgroundImage::getCloneId() -> int { return this->img ? this->img->pageId : -1; }
+
+void BackgroundImage::setCloneId(int id) {
+    if (this->img) {
+        this->img->pageId = id;
+    }
 }
 
-BackgroundImage::~BackgroundImage()
-{
-	XOJ_CHECK_TYPE(BackgroundImage);
-	XOJ_RELEASE_TYPE(BackgroundImage);
+void BackgroundImage::clearSaveState() { this->setCloneId(-1); }
+
+auto BackgroundImage::getFilepath() -> fs::path { return this->img ? this->img->path : fs::path{}; }
+
+void BackgroundImage::setFilepath(fs::path path) {
+    if (this->img) {
+        this->img->path = std::move(path);
+    }
 }
 
-bool BackgroundImage::operator==(const BackgroundImage& img)
-{
-	XOJ_CHECK_TYPE(BackgroundImage);
-	return this->img == img.img;
+auto BackgroundImage::isAttached() -> bool { return this->img ? this->img->attach : false; }
+
+void BackgroundImage::setAttach(bool attach) {
+    if (!this->img) {
+        g_warning("BackgroundImage::setAttach: please load first an image before call setAttach!");
+        Stacktrace::printStracktrace();
+        return;
+    }
+    this->img->attach = attach;
 }
 
-void BackgroundImage::free()
-{
-	XOJ_CHECK_TYPE(BackgroundImage);
-	this->img.reset();
-}
+auto BackgroundImage::getPixbuf() -> GdkPixbuf* { return this->img ? this->img->pixbuf : nullptr; }
 
-void BackgroundImage::loadFile(string filename, GError** error)
-{
-	XOJ_CHECK_TYPE(BackgroundImage);
-	this->img = std::make_shared<Content>(std::move(filename), error);
-}
-
-void BackgroundImage::loadFile(GInputStream* stream, string filename, GError** error)
-{
-	XOJ_CHECK_TYPE(BackgroundImage);
-	this->img = std::make_shared<Content>(stream, std::move(filename), error);
-}
-
-int BackgroundImage::getCloneId()
-{
-	XOJ_CHECK_TYPE(BackgroundImage);
-	return this->img ? this->img->pageId : -1;
-}
-
-void BackgroundImage::setCloneId(int id)
-{
-	XOJ_CHECK_TYPE(BackgroundImage);
-	if (this->img)
-	{
-		this->img->pageId = id;
-	}
-}
-
-void BackgroundImage::clearSaveState()
-{
-	this->setCloneId(-1);
-}
-
-string BackgroundImage::getFilename()
-{
-	XOJ_CHECK_TYPE(BackgroundImage);
-	return this->img ? this->img->filename : "";
-}
-
-void BackgroundImage::setFilename(string filename)
-{
-	XOJ_CHECK_TYPE(BackgroundImage);
-	if (this->img)
-	{
-		this->img->filename = std::move(filename);
-	}
-}
-
-bool BackgroundImage::isAttached()
-{
-	XOJ_CHECK_TYPE(BackgroundImage);
-	return this->img ? this->img->attach : false;
-}
-
-void BackgroundImage::setAttach(bool attach)
-{
-	XOJ_CHECK_TYPE(BackgroundImage);
-	if (!this->img)
-	{
-		g_warning("BackgroundImage::setAttach: please load first an image before call setAttach!");
-		Stacktrace::printStracktrace();
-		return;
-	}
-	this->img->attach = attach;
-}
-
-GdkPixbuf* BackgroundImage::getPixbuf()
-{
-	XOJ_CHECK_TYPE(BackgroundImage);
-	return this->img ? this->img->pixbuf : nullptr;
-}
-
-bool BackgroundImage::isEmpty()
-{
-	XOJ_CHECK_TYPE(BackgroundImage);
-	return !this->img;
-}
+auto BackgroundImage::isEmpty() -> bool { return !this->img; }

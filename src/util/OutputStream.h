@@ -11,45 +11,44 @@
 
 #pragma once
 
-#include "XournalType.h"
+#include <string>
+#include <vector>
 
-#include <Path.h>
 #include <zlib.h>
 
-class OutputStream
-{
+#include "XournalType.h"
+#include "filesystem.h"
+
+class OutputStream {
 public:
-	OutputStream();
-	virtual ~OutputStream();
+    OutputStream();
+    virtual ~OutputStream();
 
 public:
-	virtual void write(const char* data);
-	virtual void write(const char* data, int len) = 0;
-	virtual void write(const string& str);
+    virtual void write(const char* str);
+    virtual void write(const char* data, int len) = 0;
+    virtual void write(const string& str);
 
-	virtual void close() = 0;
+    virtual void close() = 0;
 };
 
-class GzOutputStream : public OutputStream
-{
+class GzOutputStream: public OutputStream {
 public:
-	GzOutputStream(Path filename);
-	virtual ~GzOutputStream();
+    GzOutputStream(fs::path file);
+    virtual ~GzOutputStream();
 
 public:
-	virtual void write(const char* data, int len);
+    virtual void write(const char* data, int len);
 
-	virtual void close();
+    virtual void close();
 
-	string& getLastError();
+    string& getLastError();
 
 private:
-	XOJ_TYPE_ATTRIB;
+    gzFile fp = nullptr;
 
-	gzFile fp = NULL;
+    string error;
 
-	string error;
-
-	string target;
-	Path filename;
+    string target;
+    fs::path file;
 };

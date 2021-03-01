@@ -31,7 +31,6 @@ ppa-build
 
 # CMake
 build/
-obj-*/
 desktop/desktop_install.sh
 
 # NetBeans
@@ -60,3 +59,8 @@ flatpak-build/
 
 # Lua
 lua-*
+
+# Clangd 
+compile_commands.json
+.clangd
+.cache

@@ -13,20 +13,17 @@
 
 #include "XmlNode.h"
 
-class XmlTexNode : public XmlNode
-{
+class XmlTexNode: public XmlNode {
 public:
-	XmlTexNode(const char* tag, string& binaryData);
-	virtual ~XmlTexNode();
+    XmlTexNode(const char* tag, string&& binaryData);
+    virtual ~XmlTexNode();
 
 public:
-	virtual void writeOut(OutputStream* out);
+    virtual void writeOut(OutputStream* out);
 
 private:
-	XOJ_TYPE_ATTRIB;
-
-	/**
-	 * Binary .PNG or .PDF
-	 */
-	string& binaryData;
+    /**
+     * Binary .PNG or .PDF
+     */
+    string binaryData;
 };

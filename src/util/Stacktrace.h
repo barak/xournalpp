@@ -13,14 +13,15 @@
 
 #include <iostream>
 
-class Stacktrace
-{
+#include "filesystem.h"
+
+class Stacktrace {
 private:
-	Stacktrace();
-	virtual ~Stacktrace();
+    Stacktrace();
+    virtual ~Stacktrace();
 
 public:
-	static std::string getExePath();
-	static void printStracktrace();
-	static void printStracktrace(std::ostream& stream);
+    static fs::path getExePath();
+    static void printStracktrace();
+    static void printStracktrace(std::ostream& stream);
 };

@@ -12,24 +12,22 @@
 #pragma once
 
 #include "model/Point.h"
+
 #include "XmlAudioNode.h"
 
-class XmlPointNode : public XmlAudioNode
-{
+class XmlPointNode: public XmlAudioNode {
 public:
-	XmlPointNode(const char* tag);
-	virtual ~XmlPointNode();
+    XmlPointNode(const char* tag);
+    virtual ~XmlPointNode();
 
 private:
-	XmlPointNode(const XmlPointNode& node);
-	void operator=(const XmlPointNode& node);
+    XmlPointNode(const XmlPointNode& node);
+    void operator=(const XmlPointNode& node);
 
 public:
-	void addPoint(const Point* point);
-	virtual void writeOut(OutputStream* out);
+    void addPoint(const Point* point);
+    virtual void writeOut(OutputStream* out);
 
 private:
-	XOJ_TYPE_ATTRIB;
-
-	GList* points;
+    GList* points;
 };

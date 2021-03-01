@@ -1,148 +1,75 @@
 #include "ToolBase.h"
 
-ToolBase::ToolBase()
-{
-	XOJ_INIT_TYPE(ToolBase);
-}
+ToolBase::ToolBase() = default;
 
-ToolBase::~ToolBase()
-{
-	XOJ_CHECK_TYPE(ToolBase);
-	XOJ_RELEASE_TYPE(ToolBase);
-}
-
-/**
- * Apply data from another ToolBase or any extending class
- */
-void ToolBase::applyFrom(const ToolBase* t)
-{
-	XOJ_CHECK_TYPE(ToolBase);
-
-	this->color = t->color;
-	this->size = t->size;
-	this->drawingType = t->drawingType;
-	this->fill = t->fill;
-	this->fillAlpha = t->fillAlpha;
-	this->lineStyle = t->lineStyle;
-}
+ToolBase::~ToolBase() = default;
 
 /**
  * @return Color of the tool for all drawing tools
  */
-int ToolBase::getColor() const
-{
-	XOJ_CHECK_TYPE(ToolBase);
-
-	return this->color;
-}
+auto ToolBase::getColor() const -> Color { return this->color; }
 
 /**
  * @param color Color of the tool for all drawing tools
  */
-void ToolBase::setColor(int color)
-{
-	XOJ_CHECK_TYPE(ToolBase);
-
-	this->color = color;
-}
+void ToolBase::setColor(Color color) { this->color = color; }
 
 /**
  * @return Size of a drawing tool
  */
-ToolSize ToolBase::getSize() const
-{
-	XOJ_CHECK_TYPE(ToolBase);
-
-	return this->size;
-}
+auto ToolBase::getSize() const -> ToolSize { return this->size; }
 
 /**
  * @param size Size of a drawing tool
  */
-void ToolBase::setSize(ToolSize size)
-{
-	XOJ_CHECK_TYPE(ToolBase);
-
-	this->size = size;
-}
+void ToolBase::setSize(ToolSize size) { this->size = size; }
 
 /**
  * @return Draw special shape
  */
-DrawingType ToolBase::getDrawingType() const
-{
-	XOJ_CHECK_TYPE(ToolBase);
-
-	return this->drawingType;
-}
+auto ToolBase::getDrawingType() const -> DrawingType { return this->drawingType; }
 
 /**
  * @param drawingType Draw special shape
  */
-void ToolBase::setDrawingType(DrawingType drawingType)
-{
-	XOJ_CHECK_TYPE(ToolBase);
+void ToolBase::setDrawingType(DrawingType drawingType) { this->drawingType = drawingType; }
 
-	this->drawingType = drawingType;
-}
+/**
+ * @return Eraser Type
+ */
+auto ToolBase::getEraserType() const -> EraserType { return this->eraserType; }
+
+/**
+ * @param eraserType type of eraser
+ */
+void ToolBase::setEraserType(EraserType eraserType) { this->eraserType = eraserType; }
 
 /**
  * @return Fill of the shape is enabled
  */
-bool ToolBase::getFill() const
-{
-	XOJ_CHECK_TYPE(ToolBase);
-
-	return this->fill;
-}
+auto ToolBase::getFill() const -> bool { return this->fill; }
 
 /**
  * @param fill Fill of the shape is enabled
  */
-void ToolBase::setFill(bool fill)
-{
-	XOJ_CHECK_TYPE(ToolBase);
-
-	this->fill = fill;
-}
+void ToolBase::setFill(bool fill) { this->fill = fill; }
 
 /**
  * @return Alpha for fill
  */
-int ToolBase::getFillAlpha() const
-{
-	XOJ_CHECK_TYPE(ToolBase);
-
-	return this->fillAlpha;
-}
+auto ToolBase::getFillAlpha() const -> int { return this->fillAlpha; }
 
 /**
  * @param fillAlpha Alpha for fill
  */
-void ToolBase::setFillAlpha(int fillAlpha)
-{
-	XOJ_CHECK_TYPE(ToolBase);
-
-	this->fillAlpha = fillAlpha;
-}
+void ToolBase::setFillAlpha(int fillAlpha) { this->fillAlpha = fillAlpha; }
 
 /**
  * @return Style of the line drawing
  */
-const LineStyle& ToolBase::getLineStyle() const
-{
-	XOJ_CHECK_TYPE(ToolBase);
-
-	return this->lineStyle;
-}
+auto ToolBase::getLineStyle() const -> const LineStyle& { return this->lineStyle; }
 
 /**
  * @param style Style of the line drawing
  */
-void ToolBase::setLineStyle(const LineStyle& style)
-{
-	XOJ_CHECK_TYPE(ToolBase);
-
-	this->lineStyle = style;
-}
-
+void ToolBase::setLineStyle(const LineStyle& style) { this->lineStyle = style; }

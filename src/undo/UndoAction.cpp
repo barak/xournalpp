@@ -1,28 +1,13 @@
 #include "UndoAction.h"
 
-#include <Rectangle.h>
+#include "Rectangle.h"
 
-UndoAction::UndoAction(const char* className)
- : className(className)
-{
-	XOJ_INIT_TYPE(UndoAction);
+UndoAction::UndoAction(std::string className): className(std::move(className)) {}
+
+auto UndoAction::getPages() -> std::vector<PageRef> {
+    std::vector<PageRef> pages;
+    pages.push_back(this->page);
+    return pages;
 }
 
-UndoAction::~UndoAction()
-{
-	XOJ_RELEASE_TYPE(UndoAction);
-}
-
-vector<PageRef> UndoAction::getPages()
-{
-	XOJ_CHECK_TYPE(UndoAction);
-
-	vector<PageRef> pages;
-	pages.push_back(this->page);
-	return pages;
-}
-
-const char* UndoAction::getClassName() const
-{
-	return this->className;
-}
+auto UndoAction::getClassName() const -> std::string const& { return this->className; }

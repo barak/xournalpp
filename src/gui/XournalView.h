@@ -1,7 +1,7 @@
 /*
  * Xournal++
  *
- * The widget wich displays the PDF and the drawings
+ * The widget which displays the PDF and the drawings
  *
  * @author Xournal++ Team
  * https://github.com/xournalpp/xournalpp
@@ -11,15 +11,12 @@
 
 #pragma once
 
+#include <gtk/gtk.h>
+
 #include "control/zoom/ZoomListener.h"
-#include "control/zoom/ZoomGesture.h"
 #include "model/DocumentListener.h"
 #include "model/PageRef.h"
 #include "widgets/XournalWidget.h"
-
-#include <Arrayiterator.h>
-
-#include <gtk/gtk.h>
 
 class Control;
 class XournalppCursor;
@@ -29,176 +26,162 @@ class Layout;
 class PagePositionHandler;
 class XojPageView;
 class PdfCache;
-class Rectangle;
 class RepaintHandler;
 class ScrollHandling;
 class TextEditor;
 class HandRecognition;
 
-class XournalView : public DocumentListener, public ZoomListener
-{
+class XournalView: public DocumentListener, public ZoomListener {
 public:
-	XournalView(GtkWidget* parent, Control* control, ScrollHandling* scrollHandling, ZoomGesture* zoomGesture);
-	virtual ~XournalView();
+    XournalView(GtkWidget* parent, Control* control, ScrollHandling* scrollHandling);
+    virtual ~XournalView();
 
 public:
-	void zoomIn();
-	void zoomOut();
+    bool paint(GtkWidget* widget, GdkEventExpose* event);
 
-	bool paint(GtkWidget* widget, GdkEventExpose* event);
-
-	void requestPage(XojPageView* page);
-
+    void requestPage(XojPageView* page);
 
     // Recalculate the layout width and height amd layout the pages with the updated layout size
-	void layoutPages();
+    void layoutPages();
 
-	void scrollTo(size_t pageNo, double y = 0);
-	
-	//Relative navigation in current layout:
-	void pageRelativeXY(int offCol, int offRow );
+    void scrollTo(size_t pageNo, double y = 0);
 
-	size_t getCurrentPage();
+    // Relative navigation in current layout:
+    void pageRelativeXY(int offCol, int offRow);
 
-	void clearSelection();
+    size_t getCurrentPage() const;
 
-	void layerChanged(size_t page);
+    void clearSelection();
 
-	void requestFocus();
+    void layerChanged(size_t page);
 
-	void forceUpdatePagenumbers();
+    void requestFocus();
 
-	XojPageView* getViewFor(size_t pageNr);
+    void forceUpdatePagenumbers();
 
-	bool searchTextOnPage(string text, size_t p, int* occures, double* top);
+    XojPageView* getViewFor(size_t pageNr);
 
-	bool cut();
-	bool copy();
-	bool paste();
+    bool searchTextOnPage(string text, size_t p, int* occures, double* top);
 
-	void getPasteTarget(double& x, double& y);
+    bool cut();
+    bool copy();
+    bool paste();
 
-	bool actionDelete();
+    void getPasteTarget(double& x, double& y);
 
-	void endTextAllPages(XojPageView* except = NULL);
+    bool actionDelete();
 
-	void resetShapeRecognizer();
+    void endTextAllPages(XojPageView* except = nullptr);
 
-	int getDisplayWidth() const;
-	int getDisplayHeight() const;
+    void resetShapeRecognizer();
 
-	bool isPageVisible(size_t page, int* visibleHeight);
+    int getDisplayWidth() const;
+    int getDisplayHeight() const;
 
-	void ensureRectIsVisible(int x, int y, int width, int height);
+    bool isPageVisible(size_t page, int* visibleHeight);
 
-	void setSelection(EditSelection* selection);
-	EditSelection* getSelection();
-	void deleteSelection(EditSelection* sel = NULL);
-	void repaintSelection(bool evenWithoutSelection = false);
+    void ensureRectIsVisible(int x, int y, int width, int height);
 
-	TextEditor* getTextEditor();
-	ArrayIterator<XojPageView*> pageViewIterator();
-	Control* getControl();
-	double getZoom();
-	int getDpiScaleFactor();
-	Document* getDocument();
-	PdfCache* getCache();
-	RepaintHandler* getRepaintHandler();
-	GtkWidget* getWidget();
-	XournalppCursor* getCursor();
+    void setSelection(EditSelection* selection);
+    EditSelection* getSelection();
+    void deleteSelection(EditSelection* sel = nullptr);
+    void repaintSelection(bool evenWithoutSelection = false);
 
-	Rectangle* getVisibleRect(int page);
-	Rectangle* getVisibleRect(XojPageView* redrawable);
+    TextEditor* getTextEditor();
+    std::vector<XojPageView*> const& getViewPages() const;
 
-	/**
-	 * A pen action was detected now, therefore ignore touch events
-	 * for a short time
-	 */
-	void penActionDetected();
+    Control* getControl();
+    double getZoom();
+    int getDpiScaleFactor();
+    Document* getDocument();
+    PdfCache* getCache();
+    RepaintHandler* getRepaintHandler();
+    GtkWidget* getWidget();
+    XournalppCursor* getCursor();
 
-	/**
-	 * @return Helper class for Touch specific fixes
-	 */
-	HandRecognition* getHandRecognition();
+    Rectangle<double>* getVisibleRect(int page);
+    Rectangle<double>* getVisibleRect(XojPageView* redrawable);
 
-	/**
-	 * @returnScrollbars
-	 */
-	ScrollHandling* getScrollHandling();
+    /**
+     * A pen action was detected now, therefore ignore touch events
+     * for a short time
+     */
+    void penActionDetected();
 
-	/**
-	 * Get the handler for the zoom gesture
-	 * @return The handler
-	 */
-	ZoomGesture* getZoomGestureHandler();
+    /**
+     * @return Helper class for Touch specific fixes
+     */
+    HandRecognition* getHandRecognition();
+
+    /**
+     * @return Scrollbars
+     */
+    ScrollHandling* getScrollHandling();
 
 public:
-	// ZoomListener interface
-	void zoomChanged();
+    // ZoomListener interface
+    void zoomChanged();
 
 public:
-	// DocumentListener interface
-	void pageSelected(size_t page);
-	void pageSizeChanged(size_t page);
-	void pageChanged(size_t page);
-	void pageInserted(size_t page);
-	void pageDeleted(size_t page);
-	void documentChanged(DocumentChangeType type);
+    // DocumentListener interface
+    void pageSelected(size_t page);
+    void pageSizeChanged(size_t page);
+    void pageChanged(size_t page);
+    void pageInserted(size_t page);
+    void pageDeleted(size_t page);
+    void documentChanged(DocumentChangeType type);
 
 public:
-	bool onKeyPressEvent(GdkEventKey* event);
-	bool onKeyReleaseEvent(GdkEventKey* event);
+    bool onKeyPressEvent(GdkEventKey* event);
+    bool onKeyReleaseEvent(GdkEventKey* event);
 
-	static void onRealized(GtkWidget* widget, XournalView* view);
+    static void onRealized(GtkWidget* widget, XournalView* view);
 
 private:
-	void fireZoomChanged();
+    void fireZoomChanged();
 
-	void addLoadPageToQue(PageRef page, int priority);
+    std::pair<size_t, size_t> preloadPageBounds(size_t page, size_t maxPage);
 
-	Rectangle* getVisibleRect(size_t page);
+    Rectangle<double>* getVisibleRect(size_t page);
 
-	static gboolean clearMemoryTimer(XournalView* widget);
+    static gboolean clearMemoryTimer(XournalView* widget);
 
-	static void staticLayoutPages(GtkWidget *widget, GtkAllocation* allocation, void* data);
+    void cleanupBufferCache();
+
+    static void staticLayoutPages(GtkWidget* widget, GtkAllocation* allocation, void* data);
 
 private:
-	XOJ_TYPE_ATTRIB;
+    /**
+     * Scrollbars
+     */
+    ScrollHandling* scrollHandling = nullptr;
 
-	/**
-	 * Scrollbars
-	 */
-	ScrollHandling* scrollHandling = NULL;
+    GtkWidget* widget = nullptr;
+    double margin = 75;
 
-	ZoomGesture* zoomGesture;
+    std::vector<XojPageView*> viewPages;
 
-	GtkWidget* widget = NULL;
-	double margin = 75;
+    Control* control = nullptr;
 
-	XojPageView** viewPages = NULL;
-	size_t viewPagesLen = 0;
+    size_t currentPage = 0;
+    size_t lastSelectedPage = -1;
 
-	Control* control = NULL;
+    PdfCache* cache = nullptr;
 
-	size_t currentPage = 0;
-	size_t lastSelectedPage = -1;
+    /**
+     * Handler for rerendering pages / repainting pages
+     */
+    RepaintHandler* repaintHandler = nullptr;
 
-	PdfCache* cache = NULL;
+    /**
+     * Memory cleanup timeout
+     */
+    int cleanupTimeout = -1;
 
-	/**
-	 * Handler for rerendering pages / repainting pages
-	 */
-	RepaintHandler* repaintHandler = NULL;
+    /**
+     * Helper class for Touch specific fixes
+     */
+    HandRecognition* handRecognition = nullptr;
 
-	/**
-	 * Memory cleanup timeout
-	 */
-	int cleanupTimeout = -1;
-
-	/**
-	 * Helper class for Touch specific fixes
-	 */
-	HandRecognition* handRecognition = NULL;
-
-	friend class Layout;
+    friend class Layout;
 };

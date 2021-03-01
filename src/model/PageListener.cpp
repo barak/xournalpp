@@ -2,35 +2,18 @@
 
 #include "PageHandler.h"
 
-PageListener::PageListener()
-{
-	XOJ_INIT_TYPE(PageListener);
+PageListener::PageListener() = default;
+
+PageListener::~PageListener() { unregisterListener(); }
+
+void PageListener::registerListener(std::shared_ptr<PageHandler> const& _handler) {
+    this->handler = _handler;
+    _handler->addListener(this);
 }
 
-PageListener::~PageListener()
-{
-	XOJ_CHECK_TYPE(PageListener);
-
-	unregisterListener();
-
-	XOJ_RELEASE_TYPE(PageListener);
-}
-
-void PageListener::registerListener(PageHandler* handler)
-{
-	XOJ_CHECK_TYPE(PageListener);
-
-	this->handler = handler;
-	handler->addListener(this);
-}
-
-void PageListener::unregisterListener()
-{
-	XOJ_CHECK_TYPE(PageListener);
-
-	if (this->handler)
-	{
-		this->handler->removeListener(this);
-		this->handler = NULL;
-	}
+void PageListener::unregisterListener() {
+    if (auto _handler = this->handler.lock(); _handler) {
+        _handler->removeListener(this);
+        this->handler.reset();
+    }
 }

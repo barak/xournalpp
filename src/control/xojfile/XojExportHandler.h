@@ -12,26 +12,26 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "SaveHandler.h"
+#include "XournalType.h"
 
-#include <XournalType.h>
-
-class XojExportHandler : public SaveHandler
-{
+class XojExportHandler: public SaveHandler {
 public:
-	XojExportHandler();
-	virtual ~XojExportHandler();
+    XojExportHandler();
+    virtual ~XojExportHandler();
 
 protected:
-	/**
-	 * Export the fill attributes
-	 */
-	virtual void visitStrokeExtended(XmlPointNode* stroke, Stroke* s);
-
-	virtual void writeHeader();
-	virtual void writeSolidBackground(XmlNode* background, PageRef p);
-	virtual void writeTimestamp(AudioElement* audioElement, XmlAudioNode* xmlAudioNode);
+    /**
+     * Export the fill attributes
+     */
+    void visitStrokeExtended(XmlPointNode* stroke, Stroke* s) override;
+    void writeHeader() override;
+    void writeSolidBackground(XmlNode* background, PageRef p) override;
+    void writeTimestamp(AudioElement* audioElement, XmlAudioNode* xmlAudioNode) override;
+    void writeBackgroundName(XmlNode* background, PageRef p) override;
 
 private:
-	XOJ_TYPE_ATTRIB;
 };

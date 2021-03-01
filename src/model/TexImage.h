@@ -11,110 +11,98 @@
 
 #pragma once
 
-#include "Element.h"
-#include <XournalType.h>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include <poppler.h>
 
+#include "Element.h"
+#include "XournalType.h"
 
-class TexImage: public Element
-{
+
+class TexImage: public Element {
 public:
-	TexImage();
-	virtual ~TexImage();
-
-public:
-	void setWidth(double width);
-	void setHeight(double height);
-
-	/**
-	 * Sets the binary data, a .PNG image or a .PDF
-	 */
-	void setBinaryData(string binaryData);
-
-	/**
-	 * Gets the binary data, a .PNG image or a .PDF
-	 */
-	string& getBinaryData();
-
-	/**
-	 * Get the Image, if rendered as image
-	 */
-	cairo_surface_t* getImage();
-
-	/**
-	 * @return The PDF Document, if rendered as .pdf
-	 *
-	 * The document needs to be referenced, if it will be hold somewhere
-	 */
-	PopplerDocument* getPdf();
-
-	/**
-	 * @param pdf The PDF Document, if rendered as .pdf
-	 *
-	 * The PDF will be referenced
-	 */
-	void setPdf(PopplerDocument* pdf);
-
-	virtual void scale(double x0, double y0, double fx, double fy);
-	virtual void rotate(double x0, double y0, double xo, double yo, double th);
-
-	// text tag to alow latex
-	void setText(string text);
-	string getText();
-
-	virtual Element* clone();
+    TexImage();
+    TexImage(const TexImage&) = delete;
+    TexImage& operator=(const TexImage&) = delete;
+    TexImage(const TexImage&&) = delete;
+    TexImage&& operator=(const TexImage&&) = delete;
+    virtual ~TexImage();
 
 public:
-	// Serialize interface
-	void serialize(ObjectOutputStream& out);
-	void readSerialized(ObjectInputStream& in);
+    void setWidth(double width);
+    void setHeight(double height);
+
+    /**
+     * Returns the binary data (PDF or PNG (deprecated)).
+     */
+    const std::string& getBinaryData() const;
+
+    /**
+     * @return The image, if render source is PNG. Note: this is deprecated.
+     */
+    cairo_surface_t* getImage();
+
+    /**
+     * @return The PDF Document, if rendered as a PDF.
+     *
+     * The document needs to be referenced, if it will be hold somewhere
+     */
+    PopplerDocument* getPdf();
+
+    virtual void scale(double x0, double y0, double fx, double fy, double rotation, bool restoreLineWidth);
+    virtual void rotate(double x0, double y0, double th);
+
+    // text tag to alow latex
+    void setText(string text);
+    string getText();
+
+    virtual Element* clone();
+
+    /**
+     * @return true if the binary data (PNG or PDF) was loaded successfully.
+     */
+    bool loadData(std::string&& bytes, GError** err = nullptr);
+
+public:
+    // Serialize interface
+    void serialize(ObjectOutputStream& out);
+    void readSerialized(ObjectInputStream& in);
 
 private:
-	virtual void calcSize();
+    void calcSize() const override;
 
-	static cairo_status_t cairoReadFunction(TexImage* image, unsigned char* data, unsigned int length);
+    static cairo_status_t cairoReadFunction(TexImage* image, unsigned char* data, unsigned int length);
 
-	/**
-	 * Free image and PDF
-	 */
-	void freeImageAndPdf();
-
-	/**
-	 * Load the binary data, either .PNG or .PDF
-	 */
-	void loadBinaryData();
+    /**
+     * Free image and PDF
+     */
+    void freeImageAndPdf();
 
 private:
-	XOJ_TYPE_ATTRIB;
+    /**
+     * Tex PDF Document, if rendered as PDF
+     */
+    PopplerDocument* pdf = nullptr;
 
-	/**
-	 * Tex PDF Document, if rendered as PDF
-	 */
-	PopplerDocument* pdf = NULL;
+    /**
+     * Tex image, if rendered as image. Note: this is deprecated and subject to removal in a later version.
+     */
+    cairo_surface_t* image = nullptr;
 
-	/**
-	 * Tex image, if rendered as image
-	 */
-	cairo_surface_t* image = NULL;
+    /**
+     * PNG Image / PDF Document
+     */
+    std::string binaryData;
 
-	/**
-	 * PNG Image / PDF Document
-	 */
-	string binaryData;
+    /**
+     * Read position for PNG binaryData (deprecated).
+     */
+    std::string::size_type read = 0;
 
-	/**
-	 * Flag if the binary data is already parsed
-	 */
-	bool parsedBinaryData = false;
-
-	/**
-	 * Read position in binaryData
-	 */
-	string::size_type read = 0;
-
-	/**
-	 * Tex String
-	 */
-	string text;
+    /**
+     * Tex String
+     */
+    string text;
 };

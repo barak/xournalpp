@@ -2,145 +2,150 @@
 
 #include "control/Control.h"
 #include "gui/Shadow.h"
-#include "gui/sidebar/previews/base/SidebarPreviewBaseEntry.h"
 #include "gui/sidebar/previews/base/SidebarPreviewBase.h"
+#include "gui/sidebar/previews/base/SidebarPreviewBaseEntry.h"
 #include "gui/sidebar/previews/layer/SidebarPreviewLayerEntry.h"
 #include "model/Document.h"
-#include "view/PdfView.h"
 #include "view/DocumentView.h"
+#include "view/PdfView.h"
 
-PreviewJob::PreviewJob(SidebarPreviewBaseEntry* sidebar)
- : sidebarPreview(sidebar)
-{
-	XOJ_INIT_TYPE(PreviewJob);
+PreviewJob::PreviewJob(SidebarPreviewBaseEntry* sidebar): sidebarPreview(sidebar) {}
+
+PreviewJob::~PreviewJob() { this->sidebarPreview = nullptr; }
+
+auto PreviewJob::getSource() -> void* { return this->sidebarPreview; }
+
+auto PreviewJob::getType() -> JobType { return JOB_TYPE_PREVIEW; }
+
+void PreviewJob::initGraphics() {
+    GtkAllocation alloc;
+    gtk_widget_get_allocation(this->sidebarPreview->widget, &alloc);
+    crBuffer = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, alloc.width, alloc.height);
+    zoom = this->sidebarPreview->sidebar->getZoom();
+    cr2 = cairo_create(crBuffer);
 }
 
-PreviewJob::~PreviewJob()
-{
-	XOJ_CHECK_TYPE(PreviewJob);
-
-	this->sidebarPreview = NULL;
-
-	XOJ_RELEASE_TYPE(PreviewJob);
+void PreviewJob::drawBorder() {
+    cairo_translate(cr2, Shadow::getShadowTopLeftSize() + 2, Shadow::getShadowTopLeftSize() + 2);
+    cairo_scale(cr2, zoom, zoom);
 }
 
-void* PreviewJob::getSource()
-{
-	XOJ_CHECK_TYPE(PreviewJob);
+void PreviewJob::finishPaint() {
+    g_mutex_lock(&this->sidebarPreview->drawingMutex);
 
-	return this->sidebarPreview;
+    if (this->sidebarPreview->crBuffer) {
+        cairo_surface_destroy(this->sidebarPreview->crBuffer);
+    }
+    this->sidebarPreview->crBuffer = crBuffer;
+
+    // Make sure the Job does not get deleted until the
+    // Repaint is also finished in UI Thread
+    ref();
+
+    Util::execInUiThread([=]() {
+        gtk_widget_queue_draw(this->sidebarPreview->widget);
+
+        // After the UI job is also done, it can be unreferenced
+        unref();
+    });
+
+    g_mutex_unlock(&this->sidebarPreview->drawingMutex);
 }
 
-JobType PreviewJob::getType()
-{
-	XOJ_CHECK_TYPE(PreviewJob);
+void PreviewJob::drawBackgroundPdf(Document* doc) {
+    int pgNo = this->sidebarPreview->page->getPdfPageNr();
+    XojPdfPageSPtr popplerPage = doc->getPdfPage(pgNo);
 
-	return JOB_TYPE_PREVIEW;
+    PdfView::drawPage(this->sidebarPreview->sidebar->getCache(), popplerPage, cr2, zoom,
+                      this->sidebarPreview->page->getWidth(), this->sidebarPreview->page->getHeight());
 }
 
-void PreviewJob::initGraphics()
-{
-	GtkAllocation alloc;
-	gtk_widget_get_allocation(this->sidebarPreview->widget, &alloc);
-	crBuffer = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, alloc.width, alloc.height);
-	zoom = this->sidebarPreview->sidebar->getZoom();
-	cr2 = cairo_create(crBuffer);
+void PreviewJob::drawPage() {
+    DocumentView view;
+    PageRef page = this->sidebarPreview->page;
+    Document* doc = this->sidebarPreview->sidebar->getControl()->getDocument();
+    PreviewRenderType type = this->sidebarPreview->getRenderType();
+    int layer;
+
+    doc->lock();
+
+    // getLayer is not defined for page preview
+    if (type != RENDER_TYPE_PAGE_PREVIEW) {
+        layer = (dynamic_cast<SidebarPreviewLayerEntry*>(this->sidebarPreview))->getLayer();
+    }
+
+    // Pdf::drawPage needs to go before DocumentView::initDrawing until DocumentView learns to do it and the first
+    // switch block can go away and the layer assignment into the remaining switch block.
+    switch (type) {
+        case RENDER_TYPE_PAGE_LAYER:
+            if (layer != -1) {
+                break;  // out
+            }
+            [[fallthrough]];
+
+        case RENDER_TYPE_PAGE_LAYERSTACK:
+        case RENDER_TYPE_PAGE_PREVIEW:
+            if (page->getBackgroundType().isPdfPage()) {
+                drawBackgroundPdf(doc);
+            }
+            break;
+
+        default:
+            // unknown type
+            break;
+    }
+
+    switch (type) {
+        case RENDER_TYPE_PAGE_PREVIEW:
+            // render all layers
+            view.drawPage(page, cr2, true);
+            break;
+
+        case RENDER_TYPE_PAGE_LAYER:
+            // render single layer
+            view.initDrawing(page, cr2, true);
+            if (layer == -1) {
+                view.drawBackground();
+            } else {
+                Layer* drawLayer = (*page->getLayers())[layer];
+                view.drawLayer(cr2, drawLayer);
+            }
+            view.finializeDrawing();
+            break;
+
+        case RENDER_TYPE_PAGE_LAYERSTACK:
+            // render all layers up to layer
+            view.initDrawing(page, cr2, true);
+            view.drawBackground();
+            for (int i = 0; i <= layer; i++) {
+                Layer* drawLayer = (*page->getLayers())[i];
+                view.drawLayer(cr2, drawLayer);
+            }
+            view.finializeDrawing();
+            break;
+
+        default:
+            // unknown type
+            break;
+    }
+
+    cairo_destroy(cr2);
+    doc->unlock();
 }
 
-void PreviewJob::drawBorder()
-{
-	cairo_translate(cr2, Shadow::getShadowTopLeftSize() + 2, Shadow::getShadowTopLeftSize() + 2);
-	cairo_scale(cr2, zoom, zoom);
+void PreviewJob::clipToPage() {
+    // Only render within the preview page. Without this, the when preview jobs attempt
+    // to clear the display, we fill a region larger than the inside of the preview page!
+    cairo_rectangle(cr2, 0, 0, this->sidebarPreview->page->getWidth(), this->sidebarPreview->page->getHeight());
+    cairo_clip(cr2);
 }
 
-void PreviewJob::finishPaint()
-{
-	g_mutex_lock(&this->sidebarPreview->drawingMutex);
+void PreviewJob::run() {
+    initGraphics();
+    drawBorder();
+    clipToPage();
 
-	if (this->sidebarPreview->crBuffer)
-	{
-		cairo_surface_destroy(this->sidebarPreview->crBuffer);
-	}
-	this->sidebarPreview->crBuffer = crBuffer;
+    drawPage();
 
-	// Make sure the Job does not get deleted until the
-	// Repaint is also finished in UI Thread
-	ref();
-
-	Util::execInUiThread([=]() {
-		gtk_widget_queue_draw(this->sidebarPreview->widget);
-
-		// After the UI job is also done, it can be unreferenced
-		unref();
-	});
-
-	g_mutex_unlock(&this->sidebarPreview->drawingMutex);
-}
-
-void PreviewJob::drawBackgroundPdf(Document* doc)
-{
-	int pgNo = this->sidebarPreview->page->getPdfPageNr();
-	XojPdfPageSPtr popplerPage = doc->getPdfPage(pgNo);
-	PdfView::drawPage(this->sidebarPreview->sidebar->getCache(), popplerPage, cr2, zoom,
-					  this->sidebarPreview->page->getWidth(), this->sidebarPreview->page->getHeight());
-}
-
-void PreviewJob::drawPage(int layer)
-{
-	DocumentView view;
-	PageRef page = this->sidebarPreview->page;
-
-	if (layer == -100)
-	{
-		// render all layer
-		view.drawPage(page, cr2, true);
-	}
-	else if (layer == -1)
-	{
-		// draw only background
-		view.initDrawing(page, cr2, true);
-		view.drawBackground();
-		view.finializeDrawing();
-	}
-	else
-	{
-		view.initDrawing(page, cr2, true);
-
-		Layer* drawLayer = (*page->getLayers())[layer];
-		view.drawLayer(cr2, drawLayer);
-
-		view.finializeDrawing();
-	}
-
-	cairo_destroy(cr2);
-}
-
-void PreviewJob::run()
-{
-	XOJ_CHECK_TYPE(PreviewJob);
-
-	initGraphics();
-	drawBorder();
-
-	Document* doc = this->sidebarPreview->sidebar->getControl()->getDocument();
-	doc->lock();
-
-	PreviewRenderType type = this->sidebarPreview->getRenderType();
-	int layer = -100; // all layer
-
-	if (RENDER_TYPE_PAGE_LAYER == type)
-	{
-		layer = ((SidebarPreviewLayerEntry*)this->sidebarPreview)->getLayer();
-	}
-
-	if (this->sidebarPreview->page->getBackgroundType().isPdfPage())
-	{
-		drawBackgroundPdf(doc);
-	}
-
-	drawPage(layer);
-
-	doc->unlock();
-
-	finishPaint();
+    finishPaint();
 }

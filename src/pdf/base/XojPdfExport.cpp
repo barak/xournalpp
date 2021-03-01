@@ -1,20 +1,12 @@
 #include "XojPdfExport.h"
 
-XojPdfExport::XojPdfExport()
-{
-	XOJ_INIT_TYPE(XojPdfExport);
-}
+XojPdfExport::XojPdfExport() = default;
 
-XojPdfExport::~XojPdfExport()
-{
-	XOJ_RELEASE_TYPE(XojPdfExport);
-}
+XojPdfExport::~XojPdfExport() = default;
 
 /**
  * Export without background
  */
-void XojPdfExport::setNoBackgroundExport(bool noBackgroundExport)
-{
-	XOJ_CHECK_TYPE(XojPdfExport);
-	// Does nothing in the base class
+void XojPdfExport::setExportBackground(ExportBackgroundType exportBackground) {
+    // Does nothing in the base class
 }

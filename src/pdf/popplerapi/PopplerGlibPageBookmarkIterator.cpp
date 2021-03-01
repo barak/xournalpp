@@ -1,66 +1,39 @@
 #include "PopplerGlibPageBookmarkIterator.h"
 
-PopplerGlibPageBookmarkIterator::PopplerGlibPageBookmarkIterator(PopplerIndexIter* iter, PopplerDocument* document)
- : iter(iter),
-   document(document)
-{
-	XOJ_INIT_TYPE(PopplerGlibPageBookmarkIterator);
-	g_object_ref(document);
+PopplerGlibPageBookmarkIterator::PopplerGlibPageBookmarkIterator(PopplerIndexIter* iter, PopplerDocument* document):
+        iter(iter), document(document) {
+    g_object_ref(document);
 }
 
-PopplerGlibPageBookmarkIterator::~PopplerGlibPageBookmarkIterator()
-{
-	XOJ_CHECK_TYPE(PopplerGlibPageBookmarkIterator);
+PopplerGlibPageBookmarkIterator::~PopplerGlibPageBookmarkIterator() {
+    poppler_index_iter_free(iter);
+    iter = nullptr;
 
-	poppler_index_iter_free(iter);
-	iter = NULL;
-
-	if (document)
-	{
-		g_object_unref(document);
-		document = NULL;
-	}
-
-	XOJ_RELEASE_TYPE(PopplerGlibPageBookmarkIterator);
+    if (document) {
+        g_object_unref(document);
+        document = nullptr;
+    }
 }
 
-bool PopplerGlibPageBookmarkIterator::next()
-{
-	XOJ_CHECK_TYPE(PopplerGlibPageBookmarkIterator);
+auto PopplerGlibPageBookmarkIterator::next() -> bool { return poppler_index_iter_next(iter); }
 
-	return poppler_index_iter_next(iter);
+auto PopplerGlibPageBookmarkIterator::isOpen() -> bool { return poppler_index_iter_is_open(iter); }
+
+auto PopplerGlibPageBookmarkIterator::getChildIter() -> XojPdfBookmarkIterator* {
+    PopplerIndexIter* child = poppler_index_iter_get_child(iter);
+    if (child == nullptr) {
+        return nullptr;
+    }
+
+    return new PopplerGlibPageBookmarkIterator(child, document);
 }
 
-bool PopplerGlibPageBookmarkIterator::isOpen()
-{
-	XOJ_CHECK_TYPE(PopplerGlibPageBookmarkIterator);
+auto PopplerGlibPageBookmarkIterator::getAction() -> XojPdfAction* {
+    PopplerAction* action = poppler_index_iter_get_action(iter);
 
-	return poppler_index_iter_is_open(iter);
-}
+    if (action == nullptr) {
+        return nullptr;
+    }
 
-XojPdfBookmarkIterator* PopplerGlibPageBookmarkIterator::getChildIter()
-{
-	XOJ_CHECK_TYPE(PopplerGlibPageBookmarkIterator);
-
-	PopplerIndexIter* child = poppler_index_iter_get_child(iter);
-	if (child == NULL)
-	{
-		return NULL;
-	}
-
-	return new PopplerGlibPageBookmarkIterator(child, document);
-}
-
-XojPdfAction* PopplerGlibPageBookmarkIterator::getAction()
-{
-	XOJ_CHECK_TYPE(PopplerGlibPageBookmarkIterator);
-
-	PopplerAction* action = poppler_index_iter_get_action(iter);
-
-	if (action == NULL)
-	{
-		return NULL;
-	}
-
-	return new PopplerGlibAction(action, document);
+    return new PopplerGlibAction(action, document);
 }

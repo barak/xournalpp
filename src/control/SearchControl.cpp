@@ -1,108 +1,80 @@
 #include "SearchControl.h"
 
-#include "model/Text.h"
+#include <utility>
+
 #include "model/Layer.h"
+#include "model/Text.h"
 #include "view/TextView.h"
 
-SearchControl::SearchControl(PageRef page, XojPdfPageSPtr pdf)
-{
-	XOJ_INIT_TYPE(SearchControl);
-
-	this->page = page;
-	this->pdf = pdf;
+SearchControl::SearchControl(const PageRef& page, XojPdfPageSPtr pdf) {
+    this->page = page;
+    this->pdf = std::move(pdf);
 }
 
-SearchControl::~SearchControl()
-{
-	XOJ_CHECK_TYPE(SearchControl);
+SearchControl::~SearchControl() { freeSearchResults(); }
 
-	freeSearchResults();
+void SearchControl::freeSearchResults() { this->results.clear(); }
 
-	XOJ_RELEASE_TYPE(SearchControl);
+void SearchControl::paint(cairo_t* cr, GdkRectangle* rect, double zoom, const GdkRGBA& color) {
+    // set the line always the same size on display
+    cairo_set_line_width(cr, 1 / zoom);
+
+    for (XojPdfRectangle rect: this->results) {
+        cairo_rectangle(cr, rect.x1, rect.y1, rect.x2 - rect.x1, rect.y2 - rect.y1);
+        gdk_cairo_set_source_rgba(cr, &color);
+        cairo_stroke_preserve(cr);
+        auto applied = GdkRGBA{color.red, color.green, color.blue, 0.3};
+        gdk_cairo_set_source_rgba(cr, &applied);
+        cairo_fill(cr);
+    }
 }
 
-void SearchControl::freeSearchResults()
-{
-	XOJ_CHECK_TYPE(SearchControl);
+auto SearchControl::search(string text, int* occures, double* top) -> bool {
+    freeSearchResults();
 
-	this->results.clear();
-}
+    if (text.empty()) {
+        return true;
+    }
 
-void SearchControl::paint(cairo_t* cr, GdkRectangle* rect, double zoom, GtkColorWrapper color)
-{
-	XOJ_CHECK_TYPE(SearchControl);
+    if (this->pdf) {
+        this->results = this->pdf->findText(text);
+    }
 
-	// set the line always the same size on display
-	cairo_set_line_width(cr, 1 / zoom);
+    for (Layer* l: *this->page->getLayers()) {
+        if (!this->page->isLayerVisible(l)) {
+            continue;
+        }
 
-	for (XojPdfRectangle rect : this->results)
-	{
-		cairo_rectangle(cr, rect.x1, rect.y1, rect.x2 - rect.x1, rect.y2 - rect.y1);
-		color.apply(cr);
-		cairo_stroke_preserve(cr);
-		color.applyWithAlpha(cr, 0.3);
-		cairo_fill(cr);
-	}
-}
+        for (Element* e: *l->getElements()) {
+            if (e->getType() == ELEMENT_TEXT) {
+                Text* t = dynamic_cast<Text*>(e);
 
-bool SearchControl::search(string text, int* occures, double* top)
-{
-	XOJ_CHECK_TYPE(SearchControl);
+                vector<XojPdfRectangle> textResult = TextView::findText(t, text);
 
-	freeSearchResults();
+                this->results.insert(this->results.end(), textResult.begin(), textResult.end());
+            }
+        }
+    }
 
-	if (text.empty()) return true;
+    if (occures) {
+        *occures = this->results.size();
+    }
 
-	if (this->pdf)
-	{
-		this->results = this->pdf->findText(text);
-	}
+    if (top) {
+        if (this->results.empty()) {
+            *top = 0;
+        } else {
 
-	for (Layer* l : *this->page->getLayers())
-	{
-		if (!this->page->isLayerVisible(l))
-		{
-			continue;
-		}
-		
-		for (Element* e : *l->getElements())
-		{
-			if (e->getType() == ELEMENT_TEXT)
-			{
-				Text* t = (Text*) e;
+            XojPdfRectangle first = this->results[0];
 
-				vector<XojPdfRectangle> textResult = TextView::findText(t, text);
+            double min = first.y1;
+            for (XojPdfRectangle rect: this->results) {
+                min = std::min(min, rect.y1);
+            }
 
-				this->results.insert(this->results.end(), textResult.begin(), textResult.end());
-			}
-		}
-	}
+            *top = min;
+        }
+    }
 
-	if (occures)
-	{
-		*occures = this->results.size();
-	}
-
-	if (top)
-	{
-		if (this->results.size() == 0)
-		{
-			*top = 0;
-		}
-		else
-		{
-
-			XojPdfRectangle first = this->results[0];
-
-			double min = first.y1;
-			for (XojPdfRectangle rect : this->results)
-			{
-				min = MIN(min, rect.y1);
-			}
-
-			*top = min;
-		}
-	}
-
-	return this->results.size() > 0;
+    return !this->results.empty();
 }

@@ -11,52 +11,53 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "model/Point.h"
-#include <XournalType.h>
 
-class EraseableStrokePart
-{
+#include "XournalType.h"
+
+class EraseableStrokePart {
 public:
-	EraseableStrokePart(Point a, Point b);
-	EraseableStrokePart(double width);
-	virtual ~EraseableStrokePart();
+    EraseableStrokePart(Point a, Point b);
+    EraseableStrokePart(double width);
+    virtual ~EraseableStrokePart();
 
 private:
-	EraseableStrokePart(const EraseableStrokePart& part);
+    EraseableStrokePart(const EraseableStrokePart& part);
 
 public:
-	void addPoint(Point p);
-	double getWidth();
+    void addPoint(Point p);
+    double getWidth() const;
 
-	GList* getPoints();
+    GList* getPoints();
 
-	void clearSplitData();
-	void splitFor(double halfEraserSize);
+    void clearSplitData();
+    void splitFor(double halfEraserSize);
 
-	EraseableStrokePart* clone();
+    EraseableStrokePart* clone();
 
-	void calcSize();
+    void calcSize();
 
 public:
-	double getX();
-	double getY();
-	double getElementWidth();
-	double getElementHeight();
+    double getX() const;
+    double getY() const;
+    double getElementWidth() const;
+    double getElementHeight() const;
 
-	static void printDebugStrokeParts();
+    static void printDebugStrokeParts();
 
 private:
-	XOJ_TYPE_ATTRIB;
+    double width = 0;
+    double splitSize = 0;
 
-	double width = 0;
-	double splitSize = 0;
+    GList* points = nullptr;
 
-	GList* points = NULL;
+    double x = 0;
+    double y = 0;
+    double elementWidth = 0;
+    double elementHeight = 0;
 
-	double x = 0;
-	double y = 0;
-	double elementWidth = 0;
-	double elementHeight = 0;
-
-	friend class EraseableStroke;
+    friend class EraseableStroke;
 };

@@ -11,47 +11,42 @@
 
 #pragma once
 
-#include <XournalType.h>
-
-#include "DeviceInfo.h"
-#include "AudioQueue.h"
-
-#include <control/settings/Settings.h>
-
 #include <list>
+#include <string>
+#include <vector>
 
 #include <portaudiocpp/PortAudioCpp.hxx>
 
-class PortAudioProducer
-{
+#include "control/settings/Settings.h"
+
+#include "AudioQueue.h"
+#include "DeviceInfo.h"
+#include "XournalType.h"
+
+class PortAudioProducer {
 public:
-	explicit PortAudioProducer(Settings* settings, AudioQueue<float>* audioQueue);
-	~PortAudioProducer();
+    PortAudioProducer(Settings& settings, AudioQueue<float>& audioQueue): settings(settings), audioQueue(audioQueue){};
 
-	std::list<DeviceInfo> getInputDevices();
+    std::vector<DeviceInfo> getInputDevices() const;
 
-	const DeviceInfo getSelectedInputDevice();
+    DeviceInfo getSelectedInputDevice() const;
 
-	bool isRecording();
+    bool isRecording() const;
 
-	bool startRecording();
+    bool startRecording();
 
-	int recordCallback(const void* inputBuffer, void* outputBuffer, unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags);
+    int recordCallback(const void* inputBuffer, void* outputBuffer, unsigned long framesPerBuffer,
+                       const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags);
 
-	void stopRecording();
+    void stopRecording();
 
 private:
-	XOJ_TYPE_ATTRIB;
+    portaudio::System& sys{portaudio::System::instance()};
+    Settings& settings;
 
-protected:
-	const unsigned long framesPerBuffer = 64;
+    AudioQueue<float>& audioQueue;
 
-	portaudio::AutoSystem autoSys;
-	portaudio::System& sys;
-	Settings* settings;
-	AudioQueue<float>* audioQueue;
+    std::unique_ptr<portaudio::MemFunCallbackStream<PortAudioProducer>> inputStream;
 
-	int inputChannels = 0;
-
-	portaudio::MemFunCallbackStream<PortAudioProducer>* inputStream = nullptr;
+    int inputChannels = 0;
 };

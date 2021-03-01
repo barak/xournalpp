@@ -11,192 +11,214 @@
 
 #pragma once
 
-#include "CursorSelectionType.h"
+#include <deque>
+#include <utility>
+#include <vector>
 
 #include "control/Tool.h"
 #include "model/Element.h"
 #include "model/Font.h"
 #include "model/PageRef.h"
+#include "undo/UndoAction.h"
 #include "view/ElementContainer.h"
 
-#include <XournalType.h>
+#include "CursorSelectionType.h"
+#include "XournalType.h"
 
 class UndoRedoHandler;
 class Layer;
 class XojPageView;
 class Selection;
 class Element;
-class UndoAction;
 class EditSelectionContents;
 class DeleteUndoAction;
 
-class EditSelectionContents : public ElementContainer, public Serializeable
-{
+class EditSelectionContents: public ElementContainer, public Serializeable {
 public:
-	EditSelectionContents(double x, double y, double width, double height,
-						  PageRef sourcePage, Layer* sourceLayer, XojPageView* sourceView);
-	virtual ~EditSelectionContents();
-
-public:
-	/**
-	 * Sets the tool size for pen or eraser, returs an undo action
-	 * (or NULL if nothing is done)
-	 */
-	UndoAction* setSize(ToolSize size, const double* thicknessPen, const double* thicknessHilighter, const double* thicknessEraser);
-
-	/**
-	 * Set the color of all elements, return an undo action
-	 * (Or NULL if nothing done, e.g. because there is only an image)
-	 */
-	UndoAction* setColor(int color);
-
-	/**
-	 * Sets the font of all containing text elements, return an undo action
-	 * (or NULL if there are no Text elements)
-	 */
-	UndoAction* setFont(XojFont& font);
-
-	/**
-	 * Fills the undo item if the selection is deleted
-	 * the selection is cleared after
-	 */
-	void fillUndoItem(DeleteUndoAction* undo);
-
-	/**
-	 * Fills the stroke, return an undo action
-	 * (Or NULL if nothing done, e.g. because there is only an image)
-	 */
-	UndoAction* setFill(int alphaPen, int alphaHighligther);
+    EditSelectionContents(Rectangle<double> bounds, Rectangle<double> snappedBounds, const PageRef& sourcePage,
+                          Layer* sourceLayer, XojPageView* sourceView);
+    virtual ~EditSelectionContents();
 
 public:
-	/**
-	 * Add an element to the this selection
-	 */
-	void addElement(Element* e);
+    /**
+     * Sets the line style for all strokes, returs an undo action
+     * (or nullptr if nothing is done)
+     */
+    UndoActionPtr setLineStyle(LineStyle style);
 
-	/**
-	 * Returns all containig elements of this selections
-	 */
-	vector<Element*>* getElements();
+    /**
+     * Sets the tool size for pen or eraser, returs an undo action
+     * (or nullptr if nothing is done)
+     */
+    UndoAction* setSize(ToolSize size, const double* thicknessPen, const double* thicknessHighlighter,
+                        const double* thicknessEraser);
+
+    /**
+     * Set the color of all elements, return an undo action
+     * (Or nullptr if nothing done, e.g. because there is only an image)
+     */
+    UndoAction* setColor(Color color);
+
+    /**
+     * Sets the font of all containing text elements, return an undo action
+     * (or nullptr if there are no Text elements)
+     */
+    UndoAction* setFont(XojFont& font);
+
+    /**
+     * Fills the undo item if the selection is deleted
+     * the selection is cleared after
+     */
+    void fillUndoItem(DeleteUndoAction* undo);
+
+    /**
+     * Fills the stroke, return an undo action
+     * (Or nullptr if nothing done, e.g. because there is only an image)
+     */
+    UndoAction* setFill(int alphaPen, int alphaHighligther);
 
 public:
-	/**
-	 * paints the selection
-	 */
-	void paint(cairo_t* cr, double x, double y, double rotation, double width, double height, double zoom);
+    /**
+     * Add an element to the this selection
+     * @param orderInSourceLayer: specifies the index of the element from the source layer,
+     * in case we want to replace it back where it came from.
+     */
+    void addElement(Element* e, Layer::ElementIndex order);
 
-	/**
-	 * Finish the editing
-	 */
-	void finalizeSelection(double x, double y, double width, double height, bool aspectRatio,
-						   Layer* layer, PageRef targetPage, XojPageView* targetView, UndoRedoHandler* undo);
+    /**
+     * Returns all containing elements of this selection
+     */
+    vector<Element*>* getElements();
 
-	void updateContent(double x, double y, double rotation, double width, double height, bool aspectRatio,
-					   Layer* layer, PageRef targetPage, XojPageView* targetView, UndoRedoHandler* undo,
-					   CursorSelectionType type);
+    /**
+     * Returns the insert order of this selection
+     */
+    std::deque<std::pair<Element*, Layer::ElementIndex>> const& getInsertOrder() const;
+
+    /** replaces all elements by a new vector of elements
+     * @param newElements: the elements which should replace the old elements
+     * */
+    void replaceInsertOrder(std::deque<std::pair<Element*, Layer::ElementIndex>> newInsertOrder);
+
+public:
+    /**
+     * paints the selection
+     */
+    void paint(cairo_t* cr, double x, double y, double rotation, double width, double height, double zoom);
+
+    /**
+     * Finish the editing
+     */
+    void finalizeSelection(Rectangle<double> bounds, Rectangle<double> snappedBounds, bool aspectRatio, Layer* layer,
+                           const PageRef& targetPage, XojPageView* targetView, UndoRedoHandler* undo);
+
+    void updateContent(Rectangle<double> bounds, Rectangle<double> snappedBounds, double rotation, bool aspectRatio,
+                       Layer* layer, const PageRef& targetPage, XojPageView* targetView, UndoRedoHandler* undo,
+                       CursorSelectionType type);
 
 private:
-	/**
-	 * Delete our internal View buffer,
-	 * it will be recreated when the selection is painted next time
-	 */
-	void deleteViewBuffer();
+    /**
+     * Delete our internal View buffer,
+     * it will be recreated when the selection is painted next time
+     */
+    void deleteViewBuffer();
 
-	/**
-	 * Callback to redrawing the buffer asynchrony
-	 */
-	static bool repaintSelection(EditSelectionContents* selection);
-
-public:
-	
-	/**
-	 * Gets the original view of the contents
-	 */
-	XojPageView * getSourceView();
-	
-	
-	/**
-	 * Gets the original X of the contents
-	 */
-	double getOriginalX();
-
-	/**
-	 * Gets the original Y of the contents
-	 */
-	double getOriginalY();
-
-	
-	/**
-	 * Gets the original width of the contents
-	 */
-	double getOriginalWidth();
-
-	/**
-	 * Gets the original height of the contents
-	 */
-	double getOriginalHeight();
-
-	UndoAction* copySelection(PageRef page, XojPageView *view, double x, double y);
+    /**
+     * Callback to redrawing the buffer asynchrony
+     */
+    static bool repaintSelection(EditSelectionContents* selection);
 
 public:
-	// Serialize interface
-	void serialize(ObjectOutputStream& out);
-	void readSerialized(ObjectInputStream& in);
+    /**
+     * Gets the original view of the contents
+     */
+    XojPageView* getSourceView();
+
+
+    /**
+     * Gets the original X of the contents
+     */
+    double getOriginalX() const;
+
+    /**
+     * Gets the original Y of the contents
+     */
+    double getOriginalY() const;
+
+    UndoAction* copySelection(PageRef page, XojPageView* view, double x, double y);
+
+    const static struct {
+        bool operator()(std::pair<Element*, Layer::ElementIndex> p1, std::pair<Element*, Layer::ElementIndex> p2) {
+            return p1.second < p2.second;
+        }
+    } insertOrderCmp;
+
+public:
+    // Serialize interface
+    void serialize(ObjectOutputStream& out);
+    void readSerialized(ObjectInputStream& in);
 
 private:
-	XOJ_TYPE_ATTRIB;
+    /**
+     * The original dimensions to calculate the zoom factor for reascaling the items and the offset for moving the
+     * selection
+     */
+    Rectangle<double> originalBounds;
+    Rectangle<double> lastBounds;
+    Rectangle<double> lastSnappedBounds;
 
-	/**
-	 * The original size to calculate the zoom factor for reascaling the items
-	 */
-	double originalWidth, originalHeight;
-	double lastWidth, lastHeight;
+    /**
+     * The given rotation. Original rotation should always be zero (double)
+     */
+    double rotation = 0;
+    double lastRotation = 0;  // for undoing multiple rotations during one selection edit.
 
-	/**
-	 * The original position, to calculate the offset for moving the objects
-	 */
-	double originalX, originalY;
-	double lastX, lastY;
+    /**
+     * The offset to the original selection
+     */
+    double relativeX = -9999999999;
+    double relativeY = -9999999999;
 
-	/**
-	 * The given rotation. Original rotation should always be zero (double)
-	 */
-	double rotation = 0;
-	double lastRotation = 0; // for undoing multiple rotations during one selection edit.
+    /**
+     * The setting for whether line width is restored after resizing operation (checked at creation time)
+     */
+    bool restoreLineWidth;
 
-	/**
-	 * The offset to the original selection
-	 */
-	double relativeX;
-	double relativeY;
+    /**
+     * The selected element (the only one which are handled by this instance)
+     */
+    std::vector<Element*> selected;
 
-	/**
-	 * The selected element (the only one which are handled by this instance)
-	 */
-	vector<Element*> selected;
+    /**
+     * Mapping of elements in the selection to the indexes from the original selection layer.
+     * Defines a insert order over the selection.
+     *
+     * Invariant: the insert order must be sorted by index in ascending order.
+     */
+    std::deque<std::pair<Element*, Layer::ElementIndex>> insertOrder;
 
-	/**
-	 * The rendered elements
-	 */
-	cairo_surface_t* crBuffer;
+    /**
+     * The rendered elements
+     */
+    cairo_surface_t* crBuffer = nullptr;
 
-	/**
-	 * The source id for the rescaling task
-	 */
-	int rescaleId;
+    /**
+     * The source id for the rescaling task
+     */
+    int rescaleId = 0;
 
-	/**
-	 * Source Page for Undo operations
-	 */
-	PageRef sourcePage;
+    /**
+     * Source Page for Undo operations
+     */
+    PageRef sourcePage;
 
-	/**
-	 * Source Layer for Undo operations
-	 */
-	Layer* sourceLayer;
+    /**
+     * Source Layer for Undo operations
+     */
+    Layer* sourceLayer;
 
-	/**
-	 * Source View for Undo operations
-	 */
-	XojPageView* sourceView;
+    /**
+     * Source View for Undo operations
+     */
+    XojPageView* sourceView;
 };

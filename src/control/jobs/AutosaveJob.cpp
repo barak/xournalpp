@@ -3,79 +3,53 @@
 #include "control/Control.h"
 #include "control/xojfile/SaveHandler.h"
 
-#include <i18n.h>
-#include <Path.h>
-#include <XojMsgBox.h>
+#include "XojMsgBox.h"
+#include "filesystem.h"
+#include "i18n.h"
 
-AutosaveJob::AutosaveJob(Control* control)
- : control(control)
-{
-	XOJ_INIT_TYPE(AutosaveJob);
+AutosaveJob::AutosaveJob(Control* control): control(control) {}
+
+AutosaveJob::~AutosaveJob() = default;
+
+void AutosaveJob::afterRun() {
+    string msg = FS(_F("Error while autosaving: {1}") % this->error);
+    g_warning("%s", msg.c_str());
+    XojMsgBox::showErrorToUser(control->getGtkWindow(), msg);
 }
 
-AutosaveJob::~AutosaveJob()
-{
-	XOJ_RELEASE_TYPE(AutosaveJob);
+void AutosaveJob::run() {
+    SaveHandler handler;
+
+    control->getUndoRedoHandler()->documentAutosaved();
+
+    Document* doc = control->getDocument();
+
+    doc->lock();
+    handler.prepareSave(doc);
+    auto filepath = doc->getFilepath();
+    doc->unlock();
+
+    if (filepath.empty()) {
+        filepath = Util::getAutosaveFilepath();
+    } else {
+        filepath.replace_filename(fs::u8path(u8"." + filepath.filename().u8string()));
+    }
+    Util::clearExtensions(filepath);
+    filepath += ".autosave.xopp";
+
+    control->renameLastAutosaveFile();
+
+    g_message("%s", FS(_F("Autosaving to {1}") % filepath.string()).c_str());
+
+    handler.saveTo(filepath);
+
+    this->error = handler.getErrorMessage();
+    if (!this->error.empty()) {
+        callAfterRun();
+    } else {
+        // control->deleteLastAutosaveFile(filepath);
+        control->setLastAutosaveFile(filepath);
+    }
 }
 
-void AutosaveJob::afterRun()
-{
-	XOJ_CHECK_TYPE(AutosaveJob);
-
-	string msg = FS(_F("Error while autosaving: {1}") % this->error);
-	g_warning("%s", msg.c_str());
-	XojMsgBox::showErrorToUser(control->getGtkWindow(), msg);
-}
-
-void AutosaveJob::run()
-{
-	XOJ_CHECK_TYPE(AutosaveJob);
-
-	SaveHandler handler;
-
-	control->getUndoRedoHandler()->documentAutosaved();
-
-	Document* doc = control->getDocument();
-
-	doc->lock();
-	handler.prepareSave(doc);
-	Path filename = doc->getFilename();
-	doc->unlock();
-
-	if (filename.isEmpty())
-	{
-		filename = Util::getAutosaveFilename();
-	}
-	else
-	{
-		string file = filename.getFilename();
-		filename = filename.getParentPath();
-		filename /= string(".") + file;
-	}
-	filename.clearExtensions();
-	filename += ".autosave.xopp";
-
-	control->renameLastAutosaveFile();
-
-	g_message("%s", FS(_F("Autosaving to {1}") % filename.str()).c_str());
-
-	handler.saveTo(filename);
-
-	this->error = handler.getErrorMessage();
-	if (!this->error.empty())
-	{
-		callAfterRun();
-	}
-	else
-	{
-		// control->deleteLastAutosaveFile(filename);
-		control->setLastAutosaveFile(filename);
-	}
-}
-
-JobType AutosaveJob::getType()
-{
-	XOJ_CHECK_TYPE(AutosaveJob);
-	return JOB_TYPE_AUTOSAVE;
-}
-
+auto AutosaveJob::getType() -> JobType { return JOB_TYPE_AUTOSAVE; }

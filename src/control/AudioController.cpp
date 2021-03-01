@@ -1,181 +1,114 @@
 #include "AudioController.h"
+
+#include <cinttypes>
+
 #include "Util.h"
+#include "XojMsgBox.h"
+#include "i18n.h"
 
-#include <i18n.h>
-#include <XojMsgBox.h>
+auto AudioController::startRecording() -> bool {
+    if (!this->isRecording()) {
+        if (getAudioFolder().empty()) {
+            return false;
+        }
 
-AudioController::AudioController(Settings* settings, Control* control)
-{
-	XOJ_INIT_TYPE(AudioController);
-	this->settings = settings;
-	this->control = control;
-	this->audioRecorder = new AudioRecorder(settings);
-	this->audioPlayer = new AudioPlayer(control, settings);
+        this->timestamp = static_cast<size_t>(g_get_monotonic_time() / 1000);
+
+        std::array<char, 50> buffer{};
+        time_t secs = time(nullptr);
+        tm* t = localtime(&secs);
+        // This prints the date and time in ISO format.
+        snprintf(buffer.data(), buffer.size(), "%04d-%02d-%02d_%02d-%02d-%02d", t->tm_year + 1900, t->tm_mon + 1,
+                 t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
+        string data(buffer.data());
+        data += ".ogg";
+
+        audioFilename = data;
+
+        g_message("Start recording");
+
+        bool isRecording = this->audioRecorder->start((getAudioFolder() / data).string());
+
+        if (!isRecording) {
+            audioFilename = "";
+            this->timestamp = 0;
+        }
+
+        return isRecording;
+    }
+    return false;
 }
 
-AudioController::~AudioController()
-{
-	XOJ_CHECK_TYPE(AudioController);
+auto AudioController::stopRecording() -> bool {
+    if (this->audioRecorder->isRecording()) {
+        audioFilename = "";
+        this->timestamp = 0;
 
-	delete this->audioRecorder;
-	this->audioRecorder = nullptr;
+        g_message("Stop recording");
 
-	delete this->audioPlayer;
-	this->audioPlayer = nullptr;
-
-	XOJ_RELEASE_TYPE(AudioController);
+        this->audioRecorder->stop();
+    }
+    return true;
 }
 
-bool AudioController::startRecording()
-{
-	XOJ_CHECK_TYPE(AudioController);
+auto AudioController::isRecording() -> bool { return this->audioRecorder->isRecording(); }
 
-	if (!this->isRecording())
-	{
-		if (getAudioFolder().isEmpty())
-		{
-			return false;
-		}
+auto AudioController::isPlaying() -> bool { return this->audioPlayer->isPlaying(); }
 
-		this->timestamp = static_cast<size_t>(g_get_monotonic_time() / 1000);
-
-		char buffer[50];
-		time_t secs = time(nullptr);
-		tm* t = localtime(&secs);
-		// This prints the date and time in ISO format.
-		sprintf(buffer, "%04d-%02d-%02d_%02d-%02d-%02d", t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour,
-				t->tm_min, t->tm_sec);
-		string data(buffer);
-		data += ".ogg";
-
-		audioFilename = data;
-
-		g_message("Start recording");
-
-		bool isRecording = this->audioRecorder->start(getAudioFolder().str() + "/" + data);
-
-		if (!isRecording)
-		{
-			audioFilename = "";
-			this->timestamp = 0;
-		}
-
-		return isRecording;
-	}
-	return false;
+auto AudioController::startPlayback(const string& filename, unsigned int timestamp) -> bool {
+    this->audioPlayer->stop();
+    bool status = this->audioPlayer->start(filename, timestamp);
+    if (status) {
+        this->control.getWindow()->getToolMenuHandler()->enableAudioPlaybackButtons();
+    }
+    return status;
 }
 
-bool AudioController::stopRecording()
-{
-	XOJ_CHECK_TYPE(AudioController);
+void AudioController::pausePlayback() {
+    this->control.getWindow()->getToolMenuHandler()->setAudioPlaybackPaused(true);
 
-	if (this->audioRecorder->isRecording())
-	{
-		audioFilename = "";
-		this->timestamp = 0;
-
-		g_message("Stop recording");
-
-		this->audioRecorder->stop();
-	}
-	return true;
+    this->audioPlayer->pause();
 }
 
-bool AudioController::isRecording()
-{
-	XOJ_CHECK_TYPE(AudioController);
+void AudioController::seekForwards() { this->audioPlayer->seek(this->settings.getDefaultSeekTime()); }
 
-	return this->audioRecorder->isRecording();
+void AudioController::seekBackwards() { this->audioPlayer->seek(-1 * this->settings.getDefaultSeekTime()); }
+
+void AudioController::continuePlayback() {
+    this->control.getWindow()->getToolMenuHandler()->setAudioPlaybackPaused(false);
+
+    this->audioPlayer->play();
 }
 
-bool AudioController::isPlaying()
-{
-	XOJ_CHECK_TYPE(AudioController);
-
-	return this->audioPlayer->isPlaying();
+void AudioController::stopPlayback() {
+    this->control.getWindow()->getToolMenuHandler()->disableAudioPlaybackButtons();
+    this->audioPlayer->stop();
 }
 
-bool AudioController::startPlayback(string filename, unsigned int timestamp)
-{
-	XOJ_CHECK_TYPE(AudioController);
+auto AudioController::getAudioFilename() const -> string const& { return this->audioFilename; }
 
-	this->audioPlayer->stop();
-	bool status = this->audioPlayer->start(std::move(filename), timestamp);
-	if (status)
-	{
-		this->control->getWindow()->getToolMenuHandler()->enableAudioPlaybackButtons();
-	}
-	return status;
+auto AudioController::getAudioFolder() const -> fs::path {
+    string const& af = this->settings.getAudioFolder();
+
+    if (af.length() < 8) {
+        string msg = _("Audio folder not set! Recording won't work!\nPlease set the "
+                       "recording folder under \"Preferences > Audio recording\"");
+        g_warning("%s", msg.c_str());
+        XojMsgBox::showErrorToUser(this->control.getGtkWindow(), msg);
+        return fs::path{};
+    }
+
+    auto path = Util::fromUri(af);
+    if (!path) {
+        g_warning("Failed to fetch audio folder.");
+        return fs::path{};
+    }
+
+    return *Util::fromUri(af);
 }
 
-void AudioController::pausePlayback()
-{
-	XOJ_CHECK_TYPE(AudioController);
+auto AudioController::getStartTime() const -> size_t { return this->timestamp; }
 
-	this->control->getWindow()->getToolMenuHandler()->setAudioPlaybackPaused(true);
+auto AudioController::getOutputDevices() const -> vector<DeviceInfo> { return this->audioPlayer->getOutputDevices(); }
 
-	this->audioPlayer->pause();
-}
-
-void AudioController::continuePlayback()
-{
-	XOJ_CHECK_TYPE(AudioController);
-
-	this->control->getWindow()->getToolMenuHandler()->setAudioPlaybackPaused(false);
-
-	this->audioPlayer->play();
-}
-
-void AudioController::stopPlayback()
-{
-	XOJ_CHECK_TYPE(AudioController);
-
-	this->control->getWindow()->getToolMenuHandler()->disableAudioPlaybackButtons();
-	this->audioPlayer->stop();
-}
-
-string AudioController::getAudioFilename()
-{
-	XOJ_CHECK_TYPE(AudioController);
-
-	return this->audioFilename;
-}
-
-Path AudioController::getAudioFolder()
-{
-	XOJ_CHECK_TYPE(AudioController);
-
-	string af = this->settings->getAudioFolder();
-
-	if (af.length() < 8)
-	{
-		string msg = _("Audio folder not set! Recording won't work!\nPlease set the "
-					   "recording folder under \"Preferences > Audio recording\"");
-		g_warning("%s", msg.c_str());
-		XojMsgBox::showErrorToUser(this->control->getGtkWindow(), msg);
-		return Path("");
-	}
-
-	return Path::fromUri(af);
-}
-
-size_t AudioController::getStartTime()
-{
-	XOJ_CHECK_TYPE(AudioController);
-
-	return this->timestamp;
-}
-
-vector<DeviceInfo> AudioController::getOutputDevices()
-{
-	XOJ_CHECK_TYPE(AudioController);
-
-	return this->audioPlayer->getOutputDevices();
-}
-
-vector<DeviceInfo> AudioController::getInputDevices()
-{
-	XOJ_CHECK_TYPE(AudioController);
-
-	return this->audioRecorder->getInputDevices();
-}
+auto AudioController::getInputDevices() const -> vector<DeviceInfo> { return this->audioRecorder->getInputDevices(); }

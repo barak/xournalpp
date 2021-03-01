@@ -2,79 +2,29 @@
 
 #include "DocumentHandler.h"
 
-DocumentListener::DocumentListener()
-{
-	XOJ_INIT_TYPE(DocumentListener);
+DocumentListener::DocumentListener() = default;
+
+DocumentListener::~DocumentListener() { unregisterListener(); }
+
+void DocumentListener::registerListener(DocumentHandler* handler) {
+    this->handler = handler;
+    handler->addListener(this);
 }
 
-DocumentListener::~DocumentListener()
-{
-	XOJ_CHECK_TYPE(DocumentListener);
-
-	unregisterListener();
-
-	XOJ_RELEASE_TYPE(DocumentListener);
+void DocumentListener::unregisterListener() {
+    if (this->handler) {
+        this->handler->removeListener(this);
+    }
 }
 
-void DocumentListener::registerListener(DocumentHandler* handler)
-{
-	XOJ_CHECK_TYPE(DocumentListener);
+void DocumentListener::documentChanged(DocumentChangeType type) {}
 
-	this->handler = handler;
-	handler->addListener(this);
-}
+void DocumentListener::pageSizeChanged(size_t page) {}
 
-void DocumentListener::unregisterListener()
-{
-	XOJ_CHECK_TYPE(DocumentListener);
+void DocumentListener::pageChanged(size_t page) {}
 
-	if (this->handler)
-	{
-		this->handler->removeListener(this);
-	}
-}
+void DocumentListener::pageInserted(size_t page) {}
 
-void DocumentListener::documentChanged(DocumentChangeType type)
-{
-	XOJ_CHECK_TYPE(DocumentListener);
-}
+void DocumentListener::pageDeleted(size_t page) {}
 
-void DocumentListener::pageSizeChanged(size_t page)
-{
-	XOJ_CHECK_TYPE(DocumentListener);
-}
-
-void DocumentListener::pageChanged(size_t page)
-{
-	XOJ_CHECK_TYPE(DocumentListener);
-}
-
-void DocumentListener::pageInserted(size_t page)
-{
-	XOJ_CHECK_TYPE(DocumentListener);
-}
-
-void DocumentListener::pageDeleted(size_t page)
-{
-	XOJ_CHECK_TYPE(DocumentListener);
-}
-
-void DocumentListener::pageSelected(size_t page)
-{
-	XOJ_CHECK_TYPE(DocumentListener);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+void DocumentListener::pageSelected(size_t page) {}

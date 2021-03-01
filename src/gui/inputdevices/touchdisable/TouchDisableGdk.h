@@ -11,23 +11,24 @@
 
 #pragma once
 
-#include <XournalType.h>
-#include "TouchDisableInterface.h"
+#include <string>
+#include <vector>
+
 #include "gtk/gtk.h"
 
-class TouchDisableGdk : public TouchDisableInterface
-{
+#include "TouchDisableInterface.h"
+#include "XournalType.h"
+
+class TouchDisableGdk: public TouchDisableInterface {
 public:
-	explicit TouchDisableGdk(GtkWidget* widget);
-	~TouchDisableGdk() override;
+    explicit TouchDisableGdk(GtkWidget* widget);
+    ~TouchDisableGdk() override;
+
 public:
-	void enableTouch() override;
-	void disableTouch() override;
-	void init() override;
+    void enableTouch() override;
+    void disableTouch() override;
+    void init() override;
+
 private:
-	XOJ_TYPE_ATTRIB;
-
-	GtkWidget* widget;
+    GtkWidget* widget;
 };
-
-

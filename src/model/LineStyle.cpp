@@ -1,66 +1,48 @@
 #include "LineStyle.h"
 
-#include <serializing/ObjectOutputStream.h>
-#include <serializing/ObjectInputStream.h>
+#include "serializing/ObjectInputStream.h"
+#include "serializing/ObjectOutputStream.h"
 
 
-LineStyle::LineStyle()
-{
-	XOJ_INIT_TYPE(LineStyle);
+LineStyle::LineStyle() = default;
+
+LineStyle::LineStyle(const LineStyle& other) { *this = other; }
+
+LineStyle::~LineStyle() {
+    g_free(this->dashes);
+    this->dashes = nullptr;
+    this->dashCount = 0;
 }
 
-LineStyle::LineStyle(const LineStyle& other)
-{
-	XOJ_INIT_TYPE(LineStyle);
-	*this = other;
-}
+void LineStyle::operator=(const LineStyle& other) {
+    if (this == &other) {
+        return;
+    }
+    const double* dashes = nullptr;
+    int dashCount = 0;
 
-LineStyle::~LineStyle()
-{
-	XOJ_CHECK_TYPE(LineStyle);
-
-	g_free(this->dashes);
-	this->dashes = NULL;
-	this->dashCount = 0;
-
-	XOJ_RELEASE_TYPE(LineStyle);
-}
-
-void LineStyle::operator=(const LineStyle& other)
-{
-	XOJ_CHECK_TYPE(LineStyle);
-
-	const double* dashes = NULL;
-	int dashCount = 0;
-
-	other.getDashes(dashes, dashCount);
-	setDashes(dashes, dashCount);
+    other.getDashes(dashes, dashCount);
+    setDashes(dashes, dashCount);
 }
 
 
-void LineStyle::serialize(ObjectOutputStream& out)
-{
-	XOJ_CHECK_TYPE(LineStyle);
+void LineStyle::serialize(ObjectOutputStream& out) {
+    out.writeObject("LineStyle");
 
-	out.writeObject("LineStyle");
+    out.writeData(this->dashes, this->dashCount, sizeof(double));
 
-	out.writeData(this->dashes, this->dashCount, sizeof(double));
-
-	out.endObject();
+    out.endObject();
 }
 
-void LineStyle::readSerialized(ObjectInputStream& in)
-{
-	XOJ_CHECK_TYPE(LineStyle);
+void LineStyle::readSerialized(ObjectInputStream& in) {
+    in.readObject("LineStyle");
 
-	in.readObject("LineStyle");
+    g_free(this->dashes);
+    this->dashes = nullptr;
+    this->dashCount = 0;
+    in.readData(reinterpret_cast<void**>(&this->dashes), &this->dashCount);
 
-	g_free(this->dashes);
-	this->dashes = NULL;
-	this->dashCount = 0;
-	in.readData((void**) &this->dashes, &this->dashCount);
-
-	in.endObject();
+    in.endObject();
 }
 
 /**
@@ -68,14 +50,11 @@ void LineStyle::readSerialized(ObjectInputStream& in)
  *
  * @return true if dashed
  */
-bool LineStyle::getDashes(const double*& dashes, int& dashCount) const
-{
-	XOJ_CHECK_TYPE(LineStyle);
+auto LineStyle::getDashes(const double*& dashes, int& dashCount) const -> bool {
+    dashes = this->dashes;
+    dashCount = this->dashCount;
 
-	dashes = this->dashes;
-	dashCount = this->dashCount;
-
-	return this->dashCount > 0;
+    return this->dashCount > 0;
 }
 
 /**
@@ -84,22 +63,19 @@ bool LineStyle::getDashes(const double*& dashes, int& dashCount) const
  * @param dashes Dash data, will be copied
  * @param dashCount Count of entries
  */
-void LineStyle::setDashes(const double* dashes, int dashCount)
-{
-	XOJ_CHECK_TYPE(LineStyle);
+// Todo(fabian): memmory use after free
+void LineStyle::setDashes(const double* dashes, int dashCount) {
+    g_free(this->dashes);
+    if (dashCount == 0 || dashes == nullptr) {
+        this->dashCount = 0;
+        this->dashes = nullptr;
+        return;
+    }
 
-	g_free(this->dashes);
-	if (dashCount == 0 || dashes == NULL)
-	{
-		this->dashCount = 0;
-		this->dashes = NULL;
-		return;
-	}
+    this->dashes = static_cast<double*>(g_malloc(dashCount * sizeof(double)));
+    this->dashCount = dashCount;
 
-	this->dashes = (double*)g_malloc(dashCount * sizeof(double));
-	this->dashCount = dashCount;
-
-	memcpy(this->dashes, dashes, this->dashCount * sizeof(double));
+    memcpy(this->dashes, dashes, this->dashCount * sizeof(double));
 }
 
 /**
@@ -107,9 +83,4 @@ void LineStyle::setDashes(const double* dashes, int dashCount)
  *
  * @return true if dashed
  */
-bool LineStyle::hasDashes() const
-{
-	XOJ_CHECK_TYPE(LineStyle);
-
-	return this->dashCount > 0;
-}
+auto LineStyle::hasDashes() const -> bool { return this->dashCount > 0; }

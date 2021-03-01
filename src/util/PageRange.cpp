@@ -1,109 +1,76 @@
 #include "PageRange.h"
 
-#include <ctype.h>
-#include <stdlib.h>
+#include <cctype>
+#include <cstdlib>
 
-PageRangeEntry::PageRangeEntry(int first, int last)
-{
-	XOJ_INIT_TYPE(PageRangeEntry);
-
-	this->first = first;
-	this->last = last;
+PageRangeEntry::PageRangeEntry(int first, int last) {
+    this->first = first;
+    this->last = last;
 }
 
-PageRangeEntry::~PageRangeEntry()
-{
-	XOJ_RELEASE_TYPE(PageRangeEntry);
-}
+PageRangeEntry::~PageRangeEntry() = default;
 
-int PageRangeEntry::getLast()
-{
-	XOJ_CHECK_TYPE(PageRangeEntry);
+auto PageRangeEntry::getLast() const -> int { return this->last; }
 
-	return this->last;
-}
+auto PageRangeEntry::getFirst() const -> int { return this->first; }
 
-int PageRangeEntry::getFirst()
-{
-	XOJ_CHECK_TYPE(PageRangeEntry);
+auto PageRange::isSeparator(char c) -> bool { return (c == ',' || c == ';' || c == ':'); }
 
-	return this->first;
-}
+auto PageRange::parse(const char* str, int pageCount) -> PageRangeVector {
+    PageRangeVector data;
 
-bool PageRange::isSeparator(char c)
-{
-	return (c == ',' || c == ';' || c == ':');
-}
+    if (*str == 0) {
+        return data;
+    }
 
-PageRangeVector PageRange::parse(const char* str)
-{
-	PageRangeVector data;
+    int start = 0, end = 0;
+    char* next = nullptr;
+    const char* p = str;
+    while (*p) {
+        while (isspace(*p)) {
+            p++;
+        }
 
-	if (*str == 0)
-	{
-		return data;
-	}
+        if (*p == '-') {
+            // a half-open range like -2
+            start = 1;
+        } else {
+            start = static_cast<int>(strtol(p, &next, 10));
+            if (start < 1) {
+                start = 1;
+            }
+            p = next;
+        }
 
-	int start, end;
-	char* next = NULL;
-	const char* p = str;
-	while (*p)
-	{
-		while (isspace(*p))
-		{
-			p++;
-		}
+        end = start;
 
-		if (*p == '-')
-		{
-			// a half-open range like -2
-			start = 1;
-		}
-		else
-		{
-			start = (int) strtol(p, &next, 10);
-			if (start < 1)
-			{
-				start = 1;
-			}
-			p = next;
-		}
+        while (isspace(*p)) {
+            p++;
+        }
 
-		end = start;
+        if (*p == '-') {
+            p++;
+            end = static_cast<int>(strtol(p, &next, 10));
+            if (next == p)  // a half-open range like 2-
+            {
+                end = pageCount;
+            } else if (end < start) {
+                end = start;
+            }
+        }
 
-		while (isspace(*p))
-		{
-			p++;
-		}
+        data.push_back(new PageRangeEntry(start - 1, end - 1));
 
-		if (*p == '-')
-		{
-			p++;
-			end = (int) strtol(p, &next, 10);
-			if (next == p) // a half-open range like 2-
-			{
-				end = 0;
-			}
-			else if (end < start)
-			{
-				end = start;
-			}
-		}
+        // Skip until end or separator
+        while (*p && !isSeparator(*p)) {
+            p++;
+        }
 
-		data.push_back(new PageRangeEntry(start - 1, end - 1));
+        // if not at end, skip separator
+        if (*p) {
+            p++;
+        }
+    }
 
-		// Skip until end or separator
-		while (*p && !isSeparator(*p))
-		{
-			p++;
-		}
-
-		// if not at end, skip separator
-		if (*p)
-		{
-			p++;
-		}
-	}
-
-	return data;
+    return data;
 }

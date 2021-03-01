@@ -1,134 +1,60 @@
 #include "Actions.h"
 
-ActionEnabledListener::ActionEnabledListener()
-{
-	XOJ_INIT_TYPE(ActionEnabledListener);
+ActionEnabledListener::ActionEnabledListener() = default;
+
+ActionEnabledListener::~ActionEnabledListener() { unregisterListener(); }
+
+void ActionEnabledListener::registerListener(ActionHandler* handler) {
+    if (this->handler == nullptr) {
+        this->handler = handler;
+        this->handler->addListener(this);
+    }
 }
 
-ActionEnabledListener::~ActionEnabledListener()
-{
-	XOJ_CHECK_TYPE(ActionEnabledListener);
-
-	unregisterListener();
-
-	XOJ_RELEASE_TYPE(ActionEnabledListener);
+void ActionEnabledListener::unregisterListener() {
+    if (this->handler) {
+        this->handler->removeListener(this);
+        this->handler = nullptr;
+    }
 }
 
-void ActionEnabledListener::registerListener(ActionHandler* handler)
-{
-	XOJ_CHECK_TYPE(ActionEnabledListener);
+ActionSelectionListener::ActionSelectionListener() { this->handler = nullptr; }
 
-	if (this->handler == NULL)
-	{
-		this->handler = handler;
-		this->handler->addListener(this);
-	}
+ActionSelectionListener::~ActionSelectionListener() { unregisterListener(); }
+
+void ActionSelectionListener::registerListener(ActionHandler* handler) {
+    if (this->handler == nullptr) {
+        this->handler = handler;
+        handler->addListener(this);
+    }
 }
 
-void ActionEnabledListener::unregisterListener()
-{
-	XOJ_CHECK_TYPE(ActionEnabledListener);
-
-	if (this->handler)
-	{
-		this->handler->removeListener(this);
-		this->handler = NULL;
-	}
+void ActionSelectionListener::unregisterListener() {
+    if (this->handler != nullptr) {
+        handler->removeListener(this);
+    }
 }
 
-ActionSelectionListener::ActionSelectionListener()
-{
-	XOJ_INIT_TYPE(ActionSelectionListener);
+ActionHandler::ActionHandler() = default;
 
-	this->handler = NULL;
+ActionHandler::~ActionHandler() = default;
+
+void ActionHandler::fireEnableAction(ActionType action, bool enabled) {
+    for (ActionEnabledListener* listener: this->enabledListener) {
+        listener->actionEnabledAction(action, enabled);
+    }
 }
 
-ActionSelectionListener::~ActionSelectionListener()
-{
-	XOJ_CHECK_TYPE(ActionSelectionListener);
+void ActionHandler::addListener(ActionEnabledListener* listener) { this->enabledListener.push_back(listener); }
 
-	unregisterListener();
+void ActionHandler::removeListener(ActionEnabledListener* listener) { this->enabledListener.remove(listener); }
 
-	XOJ_RELEASE_TYPE(ActionSelectionListener);
+void ActionHandler::fireActionSelected(ActionGroup group, ActionType action) {
+    for (ActionSelectionListener* listener: this->selectionListener) {
+        listener->actionSelected(group, action);
+    }
 }
 
-void ActionSelectionListener::registerListener(ActionHandler* handler)
-{
-	XOJ_CHECK_TYPE(ActionSelectionListener);
+void ActionHandler::addListener(ActionSelectionListener* listener) { this->selectionListener.push_back(listener); }
 
-	if (this->handler == NULL)
-	{
-		this->handler = handler;
-		handler->addListener(this);
-	}
-}
-
-void ActionSelectionListener::unregisterListener()
-{
-	XOJ_CHECK_TYPE(ActionSelectionListener);
-
-	if (this->handler != NULL)
-	{
-		handler->removeListener(this);
-	}
-}
-
-ActionHandler::ActionHandler()
-{
-	XOJ_INIT_TYPE(ActionHandler);
-}
-
-ActionHandler::~ActionHandler()
-{
-	XOJ_CHECK_TYPE(ActionHandler);
-
-	XOJ_RELEASE_TYPE(ActionHandler);
-}
-
-void ActionHandler::fireEnableAction(ActionType action, bool enabled)
-{
-	XOJ_CHECK_TYPE(ActionHandler);
-
-	for (ActionEnabledListener* listener : this->enabledListener)
-	{
-		listener->actionEnabledAction(action, enabled);
-	}
-}
-
-void ActionHandler::addListener(ActionEnabledListener* listener)
-{
-	XOJ_CHECK_TYPE(ActionHandler);
-
-	this->enabledListener.push_back(listener);
-}
-
-void ActionHandler::removeListener(ActionEnabledListener* listener)
-{
-	XOJ_CHECK_TYPE(ActionHandler);
-
-	this->enabledListener.remove(listener);
-}
-
-void ActionHandler::fireActionSelected(ActionGroup group, ActionType action)
-{
-	XOJ_CHECK_TYPE(ActionHandler);
-
-	for (ActionSelectionListener* listener : this->selectionListener)
-	{
-		listener->actionSelected(group, action);
-	}
-}
-
-void ActionHandler::addListener(ActionSelectionListener* listener)
-{
-	XOJ_CHECK_TYPE(ActionHandler);
-
-	this->selectionListener.push_back(listener);
-}
-
-void ActionHandler::removeListener(ActionSelectionListener* listener)
-{
-	XOJ_CHECK_TYPE(ActionHandler);
-
-	this->selectionListener.remove(listener);
-}
+void ActionHandler::removeListener(ActionSelectionListener* listener) { this->selectionListener.remove(listener); }

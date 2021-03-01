@@ -1,95 +1,55 @@
 #include "GladeGui.h"
 
-#include "GladeSearchpath.h"
+#include <cstdlib>
+#include <utility>
 
 #include <config.h>
-#include <i18n.h>
-#include <XojMsgBox.h>
 
-#include <stdlib.h>
+#include "GladeSearchpath.h"
+#include "XojMsgBox.h"
+#include "i18n.h"
 
-GladeGui::GladeGui(GladeSearchpath* gladeSearchPath, string glade, string mainWnd)
-{
-	XOJ_INIT_TYPE(GladeGui);
+GladeGui::GladeGui(GladeSearchpath* gladeSearchPath, const string& glade, const string& mainWnd) {
+    this->gladeSearchPath = gladeSearchPath;
 
-	this->gladeSearchPath = gladeSearchPath;
+    auto filepath = this->gladeSearchPath->findFile("", glade);
 
-	string filename = this->gladeSearchPath->findFile("", glade);
+    GError* error = nullptr;
+    builder = gtk_builder_new();
 
-	GError* error = NULL;
-	builder = gtk_builder_new();
+    if (!gtk_builder_add_from_file(builder, filepath.u8string().c_str(), &error)) {
+        string msg = FS(_F("Error loading glade file \"{1}\" (try to load \"{2}\")") % glade % filepath.u8string());
 
-	if (!gtk_builder_add_from_file(builder, filename.c_str(), &error))
-	{
-		string msg = FS(_F("Error loading glade file \"{1}\" (try to load \"{2}\")") % glade % filename);
+        if (error != nullptr) {
+            msg += "\n";
+            msg += error->message;
+        }
+        XojMsgBox::showErrorToUser(nullptr, msg);
 
-		if (error != NULL)
-		{
-			msg += "\n";
-			msg += error->message;
-		}
-		XojMsgBox::showErrorToUser(NULL, msg);
+        g_error_free(error);
 
-		g_error_free(error);
+        exit(-1);
+    }
 
-		exit(-1);
-	}
-
-	this->window = get(mainWnd);
+    this->window = get(mainWnd);
 }
 
-GladeGui::~GladeGui()
-{
-	XOJ_CHECK_TYPE(GladeGui);
+GladeGui::~GladeGui() { g_object_unref(builder); }
 
-	g_object_unref(builder);
-
-	XOJ_RELEASE_TYPE(GladeGui);
+auto GladeGui::get(const string& name) -> GtkWidget* {
+    GtkWidget* w = GTK_WIDGET(gtk_builder_get_object(builder, name.c_str()));
+    if (w == nullptr) {
+        g_warning("GladeGui::get: Could not find glade Widget: \"%s\"", name.c_str());
+    }
+    return w;
 }
 
-GtkWidget* GladeGui::get(string name)
-{
-	XOJ_CHECK_TYPE(GladeGui);
+auto GladeGui::getWindow() -> GtkWidget* { return this->window; }
 
-	GtkWidget* w = GTK_WIDGET(gtk_builder_get_object(builder, name.c_str()));
-	if (w == NULL)
-	{
-		g_warning("GladeGui::get: Could not find glade Widget: \"%s\"", name.c_str());
-	}
-	return w;
-}
+auto GladeGui::getGladeSearchPath() -> GladeSearchpath* { return this->gladeSearchPath; }
 
-GtkWidget* GladeGui::getWindow()
-{
-	XOJ_CHECK_TYPE(GladeGui);
+auto GladeGui::getBuilder() -> GtkBuilder* { return this->builder; }
 
-	return this->window;
-}
+GladeGui::operator GdkWindow*() { return gtk_widget_get_window(GTK_WIDGET(getWindow())); }
 
-GladeSearchpath* GladeGui::getGladeSearchPath()
-{
-	XOJ_CHECK_TYPE(GladeGui);
-
-	return this->gladeSearchPath;
-}
-
-GtkBuilder* GladeGui::getBuilder()
-{
-	XOJ_CHECK_TYPE(GladeGui);
-
-	return this->builder;
-}
-
-GladeGui::operator GdkWindow* ()
-{
-	XOJ_CHECK_TYPE(GladeGui);
-
-	return gtk_widget_get_window(GTK_WIDGET(getWindow()));
-}
-
-GladeGui::operator GtkWindow* ()
-{
-	XOJ_CHECK_TYPE(GladeGui);
-
-	return GTK_WINDOW(getWindow());
-}
+GladeGui::operator GtkWindow*() { return GTK_WINDOW(getWindow()); }

@@ -1,690 +1,597 @@
-#include "Actions.h"
-#include "LastSelectedTool.h"
 #include "ToolHandler.h"
-#include "model/StrokeStyle.h"
-#include <Util.h>
 
-#include <gtk/gtk.h>
-#include <stdio.h>
+#include <algorithm>
+#include <cstdio>
+
 #include <config-debug.h>
+#include <gtk/gtk.h>
 
-ToolListener::~ToolListener() { }
+#include "model/StrokeStyle.h"
+
+#include "Actions.h"
+#include "Util.h"
 
 
-ToolHandler::ToolHandler(ToolListener* listener, ActionHandler* actionHandler, Settings* settings)
-{
-	XOJ_INIT_TYPE(ToolHandler);
+ToolListener::~ToolListener() = default;
 
-	this->settings = settings;
-	initTools();
-	this->listener = listener;
-	this->actionHandler = actionHandler;
+ToolHandler::ToolHandler(ToolListener* stateChangeListener, ActionHandler* actionHandler, Settings* settings) {
+    this->settings = settings;
+    initTools();
+    this->actionHandler = actionHandler;
+
+    this->stateChangeListener = stateChangeListener;
 }
 
-void ToolHandler::initTools()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
+void ToolHandler::initTools() {
+    auto* thickness = new double[Tool::toolSizes];
+    // pen thicknesses = 0.15, 0.3, 0.5, 0.8, 2 mm
+    thickness[TOOL_SIZE_VERY_FINE] = 0.42;
+    thickness[TOOL_SIZE_FINE] = 0.85;
+    thickness[TOOL_SIZE_MEDIUM] = 1.41;
+    thickness[TOOL_SIZE_THICK] = 2.26;
+    thickness[TOOL_SIZE_VERY_THICK] = 5.67;
+    tools[TOOL_PEN - TOOL_PEN] = std::make_unique<Tool>(
+            "pen", TOOL_PEN, Color{0x3333CCU},
+            TOOL_CAP_COLOR | TOOL_CAP_SIZE | TOOL_CAP_RULER | TOOL_CAP_RECTANGLE | TOOL_CAP_ELLIPSE | TOOL_CAP_ARROW |
+                    TOOL_CAP_SPLINE | TOOL_CAP_RECOGNIZER | TOOL_CAP_FILL | TOOL_CAP_DASH_LINE,
+            thickness);
 
-	Tool* t = NULL;
+    thickness = new double[Tool::toolSizes];
+    thickness[TOOL_SIZE_VERY_FINE] = 1;
+    thickness[TOOL_SIZE_FINE] = 2.83;
+    thickness[TOOL_SIZE_MEDIUM] = 8.50;
+    thickness[TOOL_SIZE_THICK] = 12;
+    thickness[TOOL_SIZE_VERY_THICK] = 18;
+    tools[TOOL_ERASER - TOOL_PEN] =
+            std::make_unique<Tool>("eraser", TOOL_ERASER, Color{0x000000U}, TOOL_CAP_SIZE, thickness);
 
-	for (int i = 0; i < TOOL_COUNT; i++)
-	{
-		tools[i] = NULL;
-	}
+    // highlighter thicknesses = 1, 3, 7 mm
+    thickness = new double[Tool::toolSizes];
+    thickness[TOOL_SIZE_VERY_FINE] = 1;
+    thickness[TOOL_SIZE_FINE] = 2.83;
+    thickness[TOOL_SIZE_MEDIUM] = 8.50;
+    thickness[TOOL_SIZE_THICK] = 19.84;
+    thickness[TOOL_SIZE_VERY_THICK] = 30;
+    tools[TOOL_HIGHLIGHTER - TOOL_PEN] = std::make_unique<Tool>(
+            "highlighter", TOOL_HIGHLIGHTER, Color{0xFFFF00U},
+            TOOL_CAP_COLOR | TOOL_CAP_SIZE | TOOL_CAP_RULER | TOOL_CAP_RECTANGLE | TOOL_CAP_ELLIPSE | TOOL_CAP_ARROW |
+                    TOOL_CAP_SPLINE | TOOL_CAP_RECOGNIZER | TOOL_CAP_FILL,
+            thickness);
 
-	double* thickness = new double[5];
-	// pen thicknesses = 0.15, 0.3, 0.5, 0.8, 2 mm
-	thickness[TOOL_SIZE_VERY_FINE] = 0.42;
-	thickness[TOOL_SIZE_FINE] = 0.85;
-	thickness[TOOL_SIZE_MEDIUM] = 1.41;
-	thickness[TOOL_SIZE_THICK] = 2.26;
-	thickness[TOOL_SIZE_VERY_THICK] = 5.67;
-	t = new Tool("pen", TOOL_PEN, 0x3333CC,
-			TOOL_CAP_COLOR | TOOL_CAP_SIZE | TOOL_CAP_RULER | TOOL_CAP_RECTANGLE |
-			TOOL_CAP_CIRCLE | TOOL_CAP_ARROW | TOOL_CAP_RECOGNIZER | TOOL_CAP_FILL |
-			TOOL_CAP_DASH_LINE,
-			thickness);
-	tools[TOOL_PEN - TOOL_PEN] = t;
+    tools[TOOL_TEXT - TOOL_PEN] = std::make_unique<Tool>("text", TOOL_TEXT, Color{0x000000U}, TOOL_CAP_COLOR, nullptr);
 
-	thickness = new double[5];
-	thickness[TOOL_SIZE_VERY_FINE] = 1;
-	thickness[TOOL_SIZE_FINE] = 2.83;
-	thickness[TOOL_SIZE_MEDIUM] = 8.50;
-	thickness[TOOL_SIZE_THICK] = 12;
-	thickness[TOOL_SIZE_VERY_THICK] = 18;
-	t = new Tool("eraser", TOOL_ERASER, 0x000000, TOOL_CAP_SIZE, thickness);
-	tools[TOOL_ERASER - TOOL_PEN] = t;
+    tools[TOOL_IMAGE - TOOL_PEN] =
+            std::make_unique<Tool>("image", TOOL_IMAGE, Color{0x000000U}, TOOL_CAP_NONE, nullptr);
 
-	// highlighter thicknesses = 1, 3, 7 mm
-	thickness = new double[5];
-	thickness[TOOL_SIZE_VERY_FINE] = 1;
-	thickness[TOOL_SIZE_FINE] = 2.83;
-	thickness[TOOL_SIZE_MEDIUM] = 8.50;
-	thickness[TOOL_SIZE_THICK] = 19.84;
-	thickness[TOOL_SIZE_VERY_THICK] = 30;
-	t = new Tool("hilighter", TOOL_HILIGHTER, 0xFFFF00,
-			TOOL_CAP_COLOR | TOOL_CAP_SIZE | TOOL_CAP_RULER | TOOL_CAP_RECTANGLE |
-			TOOL_CAP_CIRCLE | TOOL_CAP_ARROW | TOOL_CAP_RECOGNIZER | TOOL_CAP_FILL,
-			thickness);
-	tools[TOOL_HILIGHTER - TOOL_PEN] = t;
+    tools[TOOL_SELECT_RECT - TOOL_PEN] =
+            std::make_unique<Tool>("selectRect", TOOL_SELECT_RECT, Color{0x000000U}, TOOL_CAP_NONE, nullptr);
 
-	t = new Tool("text", TOOL_TEXT, 0x000000, TOOL_CAP_COLOR, NULL);
-	tools[TOOL_TEXT - TOOL_PEN] = t;
+    tools[TOOL_SELECT_REGION - TOOL_PEN] =
+            std::make_unique<Tool>("selectRegion", TOOL_SELECT_REGION, Color{0x000000U}, TOOL_CAP_NONE, nullptr);
 
-	t = new Tool("image", TOOL_IMAGE, 0x000000, TOOL_CAP_NONE, NULL);
-	tools[TOOL_IMAGE - TOOL_PEN] = t;
+    tools[TOOL_SELECT_OBJECT - TOOL_PEN] =
+            std::make_unique<Tool>("selectObject", TOOL_SELECT_OBJECT, Color{0x000000U}, TOOL_CAP_NONE, nullptr);
 
-	t = new Tool("selectRect", TOOL_SELECT_RECT, 0x000000, TOOL_CAP_NONE, NULL);
-	tools[TOOL_SELECT_RECT - TOOL_PEN] = t;
+    tools[TOOL_VERTICAL_SPACE - TOOL_PEN] =
+            std::make_unique<Tool>("verticalSpace", TOOL_VERTICAL_SPACE, Color{0x000000U}, TOOL_CAP_NONE, nullptr);
 
-	t = new Tool("selectRegion", TOOL_SELECT_REGION, 0x000000, TOOL_CAP_NONE, NULL);
-	tools[TOOL_SELECT_REGION - TOOL_PEN] = t;
+    tools[TOOL_HAND - TOOL_PEN] = std::make_unique<Tool>("hand", TOOL_HAND, Color{0x000000U}, TOOL_CAP_NONE, nullptr);
 
-	t = new Tool("selectObject", TOOL_SELECT_OBJECT, 0x000000, TOOL_CAP_NONE, NULL);
-	tools[TOOL_SELECT_OBJECT - TOOL_PEN] = t;
+    tools[TOOL_PLAY_OBJECT - TOOL_PEN] =
+            std::make_unique<Tool>("playObject", TOOL_PLAY_OBJECT, Color{0x000000U}, TOOL_CAP_NONE, nullptr);
 
-	t = new Tool("verticalSpace", TOOL_VERTICAL_SPACE, 0x000000, TOOL_CAP_NONE, NULL);
-	tools[TOOL_VERTICAL_SPACE - TOOL_PEN] = t;
+    tools[TOOL_DRAW_RECT - TOOL_PEN] =
+            std::make_unique<Tool>("drawRect", TOOL_DRAW_RECT, Color{0x000000U}, TOOL_CAP_NONE, nullptr);
 
-	t = new Tool("hand", TOOL_HAND, 0x000000, TOOL_CAP_NONE, NULL);
-	tools[TOOL_HAND - TOOL_PEN] = t;
+    tools[TOOL_DRAW_ELLIPSE - TOOL_PEN] =
+            std::make_unique<Tool>("drawEllipse", TOOL_DRAW_ELLIPSE, Color{0x000000U}, TOOL_CAP_NONE, nullptr);
 
-	t = new Tool("playObject", TOOL_PLAY_OBJECT, 0x000000, TOOL_CAP_NONE, NULL);
-	tools[TOOL_PLAY_OBJECT - TOOL_PEN] = t;
+    tools[TOOL_DRAW_ARROW - TOOL_PEN] =
+            std::make_unique<Tool>("drawArrow", TOOL_DRAW_ARROW, Color{0x000000U}, TOOL_CAP_NONE, nullptr);
 
-	t = new Tool("drawRect", TOOL_DRAW_RECT, 0x000000, TOOL_CAP_NONE, NULL);
-	tools[TOOL_DRAW_RECT - TOOL_PEN] = t;
+    tools[TOOL_DRAW_COORDINATE_SYSTEM - TOOL_PEN] = std::make_unique<Tool>(
+            "drawCoordinateSystem", TOOL_DRAW_COORDINATE_SYSTEM, Color{0x000000U}, TOOL_CAP_NONE, nullptr);
 
-	t = new Tool("drawCircle", TOOL_DRAW_CIRCLE, 0x000000, TOOL_CAP_NONE, NULL);
-	tools[TOOL_DRAW_CIRCLE - TOOL_PEN] = t;
+    tools[TOOL_DRAW_SPLINE - TOOL_PEN] =
+            std::make_unique<Tool>("drawSpline", TOOL_DRAW_SPLINE, Color{0x000000U}, TOOL_CAP_NONE, nullptr);
 
-	t = new Tool("drawArrow", TOOL_DRAW_ARROW, 0x000000, TOOL_CAP_NONE, NULL);
-	tools[TOOL_DRAW_ARROW - TOOL_PEN] = t;
+    tools[TOOL_FLOATING_TOOLBOX - TOOL_PEN] = std::make_unique<Tool>("showFloatingToolbox", TOOL_FLOATING_TOOLBOX,
+                                                                     Color{0x000000U}, TOOL_CAP_NONE, nullptr);
 
-	t = new Tool("drawCoordinateSystem", TOOL_DRAW_COORDINATE_SYSTEM, 0x000000, TOOL_CAP_NONE, NULL);
-	tools[TOOL_DRAW_COORDINATE_SYSTEM - TOOL_PEN] = t;
-	
-	t = new Tool("showFloatingToolbox", TOOL_FLOATING_TOOLBOX, 0x000000, TOOL_CAP_NONE, NULL);
-	tools[TOOL_FLOATING_TOOLBOX - TOOL_PEN] = t;
-	
+    this->eraserButtonTool = std::make_unique<Tool>(tools[TOOL_HIGHLIGHTER - TOOL_PEN].get());
+    this->stylusButton1Tool = std::make_unique<Tool>(tools[TOOL_HIGHLIGHTER - TOOL_PEN].get());
+    this->stylusButton2Tool = std::make_unique<Tool>(tools[TOOL_HIGHLIGHTER - TOOL_PEN].get());
+    this->mouseMiddleButtonTool = std::make_unique<Tool>(tools[TOOL_HIGHLIGHTER - TOOL_PEN].get());
+    this->mouseRightButtonTool = std::make_unique<Tool>(tools[TOOL_HIGHLIGHTER - TOOL_PEN].get());
+    this->touchDrawingButtonTool = std::make_unique<Tool>(tools[TOOL_HIGHLIGHTER - TOOL_PEN].get());
 
-	selectTool(TOOL_PEN);
+    this->toolbarSelectedTool = &getTool(TOOL_PEN);
+    this->activeTool = &getTool(TOOL_PEN);
 }
 
-ToolHandler::~ToolHandler()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	for (int i = 0; i < TOOL_COUNT; i++)
-	{
-		delete tools[i];
-		tools[i] = NULL;
-	}
-
-	// Do not delete settings!
-	this->settings = NULL;
-
-	XOJ_RELEASE_TYPE(ToolHandler);
+ToolHandler::~ToolHandler() {
+    // Do not delete settings!
+    this->settings = nullptr;
 }
 
-void ToolHandler::setEraserType(EraserType eraserType)
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	this->eraserType = eraserType;
-	eraserTypeChanged();
+void ToolHandler::setEraserType(EraserType eraserType) {
+    Tool& tool = this->getTool(TOOL_ERASER);
+    tool.setEraserType(eraserType);
+    eraserTypeChanged();
 }
 
-void ToolHandler::eraserTypeChanged()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	if (this->actionHandler == NULL)
-	{
-		return;
-	}
-
-	switch (this->eraserType)
-	{
-	case ERASER_TYPE_DELETE_STROKE:
-		this->actionHandler->fireActionSelected(GROUP_ERASER_MODE, ACTION_TOOL_ERASER_DELETE_STROKE);
-		break;
-
-	case ERASER_TYPE_WHITEOUT:
-		this->actionHandler->fireActionSelected(GROUP_ERASER_MODE, ACTION_TOOL_ERASER_WHITEOUT);
-		break;
-
-	case ERASER_TYPE_DEFAULT:
-	default:
-		this->actionHandler->fireActionSelected(GROUP_ERASER_MODE, ACTION_TOOL_ERASER_STANDARD);
-		break;
-	}
+void ToolHandler::setButtonEraserType(EraserType eraserType, Button button) {
+    Tool* tool = getButtonTool(button);
+    tool->setEraserType(eraserType);
+    eraserTypeChanged();
 }
 
-EraserType ToolHandler::getEraserType()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
+void ToolHandler::eraserTypeChanged() {
+    if (this->actionHandler == nullptr) {
+        return;
+    }
 
-	return this->eraserType;
+    switch (this->getEraserType()) {
+        case ERASER_TYPE_DELETE_STROKE:
+            this->actionHandler->fireActionSelected(GROUP_ERASER_MODE, ACTION_TOOL_ERASER_DELETE_STROKE);
+            break;
+
+        case ERASER_TYPE_WHITEOUT:
+            this->actionHandler->fireActionSelected(GROUP_ERASER_MODE, ACTION_TOOL_ERASER_WHITEOUT);
+            break;
+
+        case ERASER_TYPE_DEFAULT:
+        default:
+            this->actionHandler->fireActionSelected(GROUP_ERASER_MODE, ACTION_TOOL_ERASER_STANDARD);
+            break;
+    }
 }
 
-void ToolHandler::selectTool(ToolType type, bool fireToolChanged)
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	if (type < 1 || type > TOOL_COUNT)
-	{
-		g_warning("unknown tool selected: %i\n", type);
-		return;
-	}
-	this->current = tools[type - TOOL_PEN];
-
-	if (fireToolChanged)
-	{
-		this->fireToolChanged();
-	}
+auto ToolHandler::getEraserType() -> EraserType {
+    // if active tool is eraser get its type
+    if (this->activeTool->type == TOOL_ERASER)
+        return this->activeTool->getEraserType();
+    else  // otherwise get EraserType of Toolbar Eraser
+        return this->getTool(TOOL_ERASER).getEraserType();
 }
 
-void ToolHandler::fireToolChanged()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	if (listener)
-	{
-		listener->toolChanged();
-	}
+void ToolHandler::selectTool(ToolType type) {
+    if (type < 1 || type > TOOL_COUNT) {
+        g_warning("unknown tool selected: %i\n", type);
+        return;
+    }
+    this->toolbarSelectedTool = &getTool(type);
+    // set activeTool is necessary for fireToolChanged()
+    // if called after this method
+    // to result in the correct Button shown as active
+    this->activeTool = this->toolbarSelectedTool;
 }
 
-Tool& ToolHandler::getTool(ToolType type)
-{
-	return *(this->tools[type - TOOL_PEN]);
+void ToolHandler::fireToolChanged() {
+    for (auto&& listener: this->toolChangeListeners) {
+        listener(this->activeTool->type);
+    }
+
+    stateChangeListener->toolChanged();
 }
 
-ToolType ToolHandler::getToolType()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	return this->current->type;
+void ToolHandler::addToolChangedListener(ToolChangedCallback listener) {
+    toolChangeListeners.emplace_back(std::move(listener));
 }
 
-bool ToolHandler::hasCapability(ToolCapabilities cap)
-{
-	XOJ_CHECK_TYPE(ToolHandler);
+auto ToolHandler::getTool(ToolType type) -> Tool& { return *(this->tools[type - TOOL_PEN]); }
 
-	return (current->capabilities & cap) != 0;
+auto ToolHandler::getToolType() -> ToolType {
+    Tool* tool = this->activeTool;
+    return tool->type;
 }
 
-ToolSize ToolHandler::getSize()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	return this->current->getSize();
+auto ToolHandler::hasCapability(ToolCapabilities cap, SelectedTool selectedTool) -> bool {
+    Tool* tool = getSelectedTool(selectedTool);
+    return (tool->capabilities & cap) != 0;
 }
 
-ToolSize ToolHandler::getPenSize()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	return tools[TOOL_PEN - TOOL_PEN]->getSize();
+auto ToolHandler::isDrawingTool() -> bool {
+    Tool* tool = this->activeTool;
+    return tool->isDrawingTool();
 }
 
-ToolSize ToolHandler::getEraserSize()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	return tools[TOOL_ERASER - TOOL_PEN]->getSize();
+auto ToolHandler::getSize(SelectedTool selectedTool) -> ToolSize {
+    Tool* tool = getSelectedTool(selectedTool);
+    return tool->getSize();
 }
 
-ToolSize ToolHandler::getHilighterSize()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
+auto ToolHandler::getPenSize() -> ToolSize { return tools[TOOL_PEN - TOOL_PEN]->getSize(); }
 
-	return tools[TOOL_HILIGHTER - TOOL_PEN]->getSize();
+auto ToolHandler::getEraserSize() -> ToolSize { return tools[TOOL_ERASER - TOOL_PEN]->getSize(); }
+
+auto ToolHandler::getHighlighterSize() -> ToolSize { return tools[TOOL_HIGHLIGHTER - TOOL_PEN]->getSize(); }
+
+void ToolHandler::setPenSize(ToolSize size) {
+    this->tools[TOOL_PEN - TOOL_PEN]->setSize(size);
+
+    if (this->activeTool->type == TOOL_PEN) {
+        this->stateChangeListener->toolSizeChanged();
+    }
 }
 
-void ToolHandler::setPenSize(ToolSize size)
-{
-	XOJ_CHECK_TYPE(ToolHandler);
+void ToolHandler::setEraserSize(ToolSize size) {
+    this->tools[TOOL_ERASER - TOOL_PEN]->setSize(size);
 
-	this->tools[TOOL_PEN - TOOL_PEN]->setSize(size);
-
-	if (this->current->type == TOOL_PEN)
-	{
-		this->listener->toolSizeChanged();
-	}
+    if (this->activeTool->type == TOOL_ERASER) {
+        this->stateChangeListener->toolSizeChanged();
+    }
 }
 
-void ToolHandler::setEraserSize(ToolSize size)
-{
-	XOJ_CHECK_TYPE(ToolHandler);
+void ToolHandler::setHighlighterSize(ToolSize size) {
+    this->tools[TOOL_HIGHLIGHTER - TOOL_PEN]->setSize(size);
 
-	this->tools[TOOL_ERASER - TOOL_PEN]->setSize(size);
-
-	if (this->current->type == TOOL_ERASER)
-	{
-		this->listener->toolSizeChanged();
-	}
+    if (this->activeTool->type == TOOL_HIGHLIGHTER) {
+        this->stateChangeListener->toolSizeChanged();
+    }
 }
 
-void ToolHandler::setHilighterSize(ToolSize size)
-{
-	XOJ_CHECK_TYPE(ToolHandler);
+void ToolHandler::setPenFillEnabled(bool fill, bool fireEvent) {
+    this->tools[TOOL_PEN - TOOL_PEN]->setFill(fill);
 
-	this->tools[TOOL_HILIGHTER - TOOL_PEN]->setSize(size);
-
-	if (this->current->type == TOOL_HILIGHTER)
-	{
-		this->listener->toolSizeChanged();
-	}
+    if (this->activeTool->type == TOOL_PEN && fireEvent) {
+        this->stateChangeListener->toolFillChanged();
+    }
 }
 
-void ToolHandler::setPenFillEnabled(bool fill, bool fireEvent)
-{
-	XOJ_CHECK_TYPE(ToolHandler);
+auto ToolHandler::getPenFillEnabled() -> bool { return this->tools[TOOL_PEN - TOOL_PEN]->getFill(); }
 
-	this->tools[TOOL_PEN - TOOL_PEN]->setFill(fill);
+void ToolHandler::setPenFill(int alpha) { this->tools[TOOL_PEN - TOOL_PEN]->setFillAlpha(alpha); }
 
-	if (this->current->type == TOOL_PEN && fireEvent)
-	{
-		this->listener->toolFillChanged();
-	}
+auto ToolHandler::getPenFill() -> int { return this->tools[TOOL_PEN - TOOL_PEN]->getFillAlpha(); }
+
+void ToolHandler::setHighlighterFillEnabled(bool fill, bool fireEvent) {
+    this->tools[TOOL_HIGHLIGHTER - TOOL_PEN]->setFill(fill);
+
+    if (this->activeTool->type == TOOL_HIGHLIGHTER && fireEvent) {
+        this->stateChangeListener->toolFillChanged();
+    }
 }
 
-bool ToolHandler::getPenFillEnabled()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
+auto ToolHandler::getHighlighterFillEnabled() -> bool { return this->tools[TOOL_HIGHLIGHTER - TOOL_PEN]->getFill(); }
 
-	return this->tools[TOOL_PEN - TOOL_PEN]->getFill();
+void ToolHandler::setHighlighterFill(int alpha) { this->tools[TOOL_HIGHLIGHTER - TOOL_PEN]->setFillAlpha(alpha); }
+
+auto ToolHandler::getHighlighterFill() -> int { return this->tools[TOOL_HIGHLIGHTER - TOOL_PEN]->getFillAlpha(); }
+
+auto ToolHandler::getThickness() -> double {
+    Tool* tool = this->activeTool;
+    if (tool->thickness) {
+        return tool->thickness[tool->getSize()];
+    }
+
+    g_warning("Request size of \"%s\"", tool->getName().c_str());
+    return 0;
 }
 
-void ToolHandler::setPenFill(int alpha)
-{
-	XOJ_CHECK_TYPE(ToolHandler);
+void ToolHandler::setSize(ToolSize size) {
+    ToolSize clippedSize = std::clamp(size, TOOL_SIZE_VERY_FINE, TOOL_SIZE_VERY_THICK);
+    if (clippedSize != size)
+        g_warning("ToolHandler::setSize: Invalid size! %i", size);
 
-	this->tools[TOOL_PEN - TOOL_PEN]->setFillAlpha(alpha);
+    Tool* tool = this->toolbarSelectedTool;
+    tool->setSize(clippedSize);
+    this->stateChangeListener->toolSizeChanged();
 }
 
-int ToolHandler::getPenFill()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
+void ToolHandler::setButtonSize(ToolSize size, Button button) {
+    ToolSize clippedSize = std::clamp(size, TOOL_SIZE_VERY_FINE, TOOL_SIZE_VERY_THICK);
+    if (clippedSize != size)
+        g_warning("ToolHandler::setSize: Invalid size! %i", size);
 
-	return this->tools[TOOL_PEN - TOOL_PEN]->getFillAlpha();
+    Tool* tool = getButtonTool(button);
+    tool->setSize(clippedSize);
+    this->stateChangeListener->toolSizeChanged();
 }
 
-void ToolHandler::setHilighterFillEnabled(bool fill, bool fireEvent)
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	this->tools[TOOL_HILIGHTER - TOOL_PEN]->setFill(fill);
-
-	if (this->current->type == TOOL_HILIGHTER && fireEvent)
-	{
-		this->listener->toolFillChanged();
-	}
+void ToolHandler::setLineStyle(const LineStyle& style) {
+    this->tools[TOOL_PEN - TOOL_PEN]->setLineStyle(style);
+    this->stateChangeListener->toolLineStyleChanged();
 }
 
-bool ToolHandler::getHilighterFillEnabled()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	return this->tools[TOOL_HILIGHTER - TOOL_PEN]->getFill();
+void ToolHandler::setColor(Color color, bool userSelection) {
+    if (this->activeTool != this->toolbarSelectedTool && !this->hasCapability(TOOL_CAP_COLOR, SelectedTool::active)) {
+        this->toolbarSelectedTool->setColor(color);
+    }
+    Tool* tool = this->activeTool;
+    tool->setColor(color);
+    this->stateChangeListener->toolColorChanged();
+    if (userSelection)
+        this->stateChangeListener->changeColorOfSelection();
+    this->stateChangeListener->setCustomColorSelected();
 }
 
-void ToolHandler::setHilighterFill(int alpha)
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	this->tools[TOOL_HILIGHTER - TOOL_PEN]->setFillAlpha(alpha);
+void ToolHandler::setButtonColor(Color color, Button button) {
+    Tool* tool = this->getButtonTool(button);
+    tool->setColor(color);
+    this->stateChangeListener->toolColorChanged();
+    this->stateChangeListener->setCustomColorSelected();
 }
 
-int ToolHandler::getHilighterFill()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	return this->tools[TOOL_HILIGHTER - TOOL_PEN]->getFillAlpha();
-}
-
-double ToolHandler::getThickness()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	if (this->current->thickness)
-	{
-		return this->current->thickness[this->current->getSize()];
-	}
-	else
-	{
-		g_warning("Request size of \"%s\"", this->current->getName().c_str());
-		return 0;
-	}
-}
-
-void ToolHandler::setSize(ToolSize size)
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	if (size < TOOL_SIZE_VERY_FINE || size > TOOL_SIZE_VERY_THICK)
-	{
-		g_warning("ToolHandler::setSize: Invalid size! %i", size);
-		return;
-	}
-
-	this->current->setSize(size);
-	this->listener->toolSizeChanged();
-}
-
-void ToolHandler::setLineStyle(const LineStyle& style)
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	this->tools[TOOL_PEN - TOOL_PEN]->setLineStyle(style);
-	this->listener->toolLineStyleChanged();
-}
-
-/**
- * Select the color for the tool
- *
- * @param color Color
- * @param userSelection
- * 			true if the user selected the color
- * 			false if the color is selected by a tool change
- * 			and therefore should not be applied to a selection
- */
-void ToolHandler::setColor(int color, bool userSelection)
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	this->current->setColor(color);
-	this->listener->toolColorChanged(userSelection);
-
-	this->listener->setCustomColorSelected();
-}
-
-int ToolHandler::getColor()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	return current->getColor();
+auto ToolHandler::getColor() -> Color {
+    Tool* tool = this->activeTool;
+    return tool->getColor();
 }
 
 /**
  * @return -1 if fill is disabled, else the fill alpha value
  */
-int ToolHandler::getFill()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	if (!current->getFill())
-	{
-		return -1;
-	}
-
-	return current->getFillAlpha();
+auto ToolHandler::getFill() -> int {
+    Tool* tool = this->activeTool;
+    if (!tool->getFill()) {
+        return -1;
+    }
+    return tool->getFillAlpha();
 }
 
-const LineStyle& ToolHandler::getLineStyle()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	return current->getLineStyle();
+auto ToolHandler::getLineStyle() -> const LineStyle& {
+    Tool* tool = this->activeTool;
+    return tool->getLineStyle();
 }
 
-DrawingType ToolHandler::getDrawingType()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	return current->getDrawingType();
+auto ToolHandler::getDrawingType(SelectedTool selectedTool) -> DrawingType {
+    Tool* tool = getSelectedTool(selectedTool);
+    return tool->getDrawingType();
 }
 
-void ToolHandler::setDrawingType(DrawingType drawingType)
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	current->setDrawingType(drawingType);
+void ToolHandler::setDrawingType(DrawingType drawingType) {
+    Tool* tool = this->toolbarSelectedTool;
+    tool->setDrawingType(drawingType);
 }
 
-ArrayIterator<Tool*> ToolHandler::iterator()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	return ArrayIterator<Tool*> (tools, TOOL_COUNT);
+void ToolHandler::setButtonDrawingType(DrawingType drawingType, Button button) {
+    Tool* tool = getButtonTool(button);
+    tool->setDrawingType(drawingType);
 }
 
-void ToolHandler::saveSettings()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
+auto ToolHandler::getTools() const -> std::array<std::unique_ptr<Tool>, TOOL_COUNT> const& { return tools; }
 
-	SElement& s = settings->getCustomElement("tools");
-	s.clear();
+void ToolHandler::saveSettings() {
+    SElement& s = settings->getCustomElement("tools");
+    s.clear();
 
-	s.setString("current", this->current->getName());
+    s.setString("current", this->activeTool->getName());
 
-	ArrayIterator<Tool*> it = iterator();
+    for (auto&& tool: tools) {
+        SElement& st = s.child(tool->getName());
+        if (tool->hasCapability(TOOL_CAP_COLOR)) {
+            st.setIntHex("color", int(tool->getColor()));
+        }
 
-	for (; it.hasNext();)
-	{
-		Tool* t = it.next();
-		SElement& st = s.child(t->getName());
-		if (t->hasCapability(TOOL_CAP_COLOR))
-		{
-			st.setIntHex("color", t->getColor());
-		}
+        st.setString("drawingType", drawingTypeToString(tool->getDrawingType()));
 
-		st.setString("drawingType", drawingTypeToString(t->getDrawingType()));
+        if (tool->hasCapability(TOOL_CAP_SIZE)) {
+            string value;
+            switch (tool->getSize()) {
+                case TOOL_SIZE_VERY_FINE:
+                    value = "VERY_FINE";
+                    break;
+                case TOOL_SIZE_FINE:
+                    value = "THIN";
+                    break;
+                case TOOL_SIZE_MEDIUM:
+                    value = "MEDIUM";
+                    break;
+                case TOOL_SIZE_THICK:
+                    value = "BIG";
+                    break;
+                case TOOL_SIZE_VERY_THICK:
+                    value = "VERY_BIG";
+                    break;
+                default:
+                    value = "";
+            }
 
-		if (t->hasCapability(TOOL_CAP_SIZE))
-		{
-			string value;
-			switch (t->getSize())
-			{
-			case TOOL_SIZE_VERY_FINE:
-				value = "VERY_FINE";
-				break;
-			case TOOL_SIZE_FINE:
-				value = "THIN";
-				break;
-			case TOOL_SIZE_MEDIUM:
-				value = "MEDIUM";
-				break;
-			case TOOL_SIZE_THICK:
-				value = "BIG";
-				break;
-			case TOOL_SIZE_VERY_THICK:
-				value = "VERY_BIG";
-				break;
-			default:
-				value = "";
-			}
+            st.setString("size", value);
+        }
 
-			st.setString("size", value);
-		}
+        if (tool->type == TOOL_PEN || tool->type == TOOL_HIGHLIGHTER) {
+            st.setInt("fill", tool->getFill());
+            st.setInt("fillAlpha", tool->getFillAlpha());
+        }
 
-		if (t->type == TOOL_PEN || t->type == TOOL_HILIGHTER)
-		{
-			st.setInt("fill", t->getFill());
-			st.setInt("fillAlpha", t->getFillAlpha());
-		}
+        if (tool->type == TOOL_PEN) {
+            st.setString("style", StrokeStyle::formatStyle(tool->getLineStyle()));
+        }
 
-		if (t->type == TOOL_PEN)
-		{
-			st.setString("style", StrokeStyle::formatStyle(t->getLineStyle()));
-		}
+        if (tool->type == TOOL_ERASER) {
+            if (this->getEraserType() == ERASER_TYPE_DELETE_STROKE) {
+                st.setString("type", "deleteStroke");
+            } else if (this->getEraserType() == ERASER_TYPE_WHITEOUT) {
+                st.setString("type", "whiteout");
+            } else  // ERASER_TYPE_DEFAULT
+            {
+                st.setString("type", "default");
+            }
+        }
+    }
 
-		if (t->type == TOOL_ERASER)
-		{
-			if (this->eraserType == ERASER_TYPE_DELETE_STROKE)
-			{
-				st.setString("type", "deleteStroke");
-			}
-			else if (this->eraserType == ERASER_TYPE_WHITEOUT)
-			{
-				st.setString("type", "whiteout");
-			}
-			else //ERASER_TYPE_DEFAULT
-			{
-				st.setString("type", "default");
-			}
-		}
-	}
-
-	settings->customSettingsChanged();
+    settings->customSettingsChanged();
 }
 
-void ToolHandler::loadSettings()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
+void ToolHandler::loadSettings() {
+    SElement& s = settings->getCustomElement("tools");
 
-	SElement& s = settings->getCustomElement("tools");
+    string selectedTool;
+    if (s.getString("current", selectedTool)) {
+        for (auto&& tool: tools) {
+            SElement& st = s.child(tool->getName());
 
-	string selectedTool;
-	if (s.getString("current", selectedTool))
-	{
-		ArrayIterator<Tool*> it = iterator();
+            if (selectedTool == tool->getName()) {
+                this->activeTool = tool.get();
+            }
 
-		for (; it.hasNext();)
-		{
-			Tool* t = it.next();
-			SElement& st = s.child(t->getName());
+            int iColor{};
+            if (tool->hasCapability(TOOL_CAP_COLOR) && st.getInt("color", iColor)) {
+                tool->setColor(Color(iColor));
+            }
 
-			if (selectedTool == t->getName())
-			{
-				this->current = t;
-			}
+            string drawingType;
+            if (st.getString("drawingType", drawingType)) {
+                tool->setDrawingType(drawingTypeFromString(drawingType));
+            }
 
-			int color = 0;
-			if (t->hasCapability(TOOL_CAP_COLOR) && st.getInt("color", color))
-			{
-				t->setColor(color);
-			}
+            int fill = -1;
+            if (st.getInt("fill", fill)) {
+                tool->setFill(fill);
+            }
+            int fillAlpha = -1;
+            if (st.getInt("fillAlpha", fillAlpha)) {
+                tool->setFillAlpha(fillAlpha);
+            }
 
-			string drawingType;
-			if (st.getString("drawingType", drawingType))
-			{
-				t->setDrawingType(drawingTypeFromString(drawingType));
-			}
+            string style;
+            if (st.getString("style", style)) {
+                tool->setLineStyle(StrokeStyle::parseStyle(style.c_str()));
+            }
 
-			int fill = -1;
-			if (st.getInt("fill", fill))
-			{
-				t->setFill(fill);
-			}
-			int fillAlpha = -1;
-			if (st.getInt("fillAlpha", fillAlpha))
-			{
-				t->setFillAlpha(fillAlpha);
-			}
+            string value;
+            if (tool->hasCapability(TOOL_CAP_SIZE) && st.getString("size", value)) {
+                if (value == "VERY_FINE") {
+                    tool->setSize(TOOL_SIZE_VERY_FINE);
+                } else if (value == "THIN") {
+                    tool->setSize(TOOL_SIZE_FINE);
+                } else if (value == "MEDIUM") {
+                    tool->setSize(TOOL_SIZE_MEDIUM);
+                } else if (value == "BIG") {
+                    tool->setSize(TOOL_SIZE_THICK);
+                } else if (value == "VERY_BIG") {
+                    tool->setSize(TOOL_SIZE_VERY_THICK);
+                } else {
+                    g_warning("Settings::Unknown tool size: %s\n", value.c_str());
+                }
+            }
 
-			string style;
-			if (st.getString("style", style))
-			{
-				t->setLineStyle(StrokeStyle::parseStyle(style.c_str()));
-			}
+            if (tool->type == TOOL_ERASER) {
+                string type;
 
-			string value;
-			if (t->hasCapability(TOOL_CAP_SIZE) && st.getString("size", value))
-			{
-				if (value == "VERY_FINE")
-					t->setSize(TOOL_SIZE_VERY_FINE);
-				else if (value == "THIN")	  t->setSize(TOOL_SIZE_FINE);
-				else if (value == "MEDIUM")	  t->setSize(TOOL_SIZE_MEDIUM);
-				else if (value == "BIG")	  t->setSize(TOOL_SIZE_THICK);
-				else if (value == "VERY_BIG") t->setSize(TOOL_SIZE_VERY_THICK);
-				else g_warning("Settings::Unknown tool size: %s\n", value.c_str());
-			}
-
-			if (t->type == TOOL_ERASER)
-			{
-				string type;
-
-				if (st.getString("type", type))
-				{
-					if (type == "deleteStroke")	 setEraserType(ERASER_TYPE_DELETE_STROKE);
-					else if (type == "whiteout") setEraserType(ERASER_TYPE_WHITEOUT);
-					else						 setEraserType(ERASER_TYPE_DEFAULT);
-					eraserTypeChanged();
-				}
-			}
-		}
-	}
+                if (st.getString("type", type)) {
+                    if (type == "deleteStroke") {
+                        setEraserType(ERASER_TYPE_DELETE_STROKE);
+                    } else if (type == "whiteout") {
+                        setEraserType(ERASER_TYPE_WHITEOUT);
+                    } else {
+                        setEraserType(ERASER_TYPE_DEFAULT);
+                    }
+                    eraserTypeChanged();
+                }
+            }
+        }
+    }
 }
 
-void ToolHandler::copyCurrentConfig()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	// If there is no last config, create one, if there is already one
-	// do not overwrite this config!
-	if (this->lastSelectedTool == NULL)
-	{
-		this->lastSelectedTool = new LastSelectedTool(this->current);
-	}
+bool ToolHandler::pointActiveToolToButtonTool(Button button) {
+    Tool* tool = getButtonTool(button);
+    if (this->activeTool == tool)
+        return false;
+    this->activeTool = tool;
+    return true;
 }
 
-void ToolHandler::restoreLastConfig()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	if (this->lastSelectedTool == NULL)
-	{
-		return;
-	}
-
-	this->current = this->lastSelectedTool->restoreAndGet();
-	delete this->lastSelectedTool;
-	this->lastSelectedTool = NULL;
-
-	this->listener->toolColorChanged(false);
-	this->listener->toolSizeChanged();
-	this->fireToolChanged();
+bool ToolHandler::pointActiveToolToToolbarTool() {
+    if (this->activeTool == this->toolbarSelectedTool)
+        return false;
+    this->activeTool = this->toolbarSelectedTool;
+    return true;
 }
 
-const double* ToolHandler::getToolThickness(ToolType type)
-{
-	XOJ_CHECK_TYPE(ToolHandler);
-
-	return this->tools[type - TOOL_PEN]->thickness;
-}
+auto ToolHandler::getToolThickness(ToolType type) -> const double* { return this->tools[type - TOOL_PEN]->thickness; }
 
 /**
  * Change the selection tools capabilities, depending on the selected elements
  */
-void ToolHandler::setSelectionEditTools(bool setColor, bool setSize, bool setFill)
-{
-	XOJ_CHECK_TYPE(ToolHandler);
+void ToolHandler::setSelectionEditTools(bool setColor, bool setSize, bool setFill) {
+    // For all selection tools, apply the features
+    for (size_t i = TOOL_SELECT_RECT - TOOL_PEN; i <= TOOL_SELECT_OBJECT - TOOL_PEN; i++) {
+        Tool* t = tools[i].get();
+        t->setCapability(TOOL_CAP_COLOR, setColor);
+        t->setCapability(TOOL_CAP_SIZE, setSize);
+        t->setCapability(TOOL_CAP_FILL, setFill);
+        t->setSize(TOOL_SIZE_NONE);
+        t->setColor(Color(-1));
+        t->setFill(false);
+    }
 
-	// For all selection tools, apply the features
-	for (int i = TOOL_SELECT_RECT - TOOL_PEN; i <= TOOL_SELECT_OBJECT - TOOL_PEN; i++)
-	{
-		Tool* t = tools[i];
-		t->setCapability(TOOL_CAP_COLOR, setColor);
-		t->setCapability(TOOL_CAP_SIZE, setSize);
-		t->setCapability(TOOL_CAP_FILL, setFill);
-		t->setSize(TOOL_SIZE_NONE);
-		t->setColor(-1);
-		t->setFill(false);
-	}
-
-	if (this->current->type == TOOL_SELECT_RECT ||
-		this->current->type == TOOL_SELECT_REGION ||
-		this->current->type == TOOL_SELECT_OBJECT ||
-		this->current->type == TOOL_PLAY_OBJECT)
-	{
-		this->listener->toolColorChanged(false);
-		this->listener->toolSizeChanged();
-		this->listener->toolFillChanged();
-		this->fireToolChanged();
-	}
+    if (this->activeTool->type == TOOL_SELECT_RECT || this->activeTool->type == TOOL_SELECT_REGION ||
+        this->activeTool->type == TOOL_SELECT_OBJECT || this->activeTool->type == TOOL_PLAY_OBJECT) {
+        this->stateChangeListener->toolColorChanged();
+        this->stateChangeListener->toolSizeChanged();
+        this->stateChangeListener->toolFillChanged();
+        this->fireToolChanged();
+    }
 }
 
-bool ToolHandler::isSinglePageTool()
-{
-	XOJ_CHECK_TYPE(ToolHandler);
+auto ToolHandler::isSinglePageTool() -> bool {
+    ToolType toolType = this->getToolType();
+    DrawingType drawingType = this->getDrawingType();
 
-	ToolType toolType = this->getToolType();
-	DrawingType drawingType = this->getDrawingType();
+    return toolType == (TOOL_PEN && (drawingType == DRAWING_TYPE_ARROW || drawingType == DRAWING_TYPE_ELLIPSE ||
+                                     drawingType == DRAWING_TYPE_COORDINATE_SYSTEM ||
+                                     drawingType == DRAWING_TYPE_LINE || drawingType == DRAWING_TYPE_RECTANGLE)) ||
+           drawingType == DRAWING_TYPE_SPLINE || toolType == TOOL_SELECT_REGION || toolType == TOOL_SELECT_RECT ||
+           toolType == TOOL_SELECT_OBJECT || toolType == TOOL_DRAW_RECT || toolType == TOOL_DRAW_ELLIPSE ||
+           toolType == TOOL_DRAW_COORDINATE_SYSTEM || toolType == TOOL_DRAW_ARROW ||
+           toolType == TOOL_FLOATING_TOOLBOX || toolType == TOOL_DRAW_SPLINE;
+}
 
-	return toolType == (TOOL_PEN && (drawingType == DRAWING_TYPE_ARROW || drawingType == DRAWING_TYPE_CIRCLE || drawingType == DRAWING_TYPE_COORDINATE_SYSTEM
-		|| drawingType == DRAWING_TYPE_LINE || drawingType == DRAWING_TYPE_RECTANGLE))
-		|| toolType == TOOL_SELECT_REGION || toolType == TOOL_SELECT_RECT || toolType == TOOL_SELECT_OBJECT || toolType == TOOL_DRAW_RECT || toolType == TOOL_DRAW_CIRCLE
-		|| toolType == TOOL_DRAW_COORDINATE_SYSTEM || toolType == TOOL_DRAW_ARROW|| toolType==TOOL_FLOATING_TOOLBOX;
+
+auto ToolHandler::getSelectedTool(SelectedTool selectedTool) -> Tool* {
+    switch (selectedTool) {
+        case SelectedTool::active:
+            return this->activeTool;
+        case SelectedTool::toolbar:
+            return this->toolbarSelectedTool;
+        default:
+            g_error("This button does not exist.");
+    }
+}
+
+auto ToolHandler::getButtonTool(Button button) -> Tool* {
+    switch (button) {
+        case Button::BUTTON_ERASER:
+            return this->eraserButtonTool.get();
+        case Button::BUTTON_STYLUS_ONE:
+            return this->stylusButton1Tool.get();
+        case Button::BUTTON_STYLUS_TWO:
+            return this->stylusButton2Tool.get();
+        case Button::BUTTON_MOUSE_MIDDLE:
+            return this->mouseMiddleButtonTool.get();
+        case Button::BUTTON_MOUSE_RIGHT:
+            return this->mouseRightButtonTool.get();
+        case Button::BUTTON_TOUCH:
+            return this->touchDrawingButtonTool.get();
+        default:
+            g_error("This button is not defined for ToolHandler.");
+    }
+}
+
+void ToolHandler::resetButtonTool(ToolType type, Button button) {
+    Tool* tool = tools[type - TOOL_PEN].get();
+    switch (button) {
+        case Button::BUTTON_ERASER:
+            this->eraserButtonTool.reset(new Tool(tool));
+            break;
+        case Button::BUTTON_STYLUS_ONE:
+            this->stylusButton1Tool.reset(new Tool(tool));
+            break;
+        case Button::BUTTON_STYLUS_TWO:
+            this->stylusButton2Tool.reset(new Tool(tool));
+            break;
+        case Button::BUTTON_MOUSE_MIDDLE:
+            this->mouseMiddleButtonTool.reset(new Tool(tool));
+            break;
+        case Button::BUTTON_MOUSE_RIGHT:
+            this->mouseRightButtonTool.reset(new Tool(tool));
+            break;
+        case Button::BUTTON_TOUCH:
+            this->touchDrawingButtonTool.reset(new Tool(tool));
+            break;
+        default:
+            g_error("This button is not defined for ToolHandler.");
+    }
 }

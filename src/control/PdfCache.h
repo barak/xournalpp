@@ -11,41 +11,60 @@
 
 #pragma once
 
-#include "pdf/base/XojPdfPage.h"
-#include <XournalType.h>
+#include <list>
+#include <string>
+#include <vector>
 
 #include <cairo/cairo.h>
-#include <list>
+
+#include "pdf/base/XojPdfPage.h"
+
+#include "XournalType.h"
 using std::list;
 
 class PdfCacheEntry;
 
-class PdfCache
-{
+class PdfCache {
 public:
-	PdfCache(int size);
-	virtual ~PdfCache();
+    PdfCache(int size);
+    virtual ~PdfCache();
 
 private:
-	PdfCache(const PdfCache& cache);
-	void operator=(const PdfCache& cache);
+    PdfCache(const PdfCache& cache);
+    void operator=(const PdfCache& cache);
 
 public:
-	void render(cairo_t* cr, XojPdfPageSPtr popplerPage, double zoom);
+    void render(cairo_t* cr, const XojPdfPageSPtr& popplerPage, double zoom);
     void clearCache();
 
-private:
-	void setZoom(double zoom);
-	cairo_surface_t* lookup(XojPdfPageSPtr popplerPage);
-	void cache(XojPdfPageSPtr popplerPage, cairo_surface_t* img);
+public:
+    /**
+     * @param b true iff any change in the view's zoom as compared to when a page
+     *  was cached forces a re-render.
+     */
+    void setAnyZoomChangeCausesRecache(bool b);
+
+    /**
+     * @brief Set the maximum tolerable zoom difference, as a percentage.
+     *
+     * @param threshold is the minimum percent-difference between the zoom value at
+     *  which the cached version of the page was rendered and the current zoom,
+     *  for which the page will be re-cached while zooming.
+     */
+    void setRefreshThreshold(double percentDifference);
 
 private:
-	XOJ_TYPE_ATTRIB;
+    void setZoom(double zoom);
+    PdfCacheEntry* lookup(const XojPdfPageSPtr& popplerPage);
+    PdfCacheEntry* cache(XojPdfPageSPtr popplerPage, cairo_surface_t* img, double zoom);
 
-	GMutex renderMutex;
+private:
+    GMutex renderMutex{};
 
-	list<PdfCacheEntry*> data;
-	list<PdfCacheEntry*>::size_type size = 0;
+    list<PdfCacheEntry*> data;
+    list<PdfCacheEntry*>::size_type size = 0;
 
-	double zoom = -1;
+    double zoom = -1;
+    double zoomRefreshThreshold;
+    bool zoomClearsCache = true;
 };

@@ -13,21 +13,19 @@
 
 #include "BaseExportJob.h"
 
-class PdfExportJob : public BaseExportJob
-{
+class PdfExportJob: public BaseExportJob {
 public:
-	PdfExportJob(Control* control);
+    PdfExportJob(Control* control);
 
 protected:
-	virtual ~PdfExportJob();
+    virtual ~PdfExportJob();
 
 public:
-	void run();
+    void run();
 
 protected:
-	virtual void addFilterToDialog();
-	virtual bool isUriValid(string& uri);
+    virtual void addFilterToDialog();
+    bool testAndSetFilepath(fs::path file) override;
 
 private:
-	XOJ_TYPE_ATTRIB;
 };

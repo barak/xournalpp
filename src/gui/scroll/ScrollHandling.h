@@ -11,43 +11,37 @@
 
 #pragma once
 
-#include <XournalType.h>
+#include <string>
+#include <vector>
 
 #include <gtk/gtk.h>
 
+#include "XournalType.h"
+
 class Layout;
 
-class ScrollHandling
-{
+class ScrollHandling {
 public:
-	ScrollHandling(GtkAdjustment* adjHorizontal, GtkAdjustment* adjVertical);
-	virtual ~ScrollHandling();
+    ScrollHandling(GtkAdjustment* adjHorizontal, GtkAdjustment* adjVertical);
+    ScrollHandling(GtkScrollable* scrollable);
+    ~ScrollHandling();
 
 public:
-	GtkAdjustment* getHorizontal();
-	GtkAdjustment* getVertical();
+    GtkAdjustment* getHorizontal();
+    GtkAdjustment* getVertical();
 
-	virtual void init(GtkWidget* xournal, Layout* layout);
+    void init(GtkWidget* xournal, Layout* layout);
 
-	virtual void setLayoutSize(int width, int height) = 0;
+    void setLayoutSize(int width, int height);
 
-	virtual int getPreferredWidth() = 0;
-	virtual int getPreferredHeight() = 0;
-
-	virtual void translate(cairo_t* cr, double& x1, double& x2, double& y1, double& y2) = 0;
-	virtual void translate(double& x, double& y) = 0;
-
-	virtual bool fullRepaint() = 0;
-
-	virtual void scrollChanged() = 0;
+    int getPreferredWidth();
+    int getPreferredHeight();
 
 private:
-	XOJ_TYPE_ATTRIB;
-
 protected:
-	GtkAdjustment* adjHorizontal = NULL;
-	GtkAdjustment* adjVertical = NULL;
+    GtkAdjustment* adjHorizontal = nullptr;
+    GtkAdjustment* adjVertical = nullptr;
 
-	GtkWidget* xournal = NULL;
-	Layout* layout = NULL;
+    GtkWidget* xournal = nullptr;
+    Layout* layout = nullptr;
 };

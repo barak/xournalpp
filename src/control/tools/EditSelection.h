@@ -12,313 +12,359 @@
 
 #pragma once
 
-#include "CursorSelectionType.h"
+#include <deque>
+#include <string>
+#include <vector>
 
 #include "control/Tool.h"
 #include "model/Font.h"
 #include "model/PageRef.h"
+#include "model/Snapping.h"
+#include "undo/UndoAction.h"
 #include "view/ElementContainer.h"
 
-#include <XournalType.h>
+#include "CursorSelectionType.h"
+#include "SnapToGridInputHandler.h"
+#include "XournalType.h"
 
 class UndoRedoHandler;
 class Layer;
 class XojPageView;
 class Selection;
 class Element;
-class UndoAction;
 class EditSelectionContents;
 class DeleteUndoAction;
 
-class EditSelection : public ElementContainer, public Serializeable
-{
+class EditSelection: public ElementContainer, public Serializeable {
 public:
-	EditSelection(UndoRedoHandler* undo, PageRef page, XojPageView* view);
-	EditSelection(UndoRedoHandler* undo, Selection* selection, XojPageView* view);
-	EditSelection(UndoRedoHandler* undo, Element* e, XojPageView* view, PageRef page);
-	EditSelection(UndoRedoHandler* undo, vector<Element*> elements, XojPageView* view, PageRef page);
-	virtual ~EditSelection();
+    EditSelection(UndoRedoHandler* undo, const PageRef& page, XojPageView* view);
+    EditSelection(UndoRedoHandler* undo, Selection* selection, XojPageView* view);
+    EditSelection(UndoRedoHandler* undo, Element* e, XojPageView* view, const PageRef& page);
+    EditSelection(UndoRedoHandler* undo, const vector<Element*>& elements, XojPageView* view, const PageRef& page);
+    virtual ~EditSelection();
 
 private:
-	/**
-	 * Our internal constructor
-	 */
-	void contstruct(UndoRedoHandler* undo, XojPageView* view, PageRef sourcePage);
+    /**
+     * Our internal constructor
+     */
+    void contstruct(UndoRedoHandler* undo, XojPageView* view, const PageRef& sourcePage);
 
-	/**
-	 * Calculate the size from the element list
-	 */
-	void calcSizeFromElements(vector<Element*> elements);
-
-	void snapRotation();
+    /**
+     * Calculate the size from the element list
+     */
+    void calcSizeFromElements(vector<Element*> elements);
 
 public:
-	/**
-	 * get the X coordinate relative to the provided view (getView())
-	 * in document coordinates
-	 */
-	double getXOnView();
+    /**
+     * get the X coordinate relative to the provided view (getView())
+     * in document coordinates
+     */
+    double getXOnView() const;
 
-	/**
-	 * Get the Y coordinate relative to the provided view (getView())
-	 * in document coordinates
-	 */
-	double getYOnView();
+    /**
+     * Get the Y coordinate relative to the provided view (getView())
+     * in document coordinates
+     */
+    double getYOnView() const;
 
-	/**
-	 * @return The original X coordinates of the provided view in document
-	 * coordinates.
-	 */
-	double getOriginalXOnView();
+    /**
+     * @return The original X coordinates of the provided view in document
+     * coordinates.
+     */
+    double getOriginalXOnView();
 
-	/**
-	 * @return The original Y coordinates of the provided view in document
-	 * coordinates.
-	 */
-	double getOriginalYOnView();
+    /**
+     * @return The original Y coordinates of the provided view in document
+     * coordinates.
+     */
+    double getOriginalYOnView();
 
-	/**
-	 * Get the width in document coordinates (multiple with zoom)
-	 */
-	double getWidth();
+    /**
+     * Get the width in document coordinates (multiple with zoom)
+     */
+    double getWidth() const;
 
-	/**
-	 * Get the height in document coordinates (multiple with zoom)
-	 */
-	double getHeight();
+    /**
+     * Get the height in document coordinates (multiple with zoom)
+     */
+    double getHeight() const;
 
-	/**
-	 * Get the source page (where the selection was done)
-	 */
-	PageRef getSourcePage();
+    /**
+     * Get the bounding rectangle in document coordinates (multiple with zoom)
+     */
+    Rectangle<double> getRect() const;
 
-	/**
-	 * Get the source layer (form where the Elements come)
-	 */
-	Layer* getSourceLayer();
+    /**
+     * Get the source page (where the selection was done)
+     */
+    PageRef getSourcePage();
 
-	/**
-	 * Get the X coordinate in View coordinates (absolute)
-	 */
-	int getXOnViewAbsolute();
+    /**
+     * Get the source layer (form where the Elements come)
+     */
+    Layer* getSourceLayer();
 
-	/**
-	 * Get the Y coordinate in View coordinates (absolute)
-	 */
-	int getYOnViewAbsolute();
+    /**
+     * Get the X coordinate in View coordinates (absolute)
+     */
+    int getXOnViewAbsolute();
 
-	/**
-	 * Get the width in View coordinates
-	 */
-	int getViewWidth();
-
-	/**
-	 * Get the height in View coordinates
-	 */
-	int getViewHeight();
+    /**
+     * Get the Y coordinate in View coordinates (absolute)
+     */
+    int getYOnViewAbsolute();
 
 public:
-	/**
-	 * Sets the tool size for pen or eraser, returns an undo action
-	 * (or NULL if nothing is done)
-	 */
-	UndoAction* setSize(ToolSize size, const double* thicknessPen, const double* thicknessHilighter, const double* thicknessEraser);
+    /**
+     * Sets the tool size for pen or eraser, returns an undo action
+     * (or nullptr if nothing is done)
+     */
+    UndoAction* setSize(ToolSize size, const double* thicknessPen, const double* thicknessHighlighter,
+                        const double* thicknessEraser);
 
-	/**
-	 * Set the color of all elements, return an undo action
-	 * (Or NULL if nothing done, e.g. because there is only an image)
-	 */
-	UndoAction* setColor(int color);
+    /**
+     * Set the line style of all strokes, return an undo action
+     * (Or nullptr if nothing done)
+     */
+    UndoActionPtr setLineStyle(LineStyle style);
 
-	/**
-	 * Sets the font of all containing text elements, return an undo action
-	 * (or NULL if there are no Text elements)
-	 */
-	UndoAction* setFont(XojFont& font);
+    /**
+     * Set the color of all elements, return an undo action
+     * (Or nullptr if nothing done, e.g. because there is only an image)
+     */
+    UndoAction* setColor(Color color);
 
-	/**
-	 * Fills the undo item if the selection is deleted
-	 * the selection is cleared after
-	 */
-	void fillUndoItem(DeleteUndoAction* undo);
+    /**
+     * Sets the font of all containing text elements, return an undo action
+     * (or nullptr if there are no Text elements)
+     */
+    UndoAction* setFont(XojFont& font);
 
-	/**
-	 * Fills the stroke, return an undo action
-	 * (Or NULL if nothing done, e.g. because there is only an image)
-	 */
-	UndoAction* setFill(int alphaPen, int alphaHighligther);
+    /**
+     * Fills the undo item if the selection is deleted
+     * the selection is cleared after
+     */
+    void fillUndoItem(DeleteUndoAction* undo);
 
-public:
-	/**
-	 * Add an element to the this selection
-	 */
-	void addElement(Element* e);
-
-	/**
-	 * Returns all containig elements of this selections
-	 */
-	vector<Element*>* getElements();
-
-	/**
-	 * Finish the current movement
-	 * (should be called in the mouse-button-released event handler)
-	 */
-	void mouseUp();
-
-	/**
-	 * Move the selection
-	 */
-	void moveSelection(double dx, double dy);
-
-	/**
-	 * Get the cursor type for the current position (if 0 then the default cursor should be used)
-	 */
-	CursorSelectionType getSelectionTypeForPos(double x, double y, double zoom);
-
-	/**
-	 * Paints the selection to cr, with the given zoom factor. The coordinates of cr
-	 * should be relative to the provided view by getView() (use translateEvent())
-	 */
-	void paint(cairo_t* cr, double zoom);
-
-	/**
-	 * If the selection is outside the visible area correct the coordinates
-	 */
-	void ensureWithinVisibleArea();
+    /**
+     * Fills the stroke, return an undo action
+     * (Or nullptr if nothing done, e.g. because there is only an image)
+     */
+    UndoAction* setFill(int alphaPen, int alphaHighligther);
 
 public:
-	/**
-	 * Handles mouse input for moving and resizing, coordinates are relative to "view"
-	 */
-	void mouseDown(CursorSelectionType type, double x, double y);
+    /**
+     * Add an element to the this selection
+     * @param order: specifies the index of the element from the source layer,
+     * in case we want to replace it back where it came from.
+     * 'InvalidLayerIndex' is a special value that says it has no source layer index (e.g, from clipboard)
+     */
+    void addElement(Element* e, Layer::ElementIndex order = Layer::InvalidElementIndex);
 
-	/**
-	 * Handles mouse input for moving and resizing, coordinates are relative to "view"
-	 */
-	void mouseMove(double x, double y);
+    /**
+     * Returns all containing elements of this selection
+     */
+    vector<Element*>* getElements();
 
-	/**
-	 * If the selection should moved (or rescaled)
-	 */
-	bool isMoving();
+    /**
+     * Returns the insert order of this selection
+     */
+    std::deque<std::pair<Element*, Layer::ElementIndex>> const& getInsertOrder() const;
 
-	void copySelection();
+    enum class OrderChange {
+        BringToFront,
+        BringForward,
+        SendBackward,
+        SendToBack,
+    };
+
+    /**
+     * Change the insert order of this selection.
+     */
+    UndoActionPtr rearrangeInsertOrder(const OrderChange change);
+
+    /**
+     * Finish the current movement
+     * (should be called in the mouse-button-released event handler)
+     */
+    void mouseUp();
+
+    /**
+     * Move the selection
+     */
+    void moveSelection(double dx, double dy);
+
+    /**
+     * Get the cursor type for the current position (if 0 then the default cursor should be used)
+     */
+    CursorSelectionType getSelectionTypeForPos(double x, double y, double zoom);
+
+    /**
+     * Paints the selection to cr, with the given zoom factor. The coordinates of cr
+     * should be relative to the provided view by getView() (use translateEvent())
+     */
+    void paint(cairo_t* cr, double zoom);
+
+    /**
+     * If the selection is outside the visible area correct the coordinates
+     */
+    void ensureWithinVisibleArea();
 
 public:
-	XojPageView* getView();
+    /**
+     * Handles mouse input for moving and resizing, coordinates are relative to "view"
+     */
+    void mouseDown(CursorSelectionType type, double x, double y);
+
+    /**
+     * Handles mouse input for moving and resizing, coordinates are relative to "view"
+     */
+    void mouseMove(double x, double y, bool alt);
+
+    /**
+     * If the selection should moved (or rescaled)
+     */
+    bool isMoving();
+
+    void copySelection();
 
 public:
-	// Serialize interface
-	void serialize(ObjectOutputStream& out);
-	void readSerialized(ObjectInputStream& in);
+    XojPageView* getView();
+
+public:
+    // Serialize interface
+    void serialize(ObjectOutputStream& out);
+    void readSerialized(ObjectInputStream& in);
 
 private:
+    /**
+     * Draws an indicator where you can scale the selection
+     */
+    void drawAnchorRect(cairo_t* cr, double x, double y, double zoom);
 
-	/**
-	 * Draws an indicator where you can scale the selection
-	 */
-	void drawAnchorRect(cairo_t* cr, double x, double y, double zoom);
-
-	/**
-	 * Draws an indicator where you can rotate the selection
-	 */
-	void drawAnchorRotation(cairo_t* cr, double x, double y, double zoom);
-
-	
-	/**
-	 * Draws an indicator where you can delete the selection
-	 */
-	void drawDeleteRect(cairo_t* cr, double x, double y, double zoom);
-	
+    /**
+     * Draws an indicator where you can rotate the selection
+     */
+    void drawAnchorRotation(cairo_t* cr, double x, double y, double zoom);
 
 
+    /**
+     * Draws an indicator where you can delete the selection
+     */
+    void drawDeleteRect(cairo_t* cr, double x, double y, double zoom) const;
 
-	/**
-	 * Finishes all pending changes, move the elements, scale the elements and add
-	 * them to new layer if any or to the old if no new layer
-	 */
-	void finalizeSelection();
 
-	/**
-	 * Gets the PageView under the cursor
-	 */
-	XojPageView* getPageViewUnderCursor();
+    /**
+     * Finishes all pending changes, move the elements, scale the elements and add
+     * them to new layer if any or to the old if no new layer
+     */
+    void finalizeSelection();
 
-	/**
-	 * Translate all coordinates which are relative to the current view to the new view,
-	 * and set the attribute view to the new view
-	 */
-	void translateToView(XojPageView* v);
+    /**
+     * Gets the PageView under the cursor
+     */
+    XojPageView* getPageViewUnderCursor();
 
-private: // DATA
-	XOJ_TYPE_ATTRIB;
+    /**
+     * Translate all coordinates which are relative to the current view to the new view,
+     * and set the attribute view to the new view
+     */
+    void translateToView(XojPageView* v);
 
-	/**
-	 * Support rotation
-	 */
-	bool supportRotation = true;
+    /**
+     * Updates rotation matrix
+     */
+    void updateMatrix();
 
-	/**
-	 * The position (and rotation) relative to the current view
-	 */
-	double x;
-	double y;
-	double rotation = 0;
+    /**
+     * scales and shifts to update bounding boxes
+     */
+    void scaleShift(double fx, double fy, bool changeLeft, bool changeTop);
 
-	/**
-	 * Use to translate to rotated selection
-	 */
-		_cairo_matrix cmatrix;
-	
-	/**
-	 * The size
-	 */
-	double width;
-	double height;
+private:  // DATA
+    /**
+     * Support rotation
+     */
+    bool supportRotation = true;
 
-	/**
-	 * Mouse coordinates for moving / resizing
-	 */
-	CursorSelectionType mouseDownType;
-	double relMousePosX;
-	double relMousePosY;
+    /**
+     * The position (and rotation) relative to the current view
+     */
+    double x{};
+    double y{};
+    double rotation = 0;
 
-	/**
-	 * If both scale axes should have the same scale factor, e.g. for Text
-	 * (we cannot only set the font size for text)
-	 */
-	bool aspectRatio;
-	
-	/**
-	 * Size of the editing handles 
-	 */
+    /**
+     * Use to translate to rotated selection
+     */
+    cairo_matrix_t cmatrix{};
 
-	int btnWidth = 8;
-	
-	/**
-	 * The source page (form where the Elements come)
-	 */
-	PageRef sourcePage;
+    /**
+     * The size
+     */
+    double width{};
+    double height{};
 
-	/**
-	 * The source layer (form where the Elements come)
-	 */
-	Layer* sourceLayer;
+    /**
+     * The size and dimensions for snapping
+     */
+    Rectangle<double> snappedBounds{};
 
-	/**
-	 * The contents of the selection
-	 */
-	EditSelectionContents* contents;
 
-private: // HANDLER
-	/**
-	 * The page view for the anchor
-	 */
-	XojPageView* view;
+    /**
+     * Mouse coordinates for moving / resizing
+     */
+    CursorSelectionType mouseDownType;
+    double relMousePosX{};
+    double relMousePosY{};
+    double relMousePosRotX{};
+    double relMousePosRotY{};
 
-	/**
-	 * Undo redo handler
-	 */
-	UndoRedoHandler* undo;
+    /**
+     * If both scale axes should have the same scale factor, e.g. for Text
+     * (we cannot only set the font size for text)
+     */
+    bool aspectRatio{};
 
+    /**
+     * If mirrors are allowed e.g. for strokes
+     */
+    bool mirror{};
+
+    /**
+     * Size of the editing handles
+     */
+
+    int btnWidth{8};
+
+    /**
+     * The source page (form where the Elements come)
+     */
+    PageRef sourcePage;
+
+    /**
+     * The source layer (form where the Elements come)
+     */
+    Layer* sourceLayer{};
+
+    /**
+     * The contents of the selection
+     */
+    EditSelectionContents* contents{};
+
+private:  // HANDLER
+    /**
+     * The page view for the anchor
+     */
+    XojPageView* view{};
+
+    /**
+     * Undo redo handler
+     */
+    UndoRedoHandler* undo{};
+
+    /**
+     * The handler for snapping points
+     */
+    SnapToGridInputHandler snappingHandler;
 };

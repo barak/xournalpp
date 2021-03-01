@@ -11,29 +11,30 @@
 
 #pragma once
 
-#include "XojPdfExport.h"
-
+#include "control/jobs/BaseExportJob.h"
 #include "control/jobs/ProgressListener.h"
 #include "model/Document.h"
 
-class XojCairoPdfExport : public XojPdfExport
-{
+#include "XojPdfExport.h"
+#include "filesystem.h"
+
+class XojCairoPdfExport: public XojPdfExport {
 public:
-	XojCairoPdfExport(Document* doc, ProgressListener* progressListener);
-	virtual ~XojCairoPdfExport();
+    XojCairoPdfExport(Document* doc, ProgressListener* progressListener);
+    virtual ~XojCairoPdfExport();
 
 public:
-	virtual bool createPdf(Path file);
-	virtual bool createPdf(Path file, PageRangeVector& range);
-	virtual string getLastError();
+    virtual bool createPdf(fs::path const& file, bool progressiveMode);
+    virtual bool createPdf(fs::path const& file, PageRangeVector& range, bool progressiveMode);
+    virtual string getLastError();
 
-	/**
-	 * Export without background
-	 */
-	virtual void setNoBackgroundExport(bool noBackgroundExport);
+    /**
+     * Export without background
+     */
+    virtual void setExportBackground(ExportBackgroundType exportBackground);
 
 private:
-	bool startPdf(Path file);
+    bool startPdf(const fs::path& file);
 #if CAIRO_VERSION >= CAIRO_VERSION_ENCODE(1, 16, 0)
     /**
      * Populate the outline of the generated PDF using the outline of the
@@ -45,20 +46,21 @@ private:
      */
     void populatePdfOutline(GtkTreeModel* tocModel);
 #endif
-	void endPdf();
-	void exportPage(size_t page);
+    void endPdf();
+    void exportPage(size_t page);
+    /**
+     * Export as a PDF document where each additional layer creates a
+     * new page */
+    void exportPageLayers(size_t page);
 
 private:
-	XOJ_TYPE_ATTRIB;
+    Document* doc = nullptr;
+    ProgressListener* progressListener = nullptr;
 
-	Document* doc = NULL;
-	ProgressListener* progressListener = NULL;
+    cairo_surface_t* surface = nullptr;
+    cairo_t* cr = nullptr;
 
-	cairo_surface_t* surface = NULL;
-	cairo_t* cr = NULL;
+    ExportBackgroundType exportBackground = EXPORT_BACKGROUND_ALL;
 
-	bool noBackgroundExport = false;
-
-	string lastError;
+    string lastError;
 };
-

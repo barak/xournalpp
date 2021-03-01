@@ -12,117 +12,133 @@
 
 #pragma once
 
-#include "ToolEnums.h"
+#include <string>
+#include <vector>
+
 #include "model/LineStyle.h"
+#include "util/Color.h"
 
-#include <XournalType.h>
+#include "ToolEnums.h"
+#include "XournalType.h"
 
-class ToolBase
-{
+class ToolBase {
 public:
-	ToolBase();
-	virtual ~ToolBase();
-
-	/**
-	 * Apply data from another ToolBase or any extending class
-	 */
-	void applyFrom(const ToolBase* t);
+    ToolBase();
+    virtual ~ToolBase();
 
 private:
-	void operator=(const ToolBase& t);
-	ToolBase(const ToolBase& t);
+    void operator=(const ToolBase& t);
+    ToolBase(const ToolBase& t);
 
 public:
-	/**
-	 * @return Color of the tool for all drawing tools
-	 */
-	int getColor() const;
+    /**
+     * @return Color of the tool for all drawing tools
+     */
+    Color getColor() const;
 
-	/**
-	 * @param color Color of the tool for all drawing tools
-	 */
-	void setColor(int color);
+    /**
+     * @param color Color of the tool for all drawing tools
+     */
+    void setColor(Color color);
 
-	/**
-	 * @return Size of a drawing tool
-	 */
-	ToolSize getSize() const;
+    /**
+     * @return Size of a drawing tool
+     */
+    ToolSize getSize() const;
 
-	/**
-	 * @param size Size of a drawing tool
-	 */
-	void setSize(ToolSize size);
+    /**
+     * @param size Size of a drawing tool
+     */
+    void setSize(ToolSize size);
 
-	/**
-	 * @return Draw special shape
-	 */
-	DrawingType getDrawingType() const;
+    /**
+     * @return Draw special shape
+     */
+    DrawingType getDrawingType() const;
 
-	/**
-	 * @param drawingType Draw special shape
-	 */
-	void setDrawingType(DrawingType drawingType);
+    /**
+     * @param drawingType Draw special shape
+     */
+    void setDrawingType(DrawingType drawingType);
 
-	/**
-	 * @return Fill of the shape is enabled
-	 */
-	bool getFill() const;
+    /**
+     * @brief Get the Eraser Type object
+     *
+     * @return EraserType
+     */
+    EraserType getEraserType() const;
 
-	/**
-	 * @param fill Fill of the shape is enabled
-	 */
-	void setFill(bool fill);
+    /**
+     * @brief Set the Eraser Type object
+     *
+     * @param eraserType
+     */
+    void setEraserType(EraserType eraserType);
 
-	/**
-	 * @return Alpha for fill
-	 */
-	int getFillAlpha() const;
+    /**
+     * @return Fill of the shape is enabled
+     */
+    bool getFill() const;
 
-	/**
-	 * @param fillAlpha Alpha for fill
-	 */
-	void setFillAlpha(int fillAlpha);
+    /**
+     * @param fill Fill of the shape is enabled
+     */
+    void setFill(bool fill);
 
-	/**
-	 * @return Style of the line drawing
-	 */
-	const LineStyle& getLineStyle() const;
+    /**
+     * @return Alpha for fill
+     */
+    int getFillAlpha() const;
 
-	/**
-	 * @param style Style of the line drawing
-	 */
-	void setLineStyle(const LineStyle& style);
+    /**
+     * @param fillAlpha Alpha for fill
+     */
+    void setFillAlpha(int fillAlpha);
+
+    /**
+     * @return Style of the line drawing
+     */
+    const LineStyle& getLineStyle() const;
+
+    /**
+     * @param style Style of the line drawing
+     */
+    void setLineStyle(const LineStyle& style);
 
 private:
-	XOJ_TYPE_ATTRIB;
+    /**
+     * Color of the tool for all drawing tools
+     */
+    Color color{0x000000U};
 
-	/**
-	 * Color of the tool for all drawing tools
-	 */
-	int color = 0x000000;
+    /**
+     * Size of a drawing tool
+     */
+    ToolSize size = TOOL_SIZE_MEDIUM;
 
-	/**
-	 * Size of a drawing tool
-	 */
-	ToolSize size = TOOL_SIZE_MEDIUM;
+    /**
+     * Draw special shape
+     */
+    DrawingType drawingType = DRAWING_TYPE_DEFAULT;
 
-	/**
-	 * Draw special shape
-	 */
-	DrawingType drawingType = DRAWING_TYPE_DEFAULT;
+    /**
+     * Eraser type
+     */
+    EraserType eraserType = ERASER_TYPE_DEFAULT;
 
-	/**
-	 * Fill of the shape is enabled
-	 */
-	bool fill = false;
+    /**
+     * Fill of the shape is enabled
+     */
+    bool fill = false;
 
-	/**
-	 * Alpha for fill
-	 */
-	int fillAlpha = 128;;
+    /**
+     * Alpha for fill
+     */
+    int fillAlpha = 128;
+    ;
 
-	/**
-	 * Style of the line drawing
-	 */
-	LineStyle lineStyle;
+    /**
+     * Style of the line drawing
+     */
+    LineStyle lineStyle;
 };

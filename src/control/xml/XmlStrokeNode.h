@@ -11,29 +11,26 @@
 
 #pragma once
 
-#include "XmlNode.h"
 #include "model/Point.h"
 
-class XmlStrokeNode : public XmlNode
-{
+#include "XmlNode.h"
+
+class XmlStrokeNode: public XmlNode {
 public:
-	XmlStrokeNode(const char* tag);
-	virtual ~XmlStrokeNode();
+    XmlStrokeNode(const char* tag);
+    virtual ~XmlStrokeNode();
 
 public:
-	void setPoints(Point* points, int pointsLength);
-	void setWidth(double width, double* widths, int widthsLength);
+    void setWidth(double width, const double* widths, int widthsLength);
 
-	virtual void writeOut(OutputStream* out);
+    virtual void writeOut(OutputStream* out);
 
 private:
-	XOJ_TYPE_ATTRIB;
+    Point* points;
+    int pointsLength;
 
-	Point* points;
-	int pointsLength;
+    double width;
 
-	double width;
-
-	double* widths;
-	int widthsLength;
+    double* widths;
+    int widthsLength;
 };

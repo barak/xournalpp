@@ -1,10 +1,75 @@
 # Changelog
 
-## 1.0.20-hotfix
+## 1.1.0 / Nightly (Unreleased)
 
-Hotfix for Debian. If you are not using the Debian package of the release page, you can stay on v1.0.20.
-
-* Fixed an issue with packaging information for Debian packages preventing installation (#2560)
+* **Breaking changes**:
+    * Xournal++ now follows the [XDG Base Directory
+      Specification](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)
+      (#1101, #1384). The configuration files will now be stored in an
+      appropriate platform-specific user data folder. Old configuration files
+      will be copied automatically if the new user data folder does not exist.
+    * The code has been updated to use C++17 (#1485) and must now be compiled
+      using a supported compiler version, such as GCC 7 or Clang 5 (or newer).
+    * Linux: Support for Ubuntu 16.04 (and older distros) has been dropped.
+      Please use a distro from 2018 or later, such as Ubuntu 18.04 or Debian
+      Buster.
+    * Linux: The thumbnailer program has been renamed from `xournal-thumbnailer`
+      to `xournalpp-thumbnailer` in order to fix tab completion (#1752).
+* Audio playback
+    * Added seeking functionality during playback (#1520)
+    * Fixed crashes caused by race conditions in the audio system
+    * Fixed bug where gaps in the audio stream could appear while recording
+    * Added an error message popup which displays when a recording fails to load
+      or play (#1573)
+* Input System
+    * The old input system has been removed.
+    * Reimplemented zoom gestures for better compatibility (#1528)
+    * Added a `Mouse+Keyboard` device class for handling e.g. wireless USB
+      mouse/keyboard receivers (#1769, #1785).
+* LaTeX
+    * Reworked LaTeX tool implementation (#1952).
+    * Added a new tab in the Preferences window for LaTeX configuration.
+    * Added a `global template file` setting for custom LaTeX template files
+      to be used when rendering LaTeX formulas (#1188).
+    * Added a button in the Preferences window for testing LaTeX setup.
+* Splines
+    * Added cubic splines as a drawing tool (#1688, #1798, #1861).
+    * Click to add anchor points (knots) and drag to create non-trivial
+      tangents. Backspace key, arrow keys, s and Shift+s allow to delete/modifiy
+      the last set knot/its tangent. Escape key and double click exit the spline
+      drawing mode.
+* Snapping and selections
+    * Added snapping for vertical space (#2011)
+    * Added snapping for moving and resizing selections (#1972, #2011)
+    * Added snapping for recognized shapes (optional setting; #2011)
+    * Added a Preferences settings to preserve line width while resizing a
+      selection (#2011)
+    * Added a Preferences setting to change the snap grid size (#1920).
+    * Fixed a bug in the object selection algorithm (#2478)
+* Pen
+    * Added Preferences settings to configure the radius, color, and border of
+      the cursor highlight when `Highlight cursor position` is enabled (#1891,
+      #1898).
+* Misc
+    * Added a menu toggle item for showing/hiding the toolbar, bound to F9
+      (#2112).
+    * Added a new mode for drawing without pen icon (#2111).
+    * Added a Lua plugin for taking a screenshot and saving it to a file
+      (#2086).
+    * Added a Lua plugin for cycling though a color list (#1835, #2251).
+    * Added Ubuntu 20.04 as a release build (#2060).
+    * Added a language setting in the Preferences window (#2188)
+    * Non-visible refactoring and code cleanup (see #1279 for details)
+    * Switch to std::filesystem (#2150)
+    * Updated translations
+    * Made the eraser more accurate (#1818).
+    * Fixed a cursor update bug (#1954).
+    * Made the grid size configurable (#1920).
+    * Fixed keyboard shortcuts not working when the menubar is hidden (#2324)
+    * Added support for more export options in command line and GUI (#2449)
+    * Switched from deprecated gtk2 initialisation to gtk3 initialisation (#2252)
+    * Improved tool handling and performance improvement (#2339)
+    * Added menu entry to append new pdf pages (#2146)
 
 ## 1.0.20
 
@@ -14,14 +79,14 @@ More bugfixes.
 * Fixed page layout update after inserting or deleting a page, changing the page layout or zooming (#1777, #2346, #2411)
 * Fixed incorrect rendering of pages after changing the page format (#2457)
 * Fixed blocked scrolling after saving a file (#2062)
-* Fixed presentation mode after startup (#2413)
+* Fixed presentation mode after startup 
 
 ## 1.0.19
 
 More bugfixes and improvements due to help from the various community
 contributors!
 
-* Changed select object algorithm to be more intuitive
+* Changed select object algorithm to be more intuitive (#1881).
 * Added ability for taps with Select Rectangle and Select Region to act like
   Select Object (#1980)
 * Improved document loading speed (#2002)

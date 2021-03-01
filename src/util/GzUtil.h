@@ -11,16 +11,15 @@
 
 #pragma once
 
-#include "Path.h"
 #include <zlib.h>
 
-class GzUtil
-{
+#include "filesystem.h"
+
+class GzUtil {
 private:
-	GzUtil();
-	virtual ~GzUtil();
+    GzUtil();
+    virtual ~GzUtil();
 
 public:
-	static gzFile openPath(Path path, string flags);
+    static gzFile openPath(const fs::path& path, const std::string& flags);
 };
-

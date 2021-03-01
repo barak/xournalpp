@@ -2,68 +2,34 @@
 
 #include "PageListener.h"
 
-PageHandler::PageHandler()
-{
-	XOJ_INIT_TYPE(PageHandler);
+PageHandler::PageHandler() = default;
+
+PageHandler::~PageHandler() = default;
+
+void PageHandler::addListener(PageListener* l) { this->listener.push_back(l); }
+
+void PageHandler::removeListener(PageListener* l) { this->listener.remove(l); }
+
+void PageHandler::fireRectChanged(Rectangle<double>& rect) {
+    for (PageListener* pl: this->listener) {
+        pl->rectChanged(rect);
+    }
 }
 
-PageHandler::~PageHandler()
-{
-	XOJ_CHECK_TYPE(PageHandler);
-
-	XOJ_RELEASE_TYPE(PageHandler);
+void PageHandler::fireRangeChanged(Range& range) {
+    for (PageListener* pl: this->listener) {
+        pl->rangeChanged(range);
+    }
 }
 
-void PageHandler::addListener(PageListener* l)
-{
-	XOJ_CHECK_TYPE(PageHandler);
-
-	this->listener.push_back(l);
+void PageHandler::fireElementChanged(Element* elem) {
+    for (PageListener* pl: this->listener) {
+        pl->elementChanged(elem);
+    }
 }
 
-void PageHandler::removeListener(PageListener* l)
-{
-	XOJ_CHECK_TYPE(PageHandler);
-
-	this->listener.remove(l);
-}
-
-void PageHandler::fireRectChanged(Rectangle &rect)
-{
-	XOJ_CHECK_TYPE(PageHandler);
-
-	for (PageListener* pl : this->listener)
-	{
-		pl->rectChanged(rect);
-	}
-}
-
-void PageHandler::fireRangeChanged(Range &range)
-{
-	XOJ_CHECK_TYPE(PageHandler);
-
-	for (PageListener* pl : this->listener)
-	{
-		pl->rangeChanged(range);
-	}
-}
-
-void PageHandler::fireElementChanged(Element *elem)
-{
-	XOJ_CHECK_TYPE(PageHandler);
-
-	for (PageListener* pl : this->listener)
-	{
-		pl->elementChanged(elem);
-	}
-}
-
-void PageHandler::firePageChanged()
-{
-	XOJ_CHECK_TYPE(PageHandler);
-
-	for (PageListener* pl : this->listener)
-	{
-		pl->pageChanged();
-	}
+void PageHandler::firePageChanged() {
+    for (PageListener* pl: this->listener) {
+        pl->pageChanged();
+    }
 }

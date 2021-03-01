@@ -1,165 +1,113 @@
 #include "PopplerGlibDocument.h"
-#include "PopplerGlibPage.h"
-#include "PopplerGlibPageBookmarkIterator.h"
 
-#include <Util.h>
 #include <memory>
 
+#include "PathUtil.h"
+#include "PopplerGlibPage.h"
+#include "PopplerGlibPageBookmarkIterator.h"
+#include "Util.h"
+#include "filesystem.h"
 
-PopplerGlibDocument::PopplerGlibDocument()
-{
-	XOJ_INIT_TYPE(PopplerGlibDocument);
+
+PopplerGlibDocument::PopplerGlibDocument() = default;
+
+PopplerGlibDocument::PopplerGlibDocument(const PopplerGlibDocument& doc): document(doc.document) {
+    if (document) {
+        g_object_ref(document);
+    }
 }
 
-PopplerGlibDocument::PopplerGlibDocument(const PopplerGlibDocument& doc)
- : document(doc.document)
-{
-	XOJ_INIT_TYPE(PopplerGlibDocument);
-
-	if (document)
-	{
-		g_object_ref(document);
-	}
+PopplerGlibDocument::~PopplerGlibDocument() {
+    if (document) {
+        g_object_unref(document);
+        document = nullptr;
+    }
 }
 
-PopplerGlibDocument::~PopplerGlibDocument()
-{
-	XOJ_CHECK_TYPE(PopplerGlibDocument);
+void PopplerGlibDocument::assign(XojPdfDocumentInterface* doc) {
+    if (document) {
+        g_object_unref(document);
+    }
 
-	if (document)
-	{
-		g_object_unref(document);
-		document = NULL;
-	}
-
-	XOJ_RELEASE_TYPE(PopplerGlibDocument);
+    document = (dynamic_cast<PopplerGlibDocument*>(doc))->document;
+    if (document) {
+        g_object_ref(document);
+    }
 }
 
-void PopplerGlibDocument::assign(XojPdfDocumentInterface* doc)
-{
-	XOJ_CHECK_TYPE(PopplerGlibDocument);
-
-	if (document)
-	{
-		g_object_unref(document);
-	}
-
-	document = ((PopplerGlibDocument*)doc)->document;
-	if (document)
-	{
-		g_object_ref(document);
-	}
+auto PopplerGlibDocument::equals(XojPdfDocumentInterface* doc) -> bool {
+    return document == (dynamic_cast<PopplerGlibDocument*>(doc))->document;
 }
 
-bool PopplerGlibDocument::equals(XojPdfDocumentInterface* doc)
-{
-	XOJ_CHECK_TYPE(PopplerGlibDocument);
+auto PopplerGlibDocument::save(fs::path const& file, GError** error) -> bool {
+    if (document == nullptr) {
+        return false;
+    }
 
-	return document == ((PopplerGlibDocument*)doc)->document;
+    auto uri = Util::toUri(file);
+    if (!uri) {
+        return false;
+    }
+    return poppler_document_save(document, uri->c_str(), error);
 }
 
-bool PopplerGlibDocument::save(Path filename, GError** error)
-{
-	XOJ_CHECK_TYPE(PopplerGlibDocument);
+auto PopplerGlibDocument::load(fs::path const& file, string password, GError** error) -> bool {
+    auto uri = Util::toUri(file);
+    if (!uri) {
+        return false;
+    }
 
-	if (document == NULL)
-	{
-		return false;
-	}
+    if (document) {
+        g_object_unref(document);
+        document = nullptr;
+    }
 
-	string uri = filename.toUri(error);
-	if (*error != NULL)
-	{
-		return false;
-	}
-	return poppler_document_save(document, uri.c_str(), error);
+    this->document = poppler_document_new_from_file(uri->c_str(), password.c_str(), error);
+    return this->document != nullptr;
 }
 
-bool PopplerGlibDocument::load(Path filename, string password, GError** error)
-{
-	XOJ_CHECK_TYPE(PopplerGlibDocument);
+auto PopplerGlibDocument::load(gpointer data, gsize length, string password, GError** error) -> bool {
+    if (document) {
+        g_object_unref(document);
+    }
 
-	string uri = filename.toUri(error);
-	if (*error != NULL)
-	{
-		return false;
-	}
-
-	if (document)
-	{
-		g_object_unref(document);
-	}
-
-	this->document = poppler_document_new_from_file(uri.c_str(), password.c_str(), error);
-	return this->document != NULL;
+    this->document =
+            poppler_document_new_from_data(static_cast<char*>(data), static_cast<int>(length), password.c_str(), error);
+    return this->document != nullptr;
 }
 
-bool PopplerGlibDocument::load(gpointer data, gsize length, string password, GError** error)
-{
-	XOJ_CHECK_TYPE(PopplerGlibDocument);
+auto PopplerGlibDocument::isLoaded() -> bool { return this->document != nullptr; }
 
-	if (document)
-	{
-		g_object_unref(document);
-	}
+auto PopplerGlibDocument::getPage(size_t page) -> XojPdfPageSPtr {
+    if (document == nullptr) {
+        return nullptr;
+    }
 
-	this->document = poppler_document_new_from_data(static_cast<char*>(data), static_cast<int>(length), password.c_str(), error);
-	return this->document != NULL;
+    PopplerPage* pg = poppler_document_get_page(document, page);
+    XojPdfPageSPtr pageptr = std::make_shared<PopplerGlibPage>(pg);
+    g_object_unref(pg);
+
+    return pageptr;
 }
 
-bool PopplerGlibDocument::isLoaded()
-{
-	XOJ_CHECK_TYPE(PopplerGlibDocument);
+auto PopplerGlibDocument::getPageCount() -> size_t {
+    if (document == nullptr) {
+        return 0;
+    }
 
-	return this->document != NULL;
+    return poppler_document_get_n_pages(document);
 }
 
-XojPdfPageSPtr PopplerGlibDocument::getPage(size_t page)
-{
-	XOJ_CHECK_TYPE(PopplerGlibDocument);
+auto PopplerGlibDocument::getContentsIter() -> XojPdfBookmarkIterator* {
+    if (document == nullptr) {
+        return nullptr;
+    }
 
-	if (document == NULL)
-	{
-		return NULL;
-	}
+    PopplerIndexIter* iter = poppler_index_iter_new(document);
 
-	PopplerPage* pg = poppler_document_get_page(document, page);
-	XojPdfPageSPtr pageptr = std::make_shared<PopplerGlibPage>(pg);
-	g_object_unref(pg);
+    if (iter == nullptr) {
+        return nullptr;
+    }
 
-	return pageptr;
+    return new PopplerGlibPageBookmarkIterator(iter, document);
 }
-
-size_t PopplerGlibDocument::getPageCount()
-{
-	XOJ_CHECK_TYPE(PopplerGlibDocument);
-
-	if (document == NULL)
-	{
-		return 0;
-	}
-
-	return poppler_document_get_n_pages(document);
-}
-
-XojPdfBookmarkIterator* PopplerGlibDocument::getContentsIter()
-{
-	XOJ_CHECK_TYPE(PopplerGlibDocument);
-
-	if (document == NULL)
-	{
-		return NULL;
-	}
-
-	PopplerIndexIter* iter = poppler_index_iter_new(document);
-
-	if (iter == NULL)
-	{
-		return NULL;
-	}
-
-	return new PopplerGlibPageBookmarkIterator(iter, document);
-}
-
-
-

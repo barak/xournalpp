@@ -11,47 +11,47 @@
 
 #pragma once
 
-#include "model/Point.h"
-#include <XournalType.h>
+#include <string>
+#include <vector>
 
 #include <gtk/gtk.h>
+
+#include "model/Point.h"
+
+#include "XournalType.h"
 
 class EraseableStrokePart;
 class PartList;
 class Range;
 class Stroke;
 
-class EraseableStroke
-{
+class EraseableStroke {
 public:
-	EraseableStroke(Stroke* stroke);
-	virtual ~EraseableStroke();
+    EraseableStroke(Stroke* stroke);
+    virtual ~EraseableStroke();
 
 public:
-	/**
-	 * Returns a repaint rectangle or NULL, the rectangle is own by the caller
-	 */
-	Range* erase(double x, double y, double halfEraserSize, Range* range = NULL);
+    /**
+     * Returns a repaint rectangle or nullptr, the rectangle is own by the caller
+     */
+    Range* erase(double x, double y, double halfEraserSize, Range* range = nullptr);
 
-	GList* getStroke(Stroke* original);
+    GList* getStroke(Stroke* original);
 
-	void draw(cairo_t* cr);
+    void draw(cairo_t* cr);
 
 private:
-	void erase(double x, double y, double halfEraserSize, EraseableStrokePart* part, PartList* list);
-	bool erasePart(double x, double y, double halfEraserSize, EraseableStrokePart* part,
-				   PartList* list, bool* deleteStrokeAfter);
+    void erase(double x, double y, double halfEraserSize, EraseableStrokePart* part, PartList* list);
+    static bool erasePart(double x, double y, double halfEraserSize, EraseableStrokePart* part, PartList* list,
+                          bool* deleteStrokeAfter);
 
-	void addRepaintRect(double x, double y, double width, double height);
+    void addRepaintRect(double x, double y, double width, double height);
 
 private:
-	XOJ_TYPE_ATTRIB;
+    GMutex partLock{};
+    PartList* parts = nullptr;
 
+    Range* repaintRect = nullptr;
 
-	GMutex partLock;
-	PartList * parts = NULL;
-
-	Range* repaintRect = NULL;
-
-	Stroke* stroke = NULL;
+    Stroke* stroke = nullptr;
 };

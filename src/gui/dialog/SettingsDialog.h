@@ -11,53 +11,76 @@
 
 #pragma once
 
-#include <util/audio/DeviceInfo.h>
-#include <control/Control.h>
+#include "control/Control.h"
 #include "control/settings/Settings.h"
 #include "gui/GladeGui.h"
+#include "util/audio/DeviceInfo.h"
+
 #include "DeviceClassConfigGui.h"
+#include "LanguageConfigGui.h"
+#include "LatexSettingsPanel.h"
 
 class ButtonConfigGui;
 
-class SettingsDialog : public GladeGui
-{
+class SettingsDialog: public GladeGui {
 public:
-	SettingsDialog(GladeSearchpath* gladeSearchPath, Settings* settings, Control* control);
-	~SettingsDialog() override;
+    SettingsDialog(GladeSearchpath* gladeSearchPath, Settings* settings, Control* control);
+    ~SettingsDialog() override;
 
 public:
-	void show(GtkWindow* parent) override;
+    void show(GtkWindow* parent) override;
 
-	void save();
+    void save();
 
-	void setDpi(int dpi);
+    void setDpi(int dpi);
 
-	/**
-	 * Autosave was toggled, enable / disable autosave config
-	 */
-	void enableWithCheckbox(string checkbox, string widget);
-	void customHandRecognitionToggled();
+    /**
+     * Set active regions
+     */
+    void enableWithCheckbox(const string& checkbox, const string& widget);
+    void disableWithCheckbox(const string& checkbox, const string& widget);
+
+    /*
+     * Listeners for changes to settings.
+     */
+    void customHandRecognitionToggled();
+    void customStylusIconTypeChanged();
+
+    /**
+     * Update whether options can be selected, tooltips, etc. for
+     * pressure sensitivity options (e.g. pressure multiplier).
+     */
+    void updatePressureSensitivityOptions();
 
 private:
-	void load();
-	void loadCheckbox(const char* name, gboolean value);
-	bool getCheckbox(const char* name);
+    void load();
+    void loadCheckbox(const char* name, gboolean value);
+    bool getCheckbox(const char* name);
 
-	string updateHideString(const string& hidden, bool hideMenubar, bool hideSidebar);
+    void loadSlider(const char* name, double value);
+    double getSlider(const char* name);
 
-	void initMouseButtonEvents();
-	void initMouseButtonEvents(const char* hbox, int button, bool withDevice = false);
+    static string updateHideString(const string& hidden, bool hideMenubar, bool hideSidebar);
+
+    void initMouseButtonEvents();
+    void initMouseButtonEvents(const char* hbox, int button, bool withDevice = false);
+
+    void initLanguageSettings();
+
+    void showStabilizerAvMethodOptions(StrokeStabilizer::AveragingMethod method);
+    void showStabilizerPreprocessorOptions(StrokeStabilizer::Preprocessor preprocessor);
 
 private:
-	XOJ_TYPE_ATTRIB;
+    Settings* settings = nullptr;
+    Control* control = nullptr;
+    GtkWidget* callib = nullptr;
+    int dpi = 72;
+    vector<DeviceInfo> audioInputDevices;
+    vector<DeviceInfo> audioOutputDevices;
 
-	Settings* settings = NULL;
-	Control* control = NULL;
-	GtkWidget* callib = NULL;
-	int dpi = 72;
-	vector<DeviceInfo> audioInputDevices;
-	vector<DeviceInfo> audioOutputDevices;
+    std::unique_ptr<LanguageConfigGui> languageConfig;
+    vector<ButtonConfigGui*> buttonConfigs;
+    vector<DeviceClassConfigGui*> deviceClassConfigs;
 
-	vector<ButtonConfigGui*> buttonConfigs;
-	vector<DeviceClassConfigGui*> deviceClassConfigs;
+    LatexSettingsPanel latexPanel;
 };

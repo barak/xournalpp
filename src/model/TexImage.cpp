@@ -1,289 +1,156 @@
 #include "TexImage.h"
 
-#include <pixbuf-utils.h>
-#include <serializing/ObjectInputStream.h>
-#include <serializing/ObjectOutputStream.h>
+#include <utility>
 
-TexImage::TexImage()
- : Element(ELEMENT_TEXIMAGE)
-{
-	XOJ_INIT_TYPE(TexImage);
+#include "serializing/ObjectInputStream.h"
+#include "serializing/ObjectOutputStream.h"
 
-	this->sizeCalculated = true;
+#include "pixbuf-utils.h"
+
+TexImage::TexImage(): Element(ELEMENT_TEXIMAGE) { this->sizeCalculated = true; }
+
+TexImage::~TexImage() { freeImageAndPdf(); }
+
+void TexImage::freeImageAndPdf() {
+    if (this->image) {
+        cairo_surface_destroy(this->image);
+        this->image = nullptr;
+    }
+
+    if (this->pdf) {
+        g_object_unref(this->pdf);
+        this->pdf = nullptr;
+    }
 }
 
-TexImage::~TexImage()
-{
-	XOJ_CHECK_TYPE(TexImage);
-
-	freeImageAndPdf();
-
-	XOJ_RELEASE_TYPE(TexImage);
+auto TexImage::clone() -> Element* {
+    auto* img = new TexImage();
+    img->loadData(std::string(this->binaryData), nullptr);
+    img->x = this->x;
+    img->y = this->y;
+    img->setColor(this->getColor());
+    img->width = this->width;
+    img->height = this->height;
+    img->text = this->text;
+    img->snappedBounds = this->snappedBounds;
+    img->sizeCalculated = this->sizeCalculated;
+    img->pdf = this->pdf;
+    return img;
 }
 
-/**
- * Free image and PDF
- */
-void TexImage::freeImageAndPdf()
-{
-	XOJ_CHECK_TYPE(TexImage);
-
-	if (this->image)
-	{
-		cairo_surface_destroy(this->image);
-		this->image = NULL;
-	}
-
-	if (this->pdf)
-	{
-		g_object_unref(this->pdf);
-		this->pdf = NULL;
-	}
-
-	this->parsedBinaryData = false;
+void TexImage::setWidth(double width) {
+    this->width = width;
+    this->calcSize();
 }
 
-Element* TexImage::clone()
-{
-	XOJ_CHECK_TYPE(TexImage);
-
-	TexImage* img = new TexImage();
-
-	img->x = this->x;
-	img->y = this->y;
-	img->setColor(this->getColor());
-	img->width = this->width;
-	img->height = this->height;
-	img->text = this->text;
-	img->binaryData = this->binaryData;
-
-	if (this->pdf)
-	{
-		img->pdf = this->pdf;
-		g_object_ref(img->pdf);
-	}
-
-	if (this->image)
-	{
-		img->image = cairo_surface_reference(this->image);
-	}
-
-	return img;
+void TexImage::setHeight(double height) {
+    this->height = height;
+    this->calcSize();
 }
 
-void TexImage::setWidth(double width)
-{
-	XOJ_CHECK_TYPE(TexImage);
+auto TexImage::cairoReadFunction(TexImage* image, unsigned char* data, unsigned int length) -> cairo_status_t {
+    for (unsigned int i = 0; i < length; i++, image->read++) {
+        if (image->read >= image->binaryData.length()) {
+            return CAIRO_STATUS_READ_ERROR;
+        }
+        data[i] = image->binaryData[image->read];
+    }
 
-	this->width = width;
-}
-
-void TexImage::setHeight(double height)
-{
-	XOJ_CHECK_TYPE(TexImage);
-
-	this->height = height;
-}
-
-cairo_status_t TexImage::cairoReadFunction(TexImage* image, unsigned char* data, unsigned int length)
-{
-	XOJ_CHECK_TYPE_OBJ(image, TexImage);
-
-	for (unsigned int i = 0; i < length; i++, image->read++)
-	{
-		if (image->read >= image->binaryData.length())
-		{
-			return CAIRO_STATUS_READ_ERROR;
-		}
-		data[i] = image->binaryData[image->read];
-	}
-
-	return CAIRO_STATUS_SUCCESS;
-}
-
-/**
- * Sets the binary data, a .PNG image or a .PDF
- */
-void TexImage::setBinaryData(string binaryData)
-{
-	XOJ_CHECK_TYPE(TexImage);
-
-	this->binaryData = binaryData;
+    return CAIRO_STATUS_SUCCESS;
 }
 
 /**
  * Gets the binary data, a .PNG image or a .PDF
  */
-string& TexImage::getBinaryData()
-{
-	XOJ_CHECK_TYPE(TexImage);
+auto TexImage::getBinaryData() const -> std::string const& { return this->binaryData; }
 
-	return this->binaryData;
+void TexImage::setText(string text) { this->text = std::move(text); }
+
+auto TexImage::getText() -> string { return this->text; }
+
+auto TexImage::loadData(std::string&& bytes, GError** err) -> bool {
+    this->freeImageAndPdf();
+    this->binaryData = bytes;
+    if (this->binaryData.length() < 4) {
+        return false;
+    }
+
+    const std::string type = binaryData.substr(1, 3);
+    if (type == "PDF") {
+        // Note: binaryData must not be modified while pdf is live.
+        this->pdf = poppler_document_new_from_data(this->binaryData.data(), this->binaryData.size(), nullptr, err);
+        if (!pdf || poppler_document_get_n_pages(this->pdf) < 1) {
+            return false;
+        }
+        if (!this->width && !this->height) {
+            PopplerPage* page = poppler_document_get_page(this->pdf, 0);
+            poppler_page_get_size(page, &this->width, &this->height);
+        }
+    } else if (type == "PNG") {
+        this->image = cairo_image_surface_create_from_png_stream(
+                reinterpret_cast<cairo_read_func_t>(&cairoReadFunction), this);
+    } else {
+        g_warning("Unknown Latex image type: \"%s\"", type.c_str());
+    }
+
+    return true;
 }
 
-void TexImage::setText(string text)
-{
-	XOJ_CHECK_TYPE(TexImage);
+auto TexImage::getImage() -> cairo_surface_t* { return this->image; }
 
-	this->text = text;
+auto TexImage::getPdf() -> PopplerDocument* { return this->pdf; }
+
+void TexImage::scale(double x0, double y0, double fx, double fy, double rotation,
+                     bool) {  // line width scaling option is not used
+
+    this->x = (this->x - x0) * fx + x0;
+    this->y = (this->y - y0) * fy + y0;
+
+    this->width *= fx;
+    this->height *= fy;
+    this->calcSize();
 }
 
-string TexImage::getText()
-{
-	XOJ_CHECK_TYPE(TexImage);
-
-	return this->text;
+void TexImage::rotate(double x0, double y0, double th) {
+    // Rotation for TexImages not yet implemented
 }
 
-cairo_surface_t* TexImage::getImage()
-{
-	XOJ_CHECK_TYPE(TexImage);
+void TexImage::serialize(ObjectOutputStream& out) {
+    out.writeObject("TexImage");
 
-	if (this->image == NULL && this->parsedBinaryData == false)
-	{
-		loadBinaryData();
-	}
+    serializeElement(out);
 
-	return this->image;
+    out.writeDouble(this->width);
+    out.writeDouble(this->height);
+    out.writeString(this->text);
+
+    out.writeData(this->binaryData.c_str(), this->binaryData.length(), 1);
+
+    out.endObject();
 }
 
-/**
- * Load the binary data, either .PNG or .PDF
- */
-void TexImage::loadBinaryData()
-{
-	XOJ_CHECK_TYPE(TexImage);
+void TexImage::readSerialized(ObjectInputStream& in) {
+    in.readObject("TexImage");
 
-	freeImageAndPdf();
+    readSerializedElement(in);
 
-	if (this->binaryData.length() < 4)
-	{
-		this->parsedBinaryData = true;
-		return;
-	}
+    this->width = in.readDouble();
+    this->height = in.readDouble();
+    this->text = in.readString();
 
-	string type = this->binaryData.substr(0, 4);
+    freeImageAndPdf();
 
-	if (type[1] == 'P' && type[2] == 'N' && type[3] == 'G')
-	{
-		this->read = 0;
-		this->image = cairo_image_surface_create_from_png_stream((cairo_read_func_t) &cairoReadFunction, this);
-	}
-	else if (type[1] == 'P' && type[2] == 'D' && type[3] == 'F')
-	{
-		this->pdf = poppler_document_new_from_data((char*)this->binaryData.c_str(), this->binaryData.length(), NULL, NULL);
-	}
-	else
-	{
-		g_warning("Unknown Latex image type: «%s»", type.c_str());
-	}
+    char* data = nullptr;
+    int len = 0;
+    in.readData(reinterpret_cast<void**>(&data), &len);
 
-	this->parsedBinaryData = true;
+    this->loadData(std::string(data, len), nullptr);
+
+    in.endObject();
+    this->calcSize();
 }
 
-/**
- * @return The PDF Document, if rendered as .pdf
- *
- * The document needs to be referenced, if it will be hold somewhere
- */
-PopplerDocument* TexImage::getPdf()
-{
-	XOJ_CHECK_TYPE(TexImage);
-
-	if (this->pdf == NULL && this->parsedBinaryData == false)
-	{
-		loadBinaryData();
-	}
-
-	return this->pdf;
-}
-
-/**
- * @param pdf The PDF Document, if rendered as .pdf
- *
- * The PDF will be referenced
- */
-void TexImage::setPdf(PopplerDocument* pdf)
-{
-	XOJ_CHECK_TYPE(TexImage);
-
-	if (this->pdf != NULL)
-	{
-		g_object_unref(this->pdf);
-	}
-
-	this->pdf = pdf;
-
-	if (this->pdf != NULL)
-	{
-		g_object_ref(this->pdf);
-		this->parsedBinaryData = true;
-	}
-}
-
-void TexImage::scale(double x0, double y0, double fx, double fy)
-{
-	XOJ_CHECK_TYPE(TexImage);
-
-	this->x -= x0;
-	this->x *= fx;
-	this->x += x0;
-	this->y -= y0;
-	this->y *= fy;
-	this->y += y0;
-
-	this->width *= fx;
-	this->height *= fy;
-}
-
-void TexImage::rotate(double x0, double y0, double xo, double yo, double th)
-{
-	XOJ_CHECK_TYPE(TexImage);
-
-	// Rotation for TexImages not yet implemented
-}
-
-void TexImage::serialize(ObjectOutputStream& out)
-{
-	XOJ_CHECK_TYPE(TexImage);
-
-	out.writeObject("TexImage");
-
-	serializeElement(out);
-
-	out.writeDouble(this->width);
-	out.writeDouble(this->height);
-	out.writeString(this->text);
-
-	out.writeData(this->binaryData.c_str(), this->binaryData.length(), 1);
-
-	out.endObject();
-}
-
-void TexImage::readSerialized(ObjectInputStream& in)
-{
-	XOJ_CHECK_TYPE(TexImage);
-
-	in.readObject("TexImage");
-
-	readSerializedElement(in);
-
-	this->width = in.readDouble();
-	this->height = in.readDouble();
-	this->text = in.readString();
-
-	freeImageAndPdf();
-
-	char* data = NULL;
-	int len = 0;
-	in.readData((void**)&data, &len);
-
-	this->binaryData = string(data, len);
-
-	in.endObject();
-}
-
-void TexImage::calcSize()
-{
-	XOJ_CHECK_TYPE(TexImage);
+void TexImage::calcSize() const {
+    this->snappedBounds = Rectangle<double>(this->x, this->y, this->width, this->height);
+    this->sizeCalculated = true;
 }

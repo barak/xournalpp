@@ -1,58 +1,48 @@
 #include "Tool.h"
 
-Tool::Tool(string name, ToolType type, int color, int capabilities, double* thickness)
-{
-	XOJ_INIT_TYPE(Tool);
+#include <utility>
 
-	this->name = name;
-	this->type = type;
-	this->thickness = thickness;
+Tool::Tool(string name, ToolType type, Color color, int capabilities, double* thickness) {
+    this->name = std::move(name);
+    this->type = type;
+    this->thickness = thickness;
 
-	this->capabilities = capabilities;
+    this->capabilities = capabilities;
 
-	setColor(color);
+    setColor(color);
 }
 
-Tool::~Tool()
-{
-	XOJ_CHECK_TYPE(Tool);
-
-	delete[] this->thickness;
-	this->thickness = NULL;
-
-	XOJ_RELEASE_TYPE(Tool);
+Tool::Tool(Tool* t): name{t->name}, type{t->type}, capabilities{t->capabilities} {
+    if (t->thickness) {
+        this->thickness = new double[toolSizes];
+        for (int i{0}; i < toolSizes; i++) {
+            this->thickness[i] = t->thickness[i];
+        }
+    } else {
+        this->thickness = nullptr;
+    }
+    setColor(t->getColor());
 }
 
-string Tool::getName()
-{
-	XOJ_CHECK_TYPE(Tool);
-
-	return this->name;
+Tool::~Tool() {
+    delete[] this->thickness;
+    this->thickness = nullptr;
 }
 
-void Tool::setCapability(int capability, bool enabled)
-{
-	XOJ_CHECK_TYPE(Tool);
+auto Tool::getName() -> string { return this->name; }
 
-	if (enabled)
-	{
-		this->capabilities |= capability;
-	}
-	else
-	{
-		this->capabilities &= ~capability;
-	}
+void Tool::setCapability(int capability, bool enabled) {
+    if (enabled) {
+        this->capabilities |= capability;
+    } else {
+        this->capabilities &= ~capability;
+    }
 }
 
-bool Tool::hasCapability(ToolCapabilities cap)
-{
-	XOJ_CHECK_TYPE(Tool);
+auto Tool::hasCapability(ToolCapabilities cap) const -> bool { return (this->capabilities & cap) != 0; }
 
-	return (this->capabilities & cap) != 0;
+auto Tool::getThickness(ToolSize size) -> double { return this->thickness[size - TOOL_SIZE_VERY_FINE]; }
+
+auto Tool::isDrawingTool() -> bool {
+    return this->type == TOOL_PEN || this->type == TOOL_HIGHLIGHTER || this->type == TOOL_ERASER;
 }
-
-double Tool::getThickness(ToolSize size)
-{
-	return this->thickness[size - TOOL_SIZE_VERY_FINE];
-}
-

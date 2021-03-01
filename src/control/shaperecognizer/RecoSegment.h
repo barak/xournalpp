@@ -8,46 +8,34 @@
  *
  * @license GNU GPLv2 or later
  */
-
 #pragma once
 
 #include "model/Point.h"
 
-#include <XournalType.h>
-
 class Stroke;
 class Inertia;
 
-class RecoSegment
-{
-public:
-	RecoSegment();
-	virtual ~RecoSegment();
+struct RecoSegment final {
+    Point calcEdgeIsect(RecoSegment* r2) const;
 
-public:
-	Point calcEdgeIsect(RecoSegment* r2);
+    /**
+     * Find the geometry of a recognized segment
+     */
+    void calcSegmentGeometry(const Point* pt, int start, int end, Inertia* s);
 
-	/**
-	 * Find the geometry of a recognized segment
-	 */
-	void calcSegmentGeometry(const Point* pt, int start, int end, Inertia* s);
+    Stroke* stroke{nullptr};
+    int startpt{0};
+    int endpt{0};
 
-public:
-	XOJ_TYPE_ATTRIB;
+    double xcenter{0};
+    double ycenter{0};
+    double angle{0};
+    double radius{0};
 
-	Stroke* stroke;
-	int startpt;
-	int endpt;
+    double x1{0};
+    double y1{0};
+    double x2{0};
+    double y2{0};
 
-	double xcenter;
-	double ycenter;
-	double angle;
-	double radius;
-
-	double x1;
-	double y1;
-	double x2;
-	double y2;
-
-	bool reversed;
+    bool reversed{};
 };

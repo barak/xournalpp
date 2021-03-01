@@ -1,101 +1,65 @@
 #include "GroupUndoAction.h"
 
-GroupUndoAction::GroupUndoAction()
- : UndoAction("GroupUndoAction")
-{
-	XOJ_INIT_TYPE(GroupUndoAction);
+GroupUndoAction::GroupUndoAction(): UndoAction("GroupUndoAction") {}
+
+GroupUndoAction::~GroupUndoAction() {
+    for (int i = actions.size() - 1; i >= 0; i--) {
+        delete actions[i];
+    }
+
+    actions.clear();
 }
 
-GroupUndoAction::~GroupUndoAction()
-{
-	XOJ_CHECK_TYPE(GroupUndoAction);
+void GroupUndoAction::addAction(UndoAction* action) { actions.push_back(action); }
 
-	for (int i = actions.size() - 1; i >= 0; i--)
-	{
-		delete actions[i];
-	}
+auto GroupUndoAction::getPages() -> vector<PageRef> {
+    vector<PageRef> pages;
 
-	actions.clear();
+    for (UndoAction* a: actions) {
+        for (PageRef addPage: a->getPages()) {
+            if (!addPage) {
+                continue;
+            }
 
-	XOJ_RELEASE_TYPE(GroupUndoAction);
+            bool pageAlreadyInTheList = false;
+            for (const PageRef& p: pages) {
+                if (addPage == p) {
+                    pageAlreadyInTheList = true;
+                    break;
+                }
+            }
+
+            if (!pageAlreadyInTheList) {
+                pages.push_back(addPage);
+            }
+        }
+    }
+
+    return pages;
 }
 
-void GroupUndoAction::addAction(UndoAction* action)
-{
-	XOJ_CHECK_TYPE(GroupUndoAction);
+auto GroupUndoAction::redo(Control* control) -> bool {
+    bool result = true;
+    for (auto& action: actions) {
+        result = result && action->redo(control);
+    }
 
-	actions.push_back(action);
+    return result;
 }
 
-vector<PageRef> GroupUndoAction::getPages()
-{
-	XOJ_CHECK_TYPE(GroupUndoAction);
+auto GroupUndoAction::undo(Control* control) -> bool {
+    bool result = true;
+    for (int i = actions.size() - 1; i >= 0; i--) {
+        result = result && actions[i]->undo(control);
+    }
 
-	vector<PageRef> pages;
-
-	for (UndoAction* a : actions)
-	{
-		for (PageRef addPage : a->getPages())
-		{
-			if (!addPage.isValid())
-			{
-				continue;
-			}
-
-			bool pageAlreadyInTheList = false;
-			for (PageRef p : pages)
-			{
-				if (addPage == p)
-				{
-					pageAlreadyInTheList = true;
-					break;
-				}
-			}
-
-			if (!pageAlreadyInTheList)
-			{
-				pages.push_back(addPage);
-			}
-		}
-	}
-
-	return pages;
+    return result;
 }
 
-bool GroupUndoAction::redo(Control* control)
-{
-	XOJ_CHECK_TYPE(GroupUndoAction);
+auto GroupUndoAction::getText() -> string {
+    if (actions.empty()) {
+        return "!! NOTHING !!";
+    }
 
-	bool result = true;
-	for (size_t i = 0; i < actions.size(); i++)
-	{
-		result = result && actions[i]->redo(control);
-	}
-
-	return result;
-}
-
-bool GroupUndoAction::undo(Control* control)
-{
-	XOJ_CHECK_TYPE(GroupUndoAction);
-
-	bool result = true;
-	for (int i = actions.size() - 1; i >= 0; i--)
-	{
-		result = result && actions[i]->undo(control);
-	}
-
-	return result;
-}
-
-string GroupUndoAction::getText()
-{
-	XOJ_CHECK_TYPE(GroupUndoAction);
-
-	if (actions.size() == 0)
-	{
-		return "!! NOTHING !!";
-	}
-
-	return actions[0]->getText();
+    return actions[0]->getText();
 }

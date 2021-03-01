@@ -1,75 +1,43 @@
 #include "OutputStream.h"
 
+#include <cstdlib>
+
 #include "GzUtil.h"
-#include <i18n.h>
+#include "i18n.h"
 
-#include <stdlib.h>
+OutputStream::OutputStream() = default;
 
-OutputStream::OutputStream() { }
+OutputStream::~OutputStream() = default;
 
-OutputStream::~OutputStream() { }
+void OutputStream::write(const string& str) { write(str.c_str(), str.length()); }
 
-void OutputStream::write(const string& str)
-{
-	write(str.c_str(), str.length());
-}
-
-void OutputStream::write(const char* str)
-{
-	write(str, strlen(str));
-}
+void OutputStream::write(const char* str) { write(str, strlen(str)); }
 
 ////////////////////////////////////////////////////////
 /// GzOutputStream /////////////////////////////////////
 ////////////////////////////////////////////////////////
 
-GzOutputStream::GzOutputStream(Path filename)
-{
-	XOJ_INIT_TYPE(GzOutputStream);
-
-	this->filename = filename;
-
-	this->fp = GzUtil::openPath(filename, "w");
-	if (this->fp == NULL)
-	{
-		this->error = FS(_F("Error opening file: \"{1}\"") % filename.str());
-	}
+GzOutputStream::GzOutputStream(fs::path file): file(std::move(file)) {
+    this->fp = GzUtil::openPath(this->file, "w");
+    if (this->fp == nullptr) {
+        this->error = FS(_F("Error opening file: \"{1}\"") % this->file.u8string());
+    }
 }
 
-GzOutputStream::~GzOutputStream()
-{
-	XOJ_CHECK_TYPE(GzOutputStream);
-
-	if (this->fp)
-	{
-		close();
-	}
-	this->fp = NULL;
-
-	XOJ_RELEASE_TYPE(GzOutputStream);
+GzOutputStream::~GzOutputStream() {
+    if (this->fp) {
+        close();
+    }
+    this->fp = nullptr;
 }
 
-string& GzOutputStream::getLastError()
-{
-	XOJ_CHECK_TYPE(GzOutputStream);
+auto GzOutputStream::getLastError() -> string& { return this->error; }
 
-	return this->error;
-}
+void GzOutputStream::write(const char* data, int len) { gzwrite(this->fp, data, len); }
 
-void GzOutputStream::write(const char* data, int len)
-{
-	XOJ_CHECK_TYPE(GzOutputStream);
-
-	gzwrite(this->fp, data, len);
-}
-
-void GzOutputStream::close()
-{
-	XOJ_CHECK_TYPE(GzOutputStream);
-
-	if (this->fp)
-	{
-		gzclose(this->fp);
-		this->fp = NULL;
-	}
+void GzOutputStream::close() {
+    if (this->fp) {
+        gzclose(this->fp);
+        this->fp = nullptr;
+    }
 }

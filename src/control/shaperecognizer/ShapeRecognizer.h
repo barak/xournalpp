@@ -11,40 +11,37 @@
 
 #pragma once
 
+#include <array>
+
 #include "CircleRecognizer.h"
 #include "RecoSegment.h"
 #include "ShapeRecognizerConfig.h"
-
-#include <XournalType.h>
 
 class Stroke;
 class Point;
 class ShapeRecognizerResult;
 
-class ShapeRecognizer
-{
+class ShapeRecognizer {
 public:
-	ShapeRecognizer();
-	virtual ~ShapeRecognizer();
+    ShapeRecognizer();
+    virtual ~ShapeRecognizer();
 
-	ShapeRecognizerResult* recognizePatterns(Stroke* stroke);
-	void resetRecognizer();
-private:
-	Stroke* tryRectangle();
-	Stroke* tryArrow();
-
-	Stroke* tryClosedPolygon(int nsides);
-	void optimizePolygonal(const Point* pt, int nsides, int* breaks, Inertia* ss);
-
-	int findPolygonal(const Point* pt, int start, int end, int nsides, int* breaks, Inertia* ss);
+    ShapeRecognizerResult* recognizePatterns(Stroke* stroke);
+    void resetRecognizer();
 
 private:
-	XOJ_TYPE_ATTRIB;
+    Stroke* tryRectangle();
+    // function Stroke* tryArrow(); removed after commit a3f7a251282dcfea8b4de695f28ce52bf2035da2
 
-	RecoSegment queue[MAX_POLYGON_SIDES + 1];
-	int queueLength;
+    static void optimizePolygonal(const Point* pt, int nsides, int* breaks, Inertia* ss);
 
-	Stroke* stroke;
+    int findPolygonal(const Point* pt, int start, int end, int nsides, int* breaks, Inertia* ss);
 
-	friend class ShapeRecognizerResult;
+private:
+    std::array<RecoSegment, MAX_POLYGON_SIDES + 1> queue{};
+    int queueLength;
+
+    Stroke* stroke;
+
+    friend class ShapeRecognizerResult;
 };

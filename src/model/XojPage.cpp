@@ -1,309 +1,178 @@
 #include "XojPage.h"
 
+#include <algorithm>
+#include <iterator>
+#include <utility>
+
 #include "BackgroundImage.h"
 #include "Document.h"
+#include "i18n.h"
 
-XojPage::XojPage(double width, double height)
-{
-	XOJ_INIT_TYPE(XojPage);
+XojPage::XojPage(double width, double height): width(width), height(height), bgType(PageTypeFormat::Lined) {}
 
-	this->bgType.format = PageTypeFormat::Lined;
-
-	this->width = width;
-	this->height = height;
+XojPage::~XojPage() {
+    for (Layer* l: this->layer) {
+        delete l;
+    }
+    this->layer.clear();
 }
 
-XojPage::~XojPage()
-{
-	XOJ_CHECK_TYPE(XojPage);
-
-	for (Layer* l : this->layer)
-	{
-		delete l;
-	}
-	this->layer.clear();
-
-	XOJ_RELEASE_TYPE(XojPage);
+XojPage::XojPage(XojPage const& page):
+        width(page.width),
+        height(page.height),
+        backgroundImage(page.backgroundImage),
+        currentLayer(page.currentLayer),
+        bgType(page.bgType),
+        pdfBackgroundPage(page.pdfBackgroundPage),
+        backgroundColor(page.backgroundColor) {
+    this->layer.reserve(page.layer.size());
+    std::transform(begin(page.layer), end(page.layer), std::back_inserter(this->layer),
+                   [](auto* layer) { return layer->clone(); });
 }
 
-void XojPage::reference()
-{
-	XOJ_CHECK_TYPE(XojPage);
+auto XojPage::clone() -> XojPage* { return new XojPage(*this); }
 
-	this->ref++;
+void XojPage::addLayer(Layer* layer) {
+    this->layer.push_back(layer);
+    this->currentLayer = npos;
 }
 
-void XojPage::unreference()
-{
-	XOJ_CHECK_TYPE(XojPage);
+void XojPage::insertLayer(Layer* layer, int index) {
+    if (index >= static_cast<int>(this->layer.size())) {
+        addLayer(layer);
+        return;
+    }
 
-	this->ref--;
-	if (ref < 1)
-	{
-		delete this;
-	}
+    this->layer.insert(this->layer.begin() + index, layer);
+    this->currentLayer = index + 1;
 }
 
-XojPage* XojPage::clone()
-{
-	XojPage* page = new XojPage(this->width, this->height);
-
-	page->backgroundImage = this->backgroundImage;
-	for (Layer* l : this->layer)
-	{
-		page->addLayer(l->clone());
-	}
-
-	page->currentLayer = this->currentLayer;
-	page->bgType = this->bgType;
-	page->pdfBackgroundPage = this->pdfBackgroundPage;
-	page->backgroundColor = this->backgroundColor;
-
-	return page;
+void XojPage::removeLayer(Layer* layer) {
+    for (unsigned int i = 0; i < this->layer.size(); i++) {
+        if (layer == this->layer[i]) {
+            this->layer.erase(this->layer.begin() + i);
+            break;
+        }
+    }
+    this->currentLayer = npos;
 }
 
-void XojPage::addLayer(Layer* layer)
-{
-	XOJ_CHECK_TYPE(XojPage);
+void XojPage::setSelectedLayerId(int id) { this->currentLayer = id; }
 
-	this->layer.push_back(layer);
-	this->currentLayer = npos;
-}
+auto XojPage::getLayers() -> vector<Layer*>* { return &this->layer; }
 
-void XojPage::insertLayer(Layer* layer, int index)
-{
-	XOJ_CHECK_TYPE(XojPage);
-
-	if (index >= (int)this->layer.size())
-	{
-		addLayer(layer);
-		return;
-	}
-
-	this->layer.insert(this->layer.begin() + index, layer);
-	this->currentLayer = index + 1;
-}
-
-void XojPage::removeLayer(Layer* layer)
-{
-	XOJ_CHECK_TYPE(XojPage);
-
-	for (unsigned int i = 0; i < this->layer.size(); i++)
-	{
-		if (layer == this->layer[i])
-		{
-			this->layer.erase(this->layer.begin() + i);
-			break;
-		}
-	}
-	this->currentLayer = npos;
-}
-
-void XojPage::setSelectedLayerId(int id)
-{
-	this->currentLayer = id;
-}
-
-vector<Layer*>* XojPage::getLayers()
-{
-	XOJ_CHECK_TYPE(XojPage);
-
-	return &this->layer;
-}
-
-size_t XojPage::getLayerCount()
-{
-	XOJ_CHECK_TYPE(XojPage);
-
-	return this->layer.size();
-}
+auto XojPage::getLayerCount() -> size_t { return this->layer.size(); }
 
 /**
  * Layer ID 0 = Background, Layer ID 1 = Layer 1
  */
-int XojPage::getSelectedLayerId()
-{
-	XOJ_CHECK_TYPE(XojPage);
+auto XojPage::getSelectedLayerId() -> int {
+    if (this->currentLayer == npos) {
+        this->currentLayer = this->layer.size();
+    }
 
-	if (this->currentLayer == npos)
-	{
-		this->currentLayer = this->layer.size();
-	}
-
-	return this->currentLayer;
+    return this->currentLayer;
 }
 
-void XojPage::setLayerVisible(int layerId, bool visible)
-{
-	XOJ_CHECK_TYPE(XojPage);
+void XojPage::setLayerVisible(int layerId, bool visible) {
+    if (layerId < 0) {
+        return;
+    }
 
-	if (layerId < 0)
-	{
-		return;
-	}
+    if (layerId == 0) {
+        backgroundVisible = visible;
+        return;
+    }
 
-	if (layerId == 0)
-	{
-		backgroundVisible = visible;
-		return;
-	}
+    layerId--;
+    if (layerId >= static_cast<int>(this->layer.size())) {
+        return;
+    }
 
-	layerId--;
-	if (layerId >= (int)this->layer.size())
-	{
-		return;
-	}
-
-	this->layer[layerId]->setVisible(visible);
+    this->layer[layerId]->setVisible(visible);
 }
 
-bool XojPage::isLayerVisible(int layerId)
-{
-	XOJ_CHECK_TYPE(XojPage);
+auto XojPage::isLayerVisible(int layerId) -> bool {
+    if (layerId < 0) {
+        return false;
+    }
 
-	if (layerId < 0)
-	{
-		return false;
-	}
+    if (layerId == 0) {
+        return backgroundVisible;
+    }
 
-	if (layerId == 0)
-	{
-		return backgroundVisible;
-	}
+    layerId--;
+    if (layerId >= static_cast<int>(this->layer.size())) {
+        return false;
+    }
 
-	layerId--;
-	if (layerId >= (int)this->layer.size())
-	{
-		return false;
-	}
-
-	return this->layer[layerId]->isVisible();
+    return this->layer[layerId]->isVisible();
 }
 
-bool XojPage::isLayerVisible(Layer* layer)
-{
-	XOJ_CHECK_TYPE(XojPage);
+auto XojPage::isLayerVisible(Layer* layer) -> bool { return layer->isVisible(); }
 
-	return layer->isVisible();
+void XojPage::setBackgroundPdfPageNr(size_t page) {
+    this->pdfBackgroundPage = page;
+    this->bgType.format = PageTypeFormat::Pdf;
+    this->bgType.config = "";
 }
 
-void XojPage::setBackgroundPdfPageNr(size_t page)
-{
-	XOJ_CHECK_TYPE(XojPage);
+void XojPage::setBackgroundColor(Color color) { this->backgroundColor = color; }
 
-	this->pdfBackgroundPage = page;
-	this->bgType.format = PageTypeFormat::Pdf;
-	this->bgType.config = "";
+auto XojPage::getBackgroundColor() const -> Color { return this->backgroundColor; }
+
+void XojPage::setSize(double width, double height) {
+    this->width = width;
+    this->height = height;
 }
 
-void XojPage::setBackgroundColor(int color)
-{
-	XOJ_CHECK_TYPE(XojPage);
+auto XojPage::getWidth() const -> double { return this->width; }
 
-	this->backgroundColor = color;
+auto XojPage::getHeight() const -> double { return this->height; }
+
+auto XojPage::getPdfPageNr() const -> size_t { return this->pdfBackgroundPage; }
+
+auto XojPage::isAnnotated() -> bool {
+    for (Layer* l: this->layer) {
+        if (l->isAnnotated()) {
+            return true;
+        }
+    }
+    return false;
 }
 
-int XojPage::getBackgroundColor()
-{
-	XOJ_CHECK_TYPE(XojPage);
+void XojPage::setBackgroundType(const PageType& bgType) {
+    this->bgType = bgType;
 
-	return this->backgroundColor;
+    if (!bgType.isPdfPage()) {
+        this->pdfBackgroundPage = npos;
+    }
+    if (!bgType.isImagePage()) {
+        this->backgroundImage.free();
+    }
 }
 
-void XojPage::setSize(double width, double height)
-{
-	XOJ_CHECK_TYPE(XojPage);
+auto XojPage::getBackgroundType() -> PageType { return this->bgType; }
 
-	this->width = width;
-	this->height = height;
+auto XojPage::getBackgroundImage() -> BackgroundImage& { return this->backgroundImage; }
+
+void XojPage::setBackgroundImage(BackgroundImage img) { this->backgroundImage = std::move(img); }
+
+auto XojPage::getSelectedLayer() -> Layer* {
+    if (this->layer.empty()) {
+        addLayer(new Layer());
+    }
+    size_t layer = getSelectedLayerId();
+
+    if (layer > 0) {
+        layer--;
+    }
+
+    return this->layer[layer];
 }
 
-double XojPage::getWidth() const
-{
-	XOJ_CHECK_TYPE(XojPage);
+auto XojPage::getBackgroundName() const -> string { return backgroundName.value_or(_("Background")); }
 
-	return this->width;
-}
+auto XojPage::backgroundHasName() const -> bool { return backgroundName.has_value(); }
 
-double XojPage::getHeight() const
-{
-	XOJ_CHECK_TYPE(XojPage);
-
-	return this->height;
-}
-
-size_t XojPage::getPdfPageNr() const
-{
-	XOJ_CHECK_TYPE(XojPage);
-
-	return this->pdfBackgroundPage;
-}
-
-bool XojPage::isAnnotated()
-{
-	XOJ_CHECK_TYPE(XojPage);
-
-	for (Layer* l : this->layer)
-	{
-		if (l->isAnnotated())
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-void XojPage::setBackgroundType(PageType bgType)
-{
-	XOJ_CHECK_TYPE(XojPage);
-
-	this->bgType = bgType;
-
-	if (!bgType.isPdfPage())
-	{
-		this->pdfBackgroundPage = npos;
-	}
-	if (!bgType.isImagePage())
-	{
-		this->backgroundImage.free();
-	}
-}
-
-PageType XojPage::getBackgroundType() const
-{
-	XOJ_CHECK_TYPE(XojPage);
-
-	return this->bgType;
-}
-
-BackgroundImage& XojPage::getBackgroundImage()
-{
-	XOJ_CHECK_TYPE(XojPage);
-
-	return this->backgroundImage;
-}
-
-void XojPage::setBackgroundImage(BackgroundImage img)
-{
-	XOJ_CHECK_TYPE(XojPage);
-
-	this->backgroundImage = img;
-}
-
-Layer* XojPage::getSelectedLayer()
-{
-	XOJ_CHECK_TYPE(XojPage);
-
-	if (this->layer.empty())
-	{
-		addLayer(new Layer());
-	}
-	size_t layer = getSelectedLayerId();
-
-	if (layer > 0)
-	{
-		layer--;
-	}
-
-	return this->layer[layer];
-}
+void XojPage::setBackgroundName(const string& newName) { backgroundName = newName; }

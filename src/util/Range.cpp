@@ -1,70 +1,31 @@
 #include "Range.h"
 
-Range::Range(double x, double y)
-{
-	XOJ_INIT_TYPE(Range);
+Range::Range(double x, double y) {
+    this->x1 = x;
+    this->x2 = x;
 
-	this->x1 = x;
-	this->x2 = x;
-
-	this->y1 = y;
-	this->y2 = y;
+    this->y1 = y;
+    this->y2 = y;
 }
 
-Range::~Range()
-{
-	XOJ_RELEASE_TYPE(Range);
+Range::~Range() = default;
+
+void Range::addPoint(double x, double y) {
+    this->x1 = std::min(this->x1, x);
+    this->x2 = std::max(this->x2, x);
+
+    this->y1 = std::min(this->y1, y);
+    this->y2 = std::max(this->y2, y);
 }
 
-void Range::addPoint(double x, double y)
-{
-	XOJ_CHECK_TYPE(Range);
+auto Range::getX() const -> double { return this->x1; }
 
-	this->x1 = MIN(this->x1, x);
-	this->x2 = MAX(this->x2, x);
+auto Range::getY() const -> double { return this->y1; }
 
-	this->y1 = MIN(this->y1, y);
-	this->y2 = MAX(this->y2, y);
-}
+auto Range::getWidth() const -> double { return this->x2 - this->x1; }
 
-double Range::getX() const
-{
-	XOJ_CHECK_TYPE(Range);
+auto Range::getHeight() const -> double { return this->y2 - this->y1; }
 
-	return this->x1;
-}
+auto Range::getX2() const -> double { return this->x2; }
 
-double Range::getY() const
-{
-	XOJ_CHECK_TYPE(Range);
-
-	return this->y1;
-}
-
-double Range::getWidth() const
-{
-	XOJ_CHECK_TYPE(Range);
-
-	return this->x2 - this->x1;
-}
-
-double Range::getHeight() const
-{
-	XOJ_CHECK_TYPE(Range);
-
-	return this->y2 - this->y1;
-}
-
-double Range::getX2() const
-{
-	XOJ_CHECK_TYPE(Range);
-
-	return this->x2;
-}
-
-double Range::getY2() const
-{
-	XOJ_CHECK_TYPE(Range);
-
-	return this->y2;
-}
+auto Range::getY2() const -> double { return this->y2; }

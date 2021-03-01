@@ -2,93 +2,55 @@
 
 #include <gtk/gtk.h>
 
-Job::Job()
-{
-	XOJ_INIT_TYPE(Job);
+Job::Job() { g_mutex_init(&this->refMutex); }
 
-	g_mutex_init(&this->refMutex);
+Job::~Job() = default;
+
+void Job::unref() {
+    g_mutex_lock(&this->refMutex);
+    this->refCount--;
+
+    if (this->refCount == 0) {
+        g_mutex_unlock(&this->refMutex);
+        delete this;
+    } else {
+        g_mutex_unlock(&this->refMutex);
+    }
 }
 
-Job::~Job()
-{
-	XOJ_CHECK_TYPE(Job);
-
-	XOJ_RELEASE_TYPE(Job);
+void Job::ref() {
+    g_mutex_lock(&this->refMutex);
+    this->refCount++;
+    g_mutex_unlock(&this->refMutex);
 }
 
-void Job::unref()
-{
-	XOJ_CHECK_TYPE(Job);
-
-	g_mutex_lock(&this->refMutex);
-	this->refCount--;
-
-	if (this->refCount == 0)
-	{
-		g_mutex_unlock(&this->refMutex);
-		delete this;
-	}
-	else
-	{
-		g_mutex_unlock(&this->refMutex);
-	}
+void Job::deleteJob() {
+    if (this->afterRunId) {
+        g_source_remove(this->afterRunId);
+        this->unref();
+    }
 }
 
-void Job::ref()
-{
-	XOJ_CHECK_TYPE(Job);
+void Job::execute() { this->run(); }
 
-	g_mutex_lock(&this->refMutex);
-	this->refCount++;
-	g_mutex_unlock(&this->refMutex);
+auto Job::getSource() -> void* { return nullptr; }
+
+auto Job::callAfterCallback(Job* job) -> bool {
+    job->afterRun();
+
+    job->afterRunId = 0;
+    job->unref();
+    return false;  // do not call again
 }
 
-void Job::deleteJob()
-{
-	if (this->afterRunId)
-	{
-		g_source_remove(this->afterRunId);
-		this->unref();
-	}
-}
+void Job::callAfterRun() {
+    if (this->afterRunId) {
+        return;
+    }
 
-void Job::execute()
-{
-	XOJ_CHECK_TYPE(Job);
+    this->ref();
 
-	this->run();
-}
-
-void* Job::getSource()
-{
-	XOJ_CHECK_TYPE(Job);
-
-	return NULL;
-}
-
-bool Job::callAfterCallback(Job* job)
-{
-	XOJ_CHECK_TYPE_OBJ(job, Job);
-
-	job->afterRun();
-
-	job->afterRunId = 0;
-	job->unref();
-	return false; // do not call again
-}
-
-void Job::callAfterRun()
-{
-	XOJ_CHECK_TYPE(Job);
-
-	if (this->afterRunId)
-	{
-		return;
-	}
-
-	this->ref();
-
-	this->afterRunId = gdk_threads_add_idle((GSourceFunc) Job::callAfterCallback, this);
+    this->afterRunId = gdk_threads_add_idle(reinterpret_cast<GSourceFunc>(Job::callAfterCallback), this);
 }
 
 /**
@@ -96,6 +58,4 @@ void Job::callAfterRun()
  *
  * All UI Stuff should happen here
  */
-void Job::afterRun()
-{
-}
+void Job::afterRun() {}

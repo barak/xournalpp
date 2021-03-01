@@ -11,72 +11,72 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "control/Tool.h"
 #include "model/PageType.h"
 
-#include <XournalType.h>
+#include "XournalType.h"
 
-class PageTemplateSettings
-{
+class PageTemplateSettings {
 public:
-	PageTemplateSettings();
-	virtual ~PageTemplateSettings();
+    PageTemplateSettings();
+    virtual ~PageTemplateSettings();
 
 public:
-	/**
-	 * Parse a template string
-	 *
-	 * @return true if valid
-	 */
-	bool parse(string tpl);
+    /**
+     * Parse a template string
+     *
+     * @return true if valid
+     */
+    bool parse(const string& tpl);
 
-	/**
-	 * Convert to a parsable string
-	 */
-	string toString();
+    /**
+     * Convert to a parsable string
+     */
+    string toString() const;
 
-	bool isCopyLastPageSettings();
-	void setCopyLastPageSettings(bool copyLastPageSettings);
+    bool isCopyLastPageSettings() const;
+    void setCopyLastPageSettings(bool copyLastPageSettings);
 
-	bool isCopyLastPageSize();
-	void setCopyLastPageSize(bool copyLastPageSize);
+    bool isCopyLastPageSize() const;
+    void setCopyLastPageSize(bool copyLastPageSize);
 
-	double getPageWidth();
-	void setPageWidth(double pageWidth);
+    double getPageWidth() const;
+    void setPageWidth(double pageWidth);
 
-	double getPageHeight();
-	void setPageHeight(double pageHeight);
+    double getPageHeight() const;
+    void setPageHeight(double pageHeight);
 
-	int getBackgroundColor();
-	void setBackgroundColor(int backgroundColor);
+    Color getBackgroundColor() const;
+    void setBackgroundColor(Color backgroundColor);
 
-	PageType getBackgroundType();
-	PageType getPageInsertType();
-	void setBackgroundType(PageType backgroundType);
+    PageType getBackgroundType();
+    PageType getPageInsertType();
+    void setBackgroundType(const PageType& backgroundType);
 
 private:
-	XOJ_TYPE_ATTRIB;
+    /**
+     * Copy the settings from the last page
+     */
+    bool copyLastPageSettings;
 
-	/**
-	 * Copy the settings from the last page
-	 */
-	bool copyLastPageSettings;
+    /**
+     * Copy the last page size
+     */
+    bool copyLastPageSize;
 
-	/**
-	 * Copy the last page size
-	 */
-	bool copyLastPageSize;
+    double pageWidth;
+    double pageHeight;
 
-	double pageWidth;
-	double pageHeight;
+    /**
+     * Background color in RGB
+     */
+    Color backgroundColor;
 
-	/**
-	 * Background color in RGB
-	 */
-	int backgroundColor;
-
-	/**
-	 * Background type
-	 */
-	PageType backgroundType;
+    /**
+     * Background type
+     */
+    PageType backgroundType;
 };

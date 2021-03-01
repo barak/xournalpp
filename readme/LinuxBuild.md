@@ -2,6 +2,10 @@
 
 ## Install dependencies
 
+Xournal++ is programmed with c++17 and needs the <optional> header and one filesystem library, either the STL or the boost implementation.
+Therefore it is required to install a compiler implementing those features.
+We recommend g++-8 or clang-9 and above.
+
 Please create pull requests (or file issues) if you have more precise dependencies.
 
 Lua is needed for plugins, if it is missing, the plugins will be disabled.
@@ -13,37 +17,41 @@ The installation instructions don't assume any specific build tool (other than C
 but they do require make, ninja, or another supported CMake generator. It is required 
 that such a tool is installed in order to build xournalpp.
 
+The minimum required CMake version is 3.10, but we recommend to use >=3.15.
+
 ### Distribution specific commands
 
 #### For Arch
 ```bash
 sudo pacman -S cmake gtk3 base-devel libxml2 cppunit portaudio libsndfile \
-poppler-glib texlive-bin texlive-pictures gettext libzip
+poppler-glib texlive-bin texlive-pictures gettext libzip lua53 lua53-lgi
 ```
 
 #### For Fedora/CentOS/RHEL:
 ```bash
 sudo dnf install gcc-c++ cmake gtk3-devel libxml2-devel cppunit-devel portaudio-devel libsndfile-devel \
-poppler-glib-devel texlive-scheme-basic texlive-dvipng 'tex(standalone.cls)' gettext libzip-devel
+poppler-glib-devel texlive-scheme-basic texlive-dvipng 'tex(standalone.cls)' gettext libzip-devel \
+librsvg2-devel lua-devel lua-lgi
 ```
 
-#### For Ubuntu/Debian:
+#### For Ubuntu/Debian and Raspberry Pi OS:
 ````bash
 sudo apt-get install cmake libgtk-3-dev libpoppler-glib-dev portaudio19-dev libsndfile-dev \
-libcppunit-dev dvipng texlive libxml2-dev liblua5.3-dev libzip-dev
+libcppunit-dev dvipng texlive libxml2-dev liblua5.3-dev libzip-dev librsvg2-dev gettext lua-lgi
 ````
 
 #### For openSUSE:
 ```bash
 sudo zypper install cmake gtk3-devel cppunit-devel portaudio-devel libsndfile-devel \
-texlive-dvipng texlive libxml2-devel libpoppler-glib-devel libzip-devel
+texlive-dvipng texlive libxml2-devel libpoppler-glib-devel libzip-devel librsvg-devel lua-lgi
 ```
 
 #### For Solus:
 ```bash
 sudo eopkg it -c system.devel
 sudo eopkg it cmake libgtk-3-devel libxml2-devel poppler-devel libzip-devel \
-portaudio-devel libsndfile-devel alsa-lib-devel cppunit-devel lua-devel
+portaudio-devel libsndfile-devel alsa-lib-devel cppunit-devel lua-devel \
+librsvg-devel gettext
 ```
 
 ## Compiling
@@ -108,7 +116,7 @@ package and then use that with the `azure-pipelines/util/build_appimage.sh`
 script.
 
 ```bash
-cmake .. -DPACK_GENERATOR="TGZ"
+cmake .. -DCPACK_GENERATOR="TGZ"
 cmake --build . --target package
 ../azure-pipelines/util/build_appimage.sh
 ```

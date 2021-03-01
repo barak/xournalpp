@@ -7,33 +7,29 @@
  * https://github.com/xournalpp/xournalpp
  *
  * @license GNU GPLv2 or later
- */#pragma once
+ */
+#pragma once
 
-#include <XournalType.h>
+#include <string>
+#include <vector>
 
 #include <portaudiocpp/PortAudioCpp.hxx>
-#include <string>
 
-class DeviceInfo
-{
+#include "XournalType.h"
+
+class DeviceInfo {
 public:
-	DeviceInfo(portaudio::Device* device, bool selected);
-	DeviceInfo(const DeviceInfo& other);
-	~DeviceInfo();
+    DeviceInfo(portaudio::Device* device, bool selected);
 
 public:
-	const string& getDeviceName() const;
-	const PaDeviceIndex getIndex() const;
-	const bool getSelected() const;
-	const int getInputChannels() const;
-	const int getOutputChannels() const;
+    const string& getDeviceName() const;
+    PaDeviceIndex getIndex() const;
+    bool getSelected() const;
 
 private:
-	XOJ_TYPE_ATTRIB;
-
-	const string deviceName;
-	const PaDeviceIndex index;
-	const bool selected;
-	const int inputChannels;
-	const int outputChannels;
+    const string deviceName;
+    const PaDeviceIndex index{};
+    const bool selected{};
+    const int inputChannels{};
+    const int outputChannels{};
 };

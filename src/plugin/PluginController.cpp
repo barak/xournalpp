@@ -1,162 +1,90 @@
 #include "PluginController.h"
-#include "Plugin.h"
-
-#include "control/Control.h"
-#include "gui/dialog/PluginDialog.h"
-#include "gui/GladeSearchpath.h"
-
-#include <StringUtils.h>
-
-#include <config-features.h>
 
 #include <algorithm>
 
+#include <config-features.h>
 
-PluginController::PluginController(Control* control)
- : control(control)
-{
-	XOJ_INIT_TYPE(PluginController);
+#include "control/Control.h"
+#include "gui/GladeSearchpath.h"
+#include "gui/dialog/PluginDialog.h"
+
+#include "Plugin.h"
+#include "StringUtils.h"
+
+
+PluginController::PluginController(Control* control): control(control) {
 #ifdef ENABLE_PLUGINS
-	string path = control->getGladeSearchPath()->getFirstSearchPath();
-	if (StringUtils::endsWith(path, "ui"))
-	{
-		path = path.substr(0, path.length() - 2) + "plugins";
-	}
-	else
-	{
-		path += "/../plugins";
-	}
-	loadPluginsFrom(path);
+    auto searchPath = control->getGladeSearchPath()->getFirstSearchPath();
+    loadPluginsFrom((searchPath /= "../plugins").lexically_normal());
 #endif
 }
 
-PluginController::~PluginController()
-{
-	XOJ_CHECK_TYPE(PluginController);
+void PluginController::loadPluginsFrom(fs::path const& path) {
 #ifdef ENABLE_PLUGINS
+    Settings* settings = control->getSettings();
+    std::vector<std::string> pluginEnabled = StringUtils::split(settings->getPluginEnabled(), ',');
+    std::vector<std::string> pluginDisabled = StringUtils::split(settings->getPluginDisabled(), ',');
 
-	for (Plugin* p : this->plugins)
-	{
-		delete p;
-	}
+    try {
+        for (auto const& f: fs::directory_iterator(path)) {
+            const auto& pluginPath = f.path();
+            auto plugin = std::make_unique<Plugin>(control, pluginPath.filename().string(), pluginPath);
+            if (!plugin->isValid()) {
+                g_warning("Error loading plugin \"%s\"", f.path().string().c_str());
+                continue;
+            }
 
-	this->plugins.clear();
+            if (plugin->isDefaultEnabled()) {
+                plugin->setEnabled(!(std::find(pluginDisabled.begin(), pluginDisabled.end(), plugin->getName()) !=
+                                     pluginDisabled.end()));
+            } else {
+                plugin->setEnabled(std::find(pluginEnabled.begin(), pluginEnabled.end(), plugin->getName()) !=
+                                   pluginEnabled.end());
+            }
 
-#endif
-	XOJ_RELEASE_TYPE(PluginController);
-}
+            plugin->loadScript();
 
-/**
- * Load all plugins within this folder
- *
- * @param path The path which contains the plugin folders
- */
-void PluginController::loadPluginsFrom(string path)
-{
-	XOJ_CHECK_TYPE(PluginController);
-#ifdef ENABLE_PLUGINS
-
-	GError* error = NULL;
-	GDir* dir = g_dir_open(path.c_str(), 0, &error);
-	if (error != NULL)
-	{
-		g_warning("Could not open plugin dir: «%s»", path.c_str());
-		g_error_free(error);
-		return;
-	}
-
-	Settings* settings = control->getSettings();
-	vector<string> pluginEnabled = StringUtils::split(settings->getPluginEnabled(), ',');
-	vector<string> pluginDisabled = StringUtils::split(settings->getPluginDisabled(), ',');
-
-	const gchar* file;
-	while ((file = g_dir_read_name(dir)) != NULL)
-	{
-		string pluginFolder = path;
-		pluginFolder += "/";
-		pluginFolder += file;
-
-		Plugin* p = new Plugin(control, file, pluginFolder);
-		if (!p->isValid())
-		{
-			g_warning("Error loading plugin «%s»", file);
-			delete p;
-			continue;
-		}
-
-		if (p->isDefaultEnabled())
-		{
-			p->setEnabled(!(std::find(pluginDisabled.begin(), pluginDisabled.end(), p->getName()) != pluginDisabled.end()));
-		}
-		else
-		{
-			p->setEnabled(std::find(pluginEnabled.begin(), pluginEnabled.end(), p->getName()) != pluginEnabled.end());
-		}
-
-		p->loadScript();
-
-		this->plugins.push_back(p);
-	}
-	g_dir_close(dir);
+            this->plugins.emplace_back(std::move(plugin));
+        }
+    } catch (fs::filesystem_error const& e) {
+        g_warning("Could not open plugin dir: \"%s\"", path.string().c_str());
+        return;
+    }
 #endif
 }
 
-/**
- * Register toolbar item and all other UI stuff
- */
-void PluginController::registerToolbar()
-{
-	XOJ_CHECK_TYPE(PluginController);
-
+void PluginController::registerToolbar() {
 #ifdef ENABLE_PLUGINS
-	for (Plugin* p : this->plugins)
-	{
-		p->registerToolbar();
-	}
+    for (auto&& p: this->plugins) {
+        p->registerToolbar();
+    }
 #endif
 }
 
-/**
- * Show Plugin manager Dialog
- */
-void PluginController::showPluginManager()
-{
-	XOJ_CHECK_TYPE(PluginController);
-
-	PluginDialog dlg(control->getGladeSearchPath(), control->getSettings());
-	dlg.loadPluginList(this);
-	dlg.show(control->getGtkWindow());
+void PluginController::showPluginManager() const {
+    PluginDialog dlg(control->getGladeSearchPath(), control->getSettings());
+    dlg.loadPluginList(this);
+    dlg.show(control->getGtkWindow());
 }
 
-/**
- * Register menu stuff
- */
-void PluginController::registerMenu()
-{
-	XOJ_CHECK_TYPE(PluginController);
-
+void PluginController::registerMenu() {
 #ifdef ENABLE_PLUGINS
-	GtkWidget* menuPlugin = control->getWindow()->get("menuPlugin");
-	for (Plugin* p : this->plugins)
-	{
-		p->registerMenu(control->getGtkWindow(), menuPlugin);
-	}
-
-	gtk_widget_show_all(menuPlugin);
+    GtkWidget* menuPlugin = control->getWindow()->get("menuPlugin");
+    for (auto&& p: this->plugins) {
+        p->registerMenu(control->getGtkWindow(), menuPlugin);
+    }
+    gtk_widget_show_all(menuPlugin);
 
 #else
-	// If plugins are disabled - disable menu also
-	GtkWidget* menuitemPlugin = control->getWindow()->get("menuitemPlugin");
-	gtk_widget_hide(menuitemPlugin);
+    // If plugins are disabled - disable menu also
+    GtkWidget* menuitemPlugin = control->getWindow()->get("menuitemPlugin");
+    gtk_widget_hide(menuitemPlugin);
 #endif
 }
 
-/**
- * Return the plugin list
- */
-vector<Plugin*>& PluginController::getPlugins()
-{
-	XOJ_CHECK_TYPE(PluginController);
-
-	return plugins;
+auto PluginController::getPlugins() const -> std::vector<Plugin*> {
+    std::vector<Plugin*> pl;
+    pl.reserve(plugins.size());
+    std::transform(begin(plugins), end(plugins), std::back_inserter(pl), [](auto&& plugin) { return plugin.get(); });
+    return pl;
 }

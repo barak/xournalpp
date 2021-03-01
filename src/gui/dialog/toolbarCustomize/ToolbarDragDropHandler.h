@@ -11,35 +11,35 @@
 
 #pragma once
 
-#include <XournalType.h>
+#include <string>
+#include <vector>
+
+#include "XournalType.h"
 
 class Control;
 class MainWindow;
 class ToolbarAdapter;
 class ToolbarCustomizeDialog;
 
-class ToolbarDragDropHandler
-{
+class ToolbarDragDropHandler {
 public:
-	ToolbarDragDropHandler(Control* control);
-	virtual ~ToolbarDragDropHandler();
-
-public:
-	void configure();
-
-	void toolbarConfigDialogClosed();
-
-	bool isInDragAndDrop();
+    ToolbarDragDropHandler(Control* control);
+    virtual ~ToolbarDragDropHandler();
 
 public:
-	void prepareToolbarsForDragAndDrop();
-	void clearToolbarsFromDragAndDrop();
+    void configure();
+
+    void toolbarConfigDialogClosed();
+
+    bool isInDragAndDrop();
+
+public:
+    void prepareToolbarsForDragAndDrop();
+    void clearToolbarsFromDragAndDrop();
 
 private:
-	XOJ_TYPE_ATTRIB;
+    Control* control;
 
-	Control* control;
-
-	ToolbarAdapter** toolbars = NULL;
-	ToolbarCustomizeDialog* customizeDialog = NULL;
+    ToolbarAdapter** toolbars = nullptr;
+    ToolbarCustomizeDialog* customizeDialog = nullptr;
 };

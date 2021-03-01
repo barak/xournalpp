@@ -1,19 +1,9 @@
 #include "Attribute.h"
 
-XMLAttribute::XMLAttribute(string name)
- : name(name)
-{
-	XOJ_INIT_TYPE(XMLAttribute);
-}
+#include <utility>
 
-XMLAttribute::~XMLAttribute()
-{
-	XOJ_RELEASE_TYPE(XMLAttribute);
-}
+XMLAttribute::XMLAttribute(string name): name(std::move(name)) {}
 
-string XMLAttribute::getName()
-{
-	XOJ_CHECK_TYPE(XMLAttribute);
+XMLAttribute::~XMLAttribute() = default;
 
-	return name;
-}
+auto XMLAttribute::getName() -> string { return name; }

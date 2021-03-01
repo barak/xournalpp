@@ -3,202 +3,135 @@
 #include <glib.h>
 
 /**
- * Base class for Formatting
- */
-class PlaceholderElement {
-public:
-	virtual ~PlaceholderElement()
-	{
-	}
-
-public:
-	virtual string format(string format) = 0;
-};
-
-/**
  * Format String
  */
-class PlaceholderElementString : public PlaceholderElement{
+class PlaceholderElementString: public PlaceholderElement {
 public:
-	PlaceholderElementString(string text)
-	 : text(text)
-	{
-	}
+    explicit PlaceholderElementString(std::string text): text(std::move(text)) {}
 
-public:
-	string format(string format)
-	{
-		return text;
-	}
+    auto format(std::string format) const -> std::string override { return text; }
 
 private:
-	string text;
+    std::string text;
 };
-
 
 /**
  * Format int
  */
-class PlaceholderElementInt : public PlaceholderElement{
+class PlaceholderElementInt: public PlaceholderElement {
 public:
-	PlaceholderElementInt(int64_t value)
-	 : value(value)
-	{
-	}
+    explicit PlaceholderElementInt(int64_t value): value(value) {}
 
-public:
-	string format(string format)
-	{
-		return std::to_string(value);
-	}
+    auto format(std::string format) const -> std::string override { return std::to_string(value); }
 
 private:
-	int64_t value;
+    int64_t value;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PlaceholderString::PlaceholderString(string text)
- : text(text)
-{
+PlaceholderString::PlaceholderString(std::string text): text(std::move(text)) {}
+
+auto PlaceholderString::operator%(int64_t value) -> PlaceholderString& {
+    data.emplace_back(std::make_unique<PlaceholderElementInt>(value));
+    return *this;
 }
 
-PlaceholderString::~PlaceholderString()
-{
-	for (PlaceholderElement* e : data)
-	{
-		delete e;
-	}
-
-	data.clear();
+auto PlaceholderString::operator%(std::string value) -> PlaceholderString& {
+    data.emplace_back(std::make_unique<PlaceholderElementString>(std::move(value)));
+    return *this;
 }
 
-PlaceholderString& PlaceholderString::operator%(int64_t value)
-{
-	data.push_back(new PlaceholderElementInt(value));
-	return *this;
+auto PlaceholderString::formatPart(std::string format) const -> std::string {
+    std::string formatDef;
+
+    std::size_t comma = format.find(',');
+    if (comma != std::string::npos) {
+        formatDef = format.substr(comma + 1);
+        format = format.substr(0, comma);
+    }
+
+    int index = 0;
+    try {
+        index = std::stoi(format);
+    } catch (const std::exception& e) {
+        g_error("Could not parse \"%s\" as int, error: %s", format.c_str(), e.what());
+    }
+
+    // Placeholder index starting at 1, vector at 0
+    index--;
+
+    if (index < 0 || index >= static_cast<int>(data.size())) {
+        std::string notFound = "{";
+        notFound += std::to_string(index + 1);
+        notFound += "}";
+        return notFound;
+    }
+
+    auto const& pe = data[index];
+
+    return pe->format(formatDef);
 }
 
-PlaceholderString& PlaceholderString::operator%(string value)
-{
-	data.push_back(new PlaceholderElementString(value));
-	return *this;
+void PlaceholderString::process() const {
+    if (!processed.empty()) {
+        return;
+    }
+
+    bool openBracket = false;
+    bool closeBacket = false;
+    std::string formatString;
+
+    // Should work, also for UTF-8
+    for (char c: text) {
+        if (c == '{') {
+            closeBacket = false;
+            if (openBracket) {
+                openBracket = false;
+                processed += '{';
+                continue;
+            }
+            openBracket = true;
+            continue;
+        }
+
+        if (c == '}') {
+            if (closeBacket) {
+                processed += '}';
+                closeBacket = false;
+                continue;
+            }
+
+            closeBacket = true;
+            if (openBracket) {
+                processed += formatPart(formatString);
+                openBracket = false;
+                formatString = "";
+            }
+            continue;
+        }
+
+        if (openBracket) {
+            formatString += c;
+            continue;
+        }
+
+
+        closeBacket = false;
+        processed += c;
+    }
 }
 
-string PlaceholderString::formatPart(string format)
-{
-	string formatDef;
-
-	std::size_t comma = format.find(',');
-	if (comma != string::npos)
-	{
-		formatDef = format.substr(comma + 1);
-		format = format.substr(0, comma);
-	}
-
-	int index;
-	try
-	{
-		index = std::stoi(format);
-	}
-	catch (const std::exception& e)
-	{
-		g_error("Could not parse «%s» as int, error: %s", format.c_str(), e.what());
-		return "{?}";
-	}
-
-	// Placeholder index starting at 1, vector at 0
-	index--;
-
-	if (index < 0 || index >= (int)data.size())
-	{
-		string notFound = "{";
-		notFound += std::to_string(index + 1);
-		notFound += "}";
-		return notFound;
-	}
-
-	PlaceholderElement* pe = data[index];
-
-	return pe->format(formatDef);
+auto PlaceholderString::str() const -> std::string {
+    process();
+    return processed;
 }
 
-void PlaceholderString::process()
-{
-	if (processed != "")
-	{
-		// Already processed
-		return;
-	}
-
-	bool openBracket = false;
-	bool closeBacket = false;
-	string formatString;
-
-	// Should work, also for UTF-8
-	for (int i = 0; i < (int)text.length(); i++)
-	{
-		char c = text.at(i);
-
-		if (c == '{') {
-			closeBacket = false;
-			if (openBracket)
-			{
-				openBracket = false;
-				processed += '{';
-				continue;
-			}
-			openBracket = true;
-			continue;
-		}
-
-		if (c == '}')
-		{
-			if (closeBacket)
-			{
-				processed += '}';
-				closeBacket = false;
-				continue;
-			}
-
-			closeBacket = true;
-			if (openBracket)
-			{
-				processed += formatPart(formatString);
-				openBracket = false;
-				formatString = "";
-			}
-			continue;
-		}
-
-		if (openBracket)
-		{
-			formatString += c;
-			continue;
-		}
-
-
-		closeBacket = false;
-		processed += c;
-	}
+auto PlaceholderString::c_str() const -> const char* {
+    process();
+    return processed.c_str();
 }
 
-string PlaceholderString::str()
-{
-	process();
-
-	return processed;
-}
-
-const char* PlaceholderString::c_str()
-{
-	process();
-
-	return processed.c_str();
-}
-
-std::ostream &operator<<(std::ostream &os, PlaceholderString &ps) {
-    return os << ps.str();
-}
+auto operator<<(std::ostream& os, PlaceholderString& ps) -> std::ostream& { return os << ps.str(); }

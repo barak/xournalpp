@@ -1,151 +1,100 @@
-#include "Control.h"
 #include "ScrollHandler.h"
 
 #include "gui/Layout.h"
-#include "gui/widgets/SpinPageAdapter.h"
 #include "gui/XournalView.h"
+#include "gui/widgets/SpinPageAdapter.h"
 
-ScrollHandler::ScrollHandler(Control* control)
- : control(control)
-{
-	XOJ_INIT_TYPE(ScrollHandler);
+#include "Control.h"
+
+ScrollHandler::ScrollHandler(Control* control): control(control) {}
+
+ScrollHandler::~ScrollHandler() = default;
+
+void ScrollHandler::goToPreviousPage() {
+    if (this->control->getWindow()) {
+        scrollToPage(this->control->getWindow()->getXournal()->getCurrentPage() - 1);
+    }
 }
 
-ScrollHandler::~ScrollHandler()
-{
-	XOJ_RELEASE_TYPE(ScrollHandler);
+void ScrollHandler::goToNextPage() {
+    if (this->control->getWindow()) {
+        scrollToPage(this->control->getWindow()->getXournal()->getCurrentPage() + 1);
+    }
 }
 
-void ScrollHandler::goToPreviousPage()
-{
-	XOJ_CHECK_TYPE(ScrollHandler);
-
-	if (this->control->getWindow())
-	{
-		scrollToPage(this->control->getWindow()->getXournal()->getCurrentPage() - 1);
-	}
+void ScrollHandler::goToLastPage() {
+    if (this->control->getWindow()) {
+        scrollToPage(this->control->getDocument()->getPageCount() - 1);
+    }
 }
 
-void ScrollHandler::goToNextPage()
-{
-	XOJ_CHECK_TYPE(ScrollHandler);
-
-	if (this->control->getWindow())
-	{
-		scrollToPage(this->control->getWindow()->getXournal()->getCurrentPage() + 1);
-	}
+void ScrollHandler::goToFirstPage() {
+    if (this->control->getWindow()) {
+        scrollToPage(0);
+    }
 }
 
-void ScrollHandler::goToLastPage()
-{
-	XOJ_CHECK_TYPE(ScrollHandler);
+void ScrollHandler::scrollToPage(const PageRef& page, double top) {
+    Document* doc = this->control->getDocument();
 
-	if (this->control->getWindow())
-	{
-		scrollToPage(this->control->getDocument()->getPageCount() - 1);
-	}
+    doc->lock();
+    auto p = doc->indexOf(page);
+    doc->unlock();
+
+    if (p != -1) {
+        scrollToPage(p, top);
+    }
 }
 
-void ScrollHandler::goToFirstPage()
-{
-	XOJ_CHECK_TYPE(ScrollHandler);
+void ScrollHandler::scrollToPage(size_t page, double top) {
+    MainWindow* win = this->control->getWindow();
+    if (win == nullptr) {
+        g_error("Window is nullptr!");
+        return;
+    }
 
-	if (this->control->getWindow())
-	{
-		scrollToPage(0);
-	}
+    win->getXournal()->scrollTo(page, top);
 }
 
-void ScrollHandler::scrollToPage(const PageRef& page, double top)
-{
-	XOJ_CHECK_TYPE(ScrollHandler);
-
-	Document* doc = this->control->getDocument();
-
-	doc->lock();
-	int p = doc->indexOf(page);
-	doc->unlock();
-
-	if (p != -1)
-	{
-		scrollToPage(p, top);
-	}
+void ScrollHandler::scrollToSpinPage() {
+    if (!this->control->getWindow()) {
+        return;
+    }
+    SpinPageAdapter* spinPageNo = this->control->getWindow()->getSpinPageNo();
+    int page = spinPageNo->getPage();
+    if (page == 0) {
+        return;
+    }
+    scrollToPage(page - 1);
 }
 
-void ScrollHandler::scrollToPage(size_t page, double top)
-{
-	XOJ_CHECK_TYPE(ScrollHandler);
+void ScrollHandler::scrollToAnnotatedPage(bool next) {
+    if (!this->control->getWindow()) {
+        return;
+    }
 
-	MainWindow* win = this->control->getWindow();
-	if (win == NULL)
-	{
-		g_error("Windows is NULL!");
-		return;
-	}
+    int step = next ? 1 : -1;
 
-	win->getXournal()->scrollTo(page, top);
+    Document* doc = this->control->getDocument();
+
+    for (size_t i = this->control->getCurrentPageNo() + step; i != npos && i < doc->getPageCount();
+         i = ((i == 0 && step == -1) ? npos : i + step)) {
+        if (doc->getPage(i)->isAnnotated()) {
+            scrollToPage(i);
+            break;
+        }
+    }
 }
 
-void ScrollHandler::scrollToSpinPage()
-{
-	XOJ_CHECK_TYPE(ScrollHandler);
+auto ScrollHandler::isPageVisible(size_t page, int* visibleHeight) -> bool {
+    if (!this->control->getWindow()) {
+        if (visibleHeight) {
+            *visibleHeight = 0;
+        }
+        return false;
+    }
 
-	if (!this->control->getWindow())
-	{
-		return;
-	}
-	SpinPageAdapter* spinPageNo = this->control->getWindow()->getSpinPageNo();
-	int page = spinPageNo->getPage();
-	if (page == 0)
-	{
-		return;
-	}
-	scrollToPage(page - 1);
+    return this->control->getWindow()->getXournal()->isPageVisible(page, visibleHeight);
 }
 
-void ScrollHandler::scrollToAnnotatedPage(bool next)
-{
-	XOJ_CHECK_TYPE(ScrollHandler);
-
-	if (!this->control->getWindow())
-	{
-		return;
-	}
-
-	int step = next ? 1 : -1;
-
-	Document* doc = this->control->getDocument();
-
-	for (size_t i = this->control->getCurrentPageNo() + step; i != npos && i < doc->getPageCount();
-	     i = ((i == 0 && step == -1) ? npos : i + step))
-	{
-		if (doc->getPage(i)->isAnnotated())
-		{
-			scrollToPage(i);
-			break;
-		}
-	}
-}
-
-bool ScrollHandler::isPageVisible(size_t page, int* visibleHeight)
-{
-	XOJ_CHECK_TYPE(ScrollHandler);
-
-	if (!this->control->getWindow())
-	{
-		if (visibleHeight)
-		{
-			*visibleHeight = 0;
-		}
-		return false;
-	}
-
-	return this->control->getWindow()->getXournal()->isPageVisible(page, visibleHeight);
-}
-
-void ScrollHandler::pageChanged(size_t page)
-{
-	XOJ_CHECK_TYPE(ScrollHandler);
-
-	scrollToSpinPage();
-}
+void ScrollHandler::pageChanged(size_t page) { scrollToSpinPage(); }

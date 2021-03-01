@@ -11,35 +11,35 @@
 
 #pragma once
 
-#include <Path.h>
-#include <XournalType.h>
+#include <string>
+#include <vector>
+
+#include "XournalType.h"
+#include "filesystem.h"
 
 class ToolbarData;
 
-class ToolbarModel
-{
+class ToolbarModel {
 public:
-	ToolbarModel();
-	virtual ~ToolbarModel();
+    ToolbarModel();
+    virtual ~ToolbarModel();
 
 private:
-	ToolbarModel(const ToolbarModel& other);
-	void operator=(const ToolbarModel& other);
+    ToolbarModel(const ToolbarModel& other);
+    void operator=(const ToolbarModel& other);
 
 public:
-	vector<ToolbarData*>* getToolbars();
-	bool parse(string filename, bool predefined);
-	void add(ToolbarData* data);
-	void remove(ToolbarData* data);
-	void save(Path filename);
-	bool existsId(string id);
-	void initCopyNameId(ToolbarData* data);
+    vector<ToolbarData*>* getToolbars();
+    bool parse(fs::path const& filepath, bool predefined);
+    void add(ToolbarData* data);
+    void remove(ToolbarData* data);
+    void save(const fs::path& filepath);
+    bool existsId(const string& id);
+    void initCopyNameId(ToolbarData* data);
 
 private:
-	void parseGroup(GKeyFile* config, const char* group, bool predefined);
+    void parseGroup(GKeyFile* config, const char* group, bool predefined);
 
 private:
-	XOJ_TYPE_ATTRIB;
-
-	vector<ToolbarData*> toolbars;
+    vector<ToolbarData*> toolbars;
 };
