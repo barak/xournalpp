@@ -18,7 +18,7 @@ Depends: ${shlibs:Depends}, ${misc:Depends}
 Suggests: texlive-base, texlive-latex-extra
 Recommends: lua-lgi
 Description: Xournal++ is a note-taking program supporting pen & PDF annotation
- Xournal++ is a handwritten note-taking program with the target of
+ Xournal++ is a handwritten note taking program with the target of
  flexibility, functionality and speed. The stroke recognizer and other
  parts are based on Xournal Code, which you can find at sourceforge.
  It supports Linux (e.g. Ubuntu, Debian, Arch, SUSE), macOS, and
