@@ -42,11 +42,9 @@ Files: ui/icons/hicolor/scalable/actions/tool_highlighter.svg
        ui/icons/hicolor/scalable/actions/addPage.svg
        ui/icons/hicolor/scalable/actions/arrow-draw.svg
        ui/icons/hicolor/scalable/actions/centerPage.svg
-       ui/icons/hicolor/scalable/actions/circle-draw.svg
        ui/icons/hicolor/scalable/actions/coordinate-system-draw.svg
        ui/icons/hicolor/scalable/actions/default.svg
        ui/icons/hicolor/scalable/actions/delPage.svg
-       ui/icons/hicolor/scalable/actions/empty.svg
        ui/icons/hicolor/scalable/actions/fill.svg
        ui/icons/hicolor/scalable/actions/fullscreen.svg
        ui/icons/hicolor/scalable/actions/goto.svg
@@ -61,7 +59,6 @@ Files: ui/icons/hicolor/scalable/actions/tool_highlighter.svg
        ui/icons/hicolor/scalable/actions/nextAnnotatedPage.svg
        ui/icons/hicolor/scalable/actions/object-play.svg
        ui/icons/hicolor/scalable/actions/object-select.svg
-       ui/icons/hicolor/scalable/actions/rec.svg
        ui/icons/hicolor/scalable/actions/rect-draw.svg
        ui/icons/hicolor/scalable/actions/rect-select.svg
        ui/icons/hicolor/scalable/actions/ruler.svg
@@ -74,13 +71,10 @@ Files: ui/icons/hicolor/scalable/actions/tool_highlighter.svg
        ui/icons/hicolor/scalable/actions/stretch.svg
        ui/icons/hicolor/scalable/actions/thickness_medium.svg
        ui/icons/hicolor/scalable/actions/thickness_thick.svg
-       ui/icons/hicolor/scalable/actions/thickness_thin.svg
-       ui/icons/hicolor/scalable/actions/tool_camera.svg
        ui/pixmaps/com.github.xournalpp.xournalpp.svg
        ui/pixmaps/application-x-xojpp.svg
        ui/pixmaps/application-x-xopp.svg
        ui/pixmaps/application-x-xopt.svg
-       ui/pixmaps/com.github.xournalpp.xournalpp.svg
        ui/pixmaps/gnome-mime-application-x-xopp.svg
        ui/pixmaps/gnome-mime-application-x-xopt.svg
        ui/pixmaps/xopt.svg
@@ -452,62 +446,62 @@ License: CC-BY-4.0
  .
   1. *License grant*.
       1. Subject to the terms and conditions of this Public License, the
-	 Licensor hereby grants You a worldwide, royalty-free,
-	 non-sublicensable, non-exclusive, irrevocable license to
-	 exercise the Licensed Rights in the Licensed Material to:
-	  1. reproduce and Share the Licensed Material, in whole or in
-	     part; and
-	  2. produce, reproduce, and Share Adapted Material.
+         Licensor hereby grants You a worldwide, royalty-free,
+         non-sublicensable, non-exclusive, irrevocable license to
+         exercise the Licensed Rights in the Licensed Material to:
+          1. reproduce and Share the Licensed Material, in whole or in
+             part; and
+          2. produce, reproduce, and Share Adapted Material.
       2. Exceptions and Limitations. For the avoidance of doubt, where
-	 Exceptions and Limitations apply to Your use, this Public
-	 License does not apply, and You do not need to comply with its
-	 terms and conditions.
+         Exceptions and Limitations apply to Your use, this Public
+         License does not apply, and You do not need to comply with its
+         terms and conditions.
       3. Term. The term of this Public License is specified in Section
-	 6(a) <#s6a>.
+         6(a) <#s6a>.
       4. Media and formats; technical modifications allowed. The Licensor
-	 authorizes You to exercise the Licensed Rights in all media and
-	 formats whether now known or hereafter created, and to make
-	 technical modifications necessary to do so. The Licensor waives
-	 and/or agrees not to assert any right or authority to forbid You
-	 from making technical modifications necessary to exercise the
-	 Licensed Rights, including technical modifications necessary to
-	 circumvent Effective Technological Measures. For purposes of
-	 this Public License, simply making modifications authorized by
-	 this Section 2(a)(4) <#s2a4> never produces Adapted Material.
+         authorizes You to exercise the Licensed Rights in all media and
+         formats whether now known or hereafter created, and to make
+         technical modifications necessary to do so. The Licensor waives
+         and/or agrees not to assert any right or authority to forbid You
+         from making technical modifications necessary to exercise the
+         Licensed Rights, including technical modifications necessary to
+         circumvent Effective Technological Measures. For purposes of
+         this Public License, simply making modifications authorized by
+         this Section 2(a)(4) <#s2a4> never produces Adapted Material.
       5. Downstream recipients.
-	  1. Offer from the Licensor – Licensed Material. Every recipient
-	     of the Licensed Material automatically receives an offer
-	     from the Licensor to exercise the Licensed Rights under the
-	     terms and conditions of this Public License.
-	  2. No downstream restrictions. You may not offer or impose any
-	     additional or different terms or conditions on, or apply any
-	     Effective Technological Measures to, the Licensed Material
-	     if doing so restricts exercise of the Licensed Rights by any
-	     recipient of the Licensed Material.
+          1. Offer from the Licensor – Licensed Material. Every recipient
+             of the Licensed Material automatically receives an offer
+             from the Licensor to exercise the Licensed Rights under the
+             terms and conditions of this Public License.
+          2. No downstream restrictions. You may not offer or impose any
+             additional or different terms or conditions on, or apply any
+             Effective Technological Measures to, the Licensed Material
+             if doing so restricts exercise of the Licensed Rights by any
+             recipient of the Licensed Material.
       6. No endorsement. Nothing in this Public License constitutes or
-	 may be construed as permission to assert or imply that You are,
-	 or that Your use of the Licensed Material is, connected with, or
-	 sponsored, endorsed, or granted official status by, the Licensor
-	 or others designated to receive attribution as provided in
-	 Section 3(a)(1)(A)(i) <#s3a1Ai>.
+         may be construed as permission to assert or imply that You are,
+         or that Your use of the Licensed Material is, connected with, or
+         sponsored, endorsed, or granted official status by, the Licensor
+         or others designated to receive attribution as provided in
+         Section 3(a)(1)(A)(i) <#s3a1Ai>.
   2.
  .
      *Other rights*.
  .
       1. Moral rights, such as the right of integrity, are not licensed
-	 under this Public License, nor are publicity, privacy, and/or
-	 other similar personality rights; however, to the extent
-	 possible, the Licensor waives and/or agrees not to assert any
-	 such rights held by the Licensor to the limited extent necessary
-	 to allow You to exercise the Licensed Rights, but not otherwise.
+         under this Public License, nor are publicity, privacy, and/or
+         other similar personality rights; however, to the extent
+         possible, the Licensor waives and/or agrees not to assert any
+         such rights held by the Licensor to the limited extent necessary
+         to allow You to exercise the Licensed Rights, but not otherwise.
       2. Patent and trademark rights are not licensed under this Public
-	 License.
+         License.
       3. To the extent possible, the Licensor waives any right to collect
-	 royalties from You for the exercise of the Licensed Rights,
-	 whether directly or through a collecting society under any
-	 voluntary or waivable statutory or compulsory licensing scheme.
-	 In all other cases the Licensor expressly reserves any right to
-	 collect such royalties.
+         royalties from You for the exercise of the Licensed Rights,
+         whether directly or through a collecting society under any
+         voluntary or waivable statutory or compulsory licensing scheme.
+         In all other cases the Licensor expressly reserves any right to
+         collect such royalties.
  .
  *Section 3 – License Conditions.*
  .
@@ -520,36 +514,36 @@ License: CC-BY-4.0
  .
       1.
  .
-	 If You Share the Licensed Material (including in modified form),
-	 You must:
+         If You Share the Licensed Material (including in modified form),
+         You must:
  .
-	  1. retain the following if it is supplied by the Licensor with
-	     the Licensed Material:
-	      1. identification of the creator(s) of the Licensed
-		 Material and any others designated to receive
-		 attribution, in any reasonable manner requested by the
-		 Licensor (including by pseudonym if designated);
-	      2. a copyright notice;
-	      3. a notice that refers to this Public License;
-	      4. a notice that refers to the disclaimer of warranties;
-	      5. a URI or hyperlink to the Licensed Material to the
-		 extent reasonably practicable;
-	  2. indicate if You modified the Licensed Material and retain an
-	     indication of any previous modifications; and
-	  3. indicate the Licensed Material is licensed under this Public
-	     License, and include the text of, or the URI or hyperlink
-	     to, this Public License.
+          1. retain the following if it is supplied by the Licensor with
+             the Licensed Material:
+              1. identification of the creator(s) of the Licensed
+                 Material and any others designated to receive
+                 attribution, in any reasonable manner requested by the
+                 Licensor (including by pseudonym if designated);
+              2. a copyright notice;
+              3. a notice that refers to this Public License;
+              4. a notice that refers to the disclaimer of warranties;
+              5. a URI or hyperlink to the Licensed Material to the
+                 extent reasonably practicable;
+          2. indicate if You modified the Licensed Material and retain an
+             indication of any previous modifications; and
+          3. indicate the Licensed Material is licensed under this Public
+             License, and include the text of, or the URI or hyperlink
+             to, this Public License.
       2. You may satisfy the conditions in Section 3(a)(1) <#s3a1> in any
-	 reasonable manner based on the medium, means, and context in
-	 which You Share the Licensed Material. For example, it may be
-	 reasonable to satisfy the conditions by providing a URI or
-	 hyperlink to a resource that includes the required information.
+         reasonable manner based on the medium, means, and context in
+         which You Share the Licensed Material. For example, it may be
+         reasonable to satisfy the conditions by providing a URI or
+         hyperlink to a resource that includes the required information.
       3. If requested by the Licensor, You must remove any of the
-	 information required by Section 3(a)(1)(A) <#s3a1A> to the
-	 extent reasonably practicable.
+         information required by Section 3(a)(1)(A) <#s3a1A> to the
+         extent reasonably practicable.
       4. If You Share Adapted Material You produce, the Adapter's License
-	 You apply must not prevent recipients of the Adapted Material
-	 from complying with this Public License.
+         You apply must not prevent recipients of the Adapted Material
+         from complying with this Public License.
  .
  *Section 4 – Sui Generis Database Rights.*
  .
@@ -609,7 +603,7 @@ License: CC-BY-4.0
      Section 6(a) <#s6a>, it reinstates:
  .
       1. automatically as of the date the violation is cured, provided it
-	 is cured within 30 days of Your discovery of the violation; or
+         is cured within 30 days of Your discovery of the violation; or
       2. upon express reinstatement by the Licensor.
      For the avoidance of doubt, this Section 6(b) <#s6b> does not affect
      any right the Licensor may have to seek remedies for Your violations
