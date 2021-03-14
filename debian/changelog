@@ -1,5 +1,5 @@
 xournalpp (1.1.0-1) UNRELEASED; urgency=medium
 
-  * initial official debian release (closes: #927076)
+  * Initial official debian release (closes: #927076)
 
- -- Barak A. Pearlmutter <bap@debian.org>  Mon, 01 Mar 2021 10:24:28 +0000
+ -- Barak A. Pearlmutter <bap@debian.org>  Sun, 14 Mar 2021 11:27:41 +0000

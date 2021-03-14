@@ -21,7 +21,7 @@ Description: Xournal++ is a note-taking program supporting pen & PDF annotation
  Xournal++ is a handwritten note taking program with the target of
  flexibility, functionality and speed. The stroke recognizer and other
  parts are based on Xournal Code, which you can find at sourceforge.
- It supports Linux (e.g. Ubuntu, Debian, Arch, SUSE), macOS, and
+ It supports Linux (e.g., Ubuntu, Debian, Arch, SUSE), macOS, and
  Windows 10. Supports pen input from devices such as Wacom Tablets.
  .
  Xournal++ features:
