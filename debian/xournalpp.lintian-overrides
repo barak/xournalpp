@@ -1,2 +1,3 @@
 # not documentation, part of internal LaTeX pipeline
 xournalpp: package-contains-documentation-outside-usr-share-doc usr/share/xournalpp/resources/default_template.tex
+xournalpp: package-contains-documentation-outside-usr-share-doc usr/share/xournalpp/resources/legacy_template.tex
