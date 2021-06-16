@@ -283,9 +283,7 @@ auto exportImg(const char* input, const char* output, const char* range, int png
 
     imgExport.exportGraphics(&progress);
 
-    for (PageRangeEntry* e: exportRange) {
-        delete e;
-    }
+    for (PageRangeEntry* e: exportRange) { delete e; }
     exportRange.clear();
 
     string errorMsg = imgExport.getLastErrorMsg();
@@ -335,9 +333,7 @@ auto exportPdf(const char* input, const char* output, const char* range, ExportB
         // Do the export
         exportSuccess = pdfe->createPdf(path, exportRange, progressiveMode);
         // Clean up
-        for (PageRangeEntry* e: exportRange) {
-            delete e;
-        }
+        for (PageRangeEntry* e: exportRange) { delete e; }
         exportRange.clear();
     } else {
         exportSuccess = pdfe->createPdf(path, progressiveMode);
@@ -506,14 +502,21 @@ void on_startup(GApplication* application, XMPtr app_data) {
     // init singleton
     // ToolbarColorNames::getInstance();
     app_data->control = std::make_unique<Control>(application, app_data->gladePath.get());
-    {
-        auto icon = app_data->gladePath->getFirstSearchPath() / "icons";
-        gtk_icon_theme_prepend_search_path(gtk_icon_theme_get_default(), icon.u8string().c_str());
-    }
 
-    if (app_data->control->getSettings()->isDarkTheme()) {
-        auto icon = app_data->gladePath->getFirstSearchPath() / "iconsDark";
-        gtk_icon_theme_prepend_search_path(gtk_icon_theme_get_default(), icon.u8string().c_str());
+    // Set up icons
+    {
+        const auto lightIcons = app_data->gladePath->getFirstSearchPath() / "iconsColor-light";
+        const auto darkIcons = app_data->gladePath->getFirstSearchPath() / "iconsColor-dark";
+
+        // icon load order from lowest priority to highest priority
+        std::vector<std::string> iconLoadOrder = {lightIcons.u8string()};
+        if (app_data->control->getSettings()->isDarkTheme()) {
+            iconLoadOrder.emplace_back(darkIcons.u8string());
+        } else {
+            iconLoadOrder.insert(iconLoadOrder.begin(), darkIcons.u8string());
+        }
+
+        for (auto& p: iconLoadOrder) { gtk_icon_theme_prepend_search_path(gtk_icon_theme_get_default(), p.c_str()); }
     }
 
     auto& globalLatexTemplatePath = app_data->control->getSettings()->latexSettings.globalTemplatePath;
