@@ -61,13 +61,9 @@ TextEditor::~TextEditor() {
 
     if (this->ownText) {
         UndoRedoHandler* handler = gui->getXournal()->getControl()->getUndoRedoHandler();
-        for (TextUndoAction& undo: this->undoActions) {
-            handler->removeUndoAction(&undo);
-        }
+        for (TextUndoAction& undo: this->undoActions) { handler->removeUndoAction(&undo); }
     } else {
-        for (TextUndoAction& undo: this->undoActions) {
-            undo.textEditFinished();
-        }
+        for (TextUndoAction& undo: this->undoActions) { undo.textEditFinished(); }
     }
     this->undoActions.clear();
 
@@ -1001,21 +997,14 @@ void TextEditor::paint(cairo_t* cr, GdkRectangle* repaintRect, double zoom) {
             auto selectionColorU16 = Util::GdkRGBA_to_ColorU16(selectionColor);
             PangoAttribute* attrib =
                     pango_attr_background_new(selectionColorU16.red, selectionColorU16.green, selectionColorU16.blue);
-            PangoAttrList* attrlist = pango_layout_get_attributes(this->layout);
-
             attrib->start_index = getByteOffset(gtk_text_iter_get_offset(&start));
             attrib->end_index = getByteOffset(gtk_text_iter_get_offset(&end));
 
-            const bool isNewAttrlist = attrlist == nullptr;
-            if (isNewAttrlist) {
-                attrlist = pango_attr_list_new();
-                pango_layout_set_attributes(this->layout, attrlist);
-            }
+            PangoAttrList* attrlist = pango_attr_list_new();
             pango_attr_list_insert(attrlist, attrib);
-            if (isNewAttrlist) {
-                pango_attr_list_unref(attrlist);
-                attrlist = nullptr;
-            }
+            pango_layout_set_attributes(this->layout, attrlist);
+            pango_attr_list_unref(attrlist);
+            attrlist = nullptr;
         } else {
             // remove all attributes
             PangoAttrList* attrlist = pango_attr_list_new();
