@@ -4,19 +4,19 @@ Upstream-Contact: https://github.com/xournalpp/xournalpp/issues/
 Source: https://github.com/xournalpp/xournalpp/
 
 Files: *
-Copyright: 2021 Xournal Team Members
-           2020 Roland Lötscher <roland_loetscher@hotmail.com>
-           2013-2019 Andreas Butti <andreas.butti@gmail.com>
-           2012-2019 Wilson Brenna <wilson@wbrenna.homelinux.com>
-           2015-2019 Marek Pikuła <marek@pikula.tk>
-           2018-2019 Moreno Razzoli
-           2018-2019 Luca Errani <luca.errani1@gmail.com>
-           2019 Ulrich Huber <ulrich@huberulrich.de>
-           2019 Justin Jones <bjustjones@netscape.net>
-           2019 Bryan Tan <Technius@users.noreply.github.com>
-           2019 Justus Rossmeier
-           2019 Fabian Keßler <Fabian_Kessler@gmx.de>
-           2019 lehmanju <internet@devpi.de>
+Copyright: 2021, Xournal Team Members
+           2020, Roland Lötscher <roland_loetscher@hotmail.com>
+           2013-2019, Andreas Butti <andreas.butti@gmail.com>
+           2012-2019, Wilson Brenna <wilson@wbrenna.homelinux.com>
+           2015-2019, Marek Pikuła <marek@pikula.tk>
+           2018-2019, Moreno Razzoli
+           2018-2019, Luca Errani <luca.errani1@gmail.com>
+           2019, Ulrich Huber <ulrich@huberulrich.de>
+           2019, Justin Jones <bjustjones@netscape.net>
+           2019, Bryan Tan <Technius@users.noreply.github.com>
+           2019, Justus Rossmeier
+           2019, Fabian Keßler <Fabian_Kessler@gmx.de>
+           2019, lehmanju <internet@devpi.de>
            2003, Ettore Perazzoli
            1995, Spencer Kimball and Peter Mattis
 License: GPL-2+
@@ -27,28 +27,12 @@ Copyright: 2004, Paolo Borelli
            2003, Ricardo Fernandez Pascual
 License: LGPL-2+
 
-Files: ui/icons/hicolor/scalable/actions/presentation-mode.svg
-       ui/icons/hicolor/scalable/actions/tool_math_tex.svg
-       ui/iconsDark/hicolor/scalable/actions/presentation-mode.svg
-       ui/iconsDark/hicolor/scalable/actions/tool_math_tex.svg
-Copyright: 2019 Peter Klausing <peter_klausing@wh2.tu-dresden.de>
-Comment: From license metadata, author from git logs
-License: CC-BY-4.0
-
-Files: ui/icons/hicolor/scalable/actions/tool_highlighter.svg
-       ui/iconsDark/hicolor/scalable/actions/tool_highlighter.svg
-Copyright: 2014 matheod
-           2019 Andreas Butti <andreas.butti@gmail.com>
-License: CC0-1.0
-Comment: https://openclipart.org/detail/190165/yellow-highlighter (src: Tango Desktop Project)
-         plus minor adaptions by Andreas Butti
-
-Files: ui/icons/hicolor/scalable/actions/tool_image.svg
-       ui/icons/hicolor/scalable/actions/goto.svg
-Copyright: 2010 warszawianka
-License: CC0-1.0
-Comment: https://openclipart.org/detail/36091/tango-image-x-generic (src: Tango Desktop Project)
-         https://openclipart.org/detail/30415/tango-go-down (src: Tango Desktop Project)
+Files: ui/iconsColor-dark/*
+       ui/iconsColor-light/*
+Copyright: 2020, Nararyans R.I.
+License: GPL-3+
+Comment: Source for the licensing information is https://github.com/xournalpp/xournalpp/issues/3103#issuecomment-847043386.
+         These icons where heavily inspired by https://github.com/elementary/icons
 
 Files: ui/pixmaps/com.github.xournalpp.xournalpp.svg
        ui/pixmaps/com.github.xournalpp.xournalpp.png
@@ -58,17 +42,17 @@ Files: ui/pixmaps/com.github.xournalpp.xournalpp.svg
        ui/pixmaps/gnome-mime-application-x-xopp.svg
        ui/pixmaps/gnome-mime-application-x-xopt.svg
        ui/pixmaps/xopt.svg
-Copyright: 2020 Luya Tshimbalanga <luya@fedoraproject.org>
+Copyright: 2020, Luya Tshimbalanga <luya@fedoraproject.org>
 License: CC-BY-SA-4.0
 Comment: See https://github.com/xournalpp/xournalpp/issues/3103#issuecomment-844556592
 
 Files: cmake/find/FindFilesystem.cmake
        cmake/include/clang-tidy.cmake
-Copyright: 2000-2021 Kitware, Inc. and Contributors
+Copyright: 2000-2021, Kitware, Inc. and Contributors
 License: BSD-3-clause
 
 Files: cmake/find/FindICU.cmake
-Copyright: 2011-2013, julp
+Copyright: 2011-2016, POINSOT Julien
 License: BSD-2-clause
 Comment: https://github.com/julp/FindICU.cmake
          could maybe be replaced with
@@ -93,9 +77,9 @@ Copyright: 2019, Tobias Mueller <tobiasmue@gnome.org>
 License: CC0-1.0
 
 Files: src/util/hashcombine.h
-Copyright: 2019, Fabian Keßler <fabian_kessler@gmx.de>
-           1998-2021, David Eberly, Geometric Tools
+Copyright: 1998-2021, David Eberly, Geometric Tools
 License: BSL-1
+Comment: https://www.geometrictools.com/GTE/Mathematics/HashCombine.h
 
 Files: debian/docs
        debian/package_description
@@ -142,15 +126,16 @@ Copyright: 2013, Wilson Brenna
 License: GPL-2+
 
 Files: src/util/pixbuf-utils.cpp
-Copyright: 2001, 2002, 2003 The Free Software Foundation, Inc.
-           2003 Ettore Perazzoli
-           1995 Spencer Kimball and Peter Mattis
+Copyright: 2001, 2002, 2003, The Free Software Foundation, Inc.
+           2003, Ettore Perazzoli
+           1995, Spencer Kimball and Peter Mattis
 License: GPL-3+
 Comment: Original Author Paolo Bacchilega <paolo.bacch@tin.it>
           seemingly for the FSF but this is unclear from the code
+License: GPL-3+
 
 Files: src/util/safe_casts.h
-Copyright: August 17th, 2003 Fabian Keßler <fabian_kessler@gmx.de>
+Copyright: 2020, Fabian Keßler <fabian_kessler@gmx.de>
 License: BSL-1
 
 License: GPL-2+
