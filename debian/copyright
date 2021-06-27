@@ -118,10 +118,12 @@ Copyright: 2020, Debbie Reynolds
 License: GPL-2+
 
 Files: src/gui/GladeSearchpath.h
+       src/gui/GladeSearchpath.cpp
 Copyright: 2011, Andreas Butti
 License: GPL-2+
 
 Files: src/gui/dialog/LatexDialog.h
+       src/gui/dialog/LatexDialog.cpp
 Copyright: 2013, Wilson Brenna
 License: GPL-2+
 
