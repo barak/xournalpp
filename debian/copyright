@@ -4,22 +4,32 @@ Upstream-Contact: https://github.com/xournalpp/xournalpp/issues/
 Source: https://github.com/xournalpp/xournalpp/
 
 Files: *
-Copyright: 2021, Xournal Team Members
-           2020, Roland Lötscher <roland_loetscher@hotmail.com>
-           2013-2019, Andreas Butti <andreas.butti@gmail.com>
-           2012-2019, Wilson Brenna <wilson@wbrenna.homelinux.com>
-           2015-2019, Marek Pikuła <marek@pikula.tk>
-           2018-2019, Moreno Razzoli
+Copyright: 2012-2018, Wilson Brenna <wilson@wbrenna.homelinux.com>
+           2013-2021, Andreas Butti <andreas.butti@gmail.com>
+           2015-2016, Marek Pikuła <marek@pikula.tk>
+           2017-2019, peetCreative <peetCreative@users.noreply.github.com>
+           2018-2019, Moreno Razzoli <morrolinux@users.noreply.github.com>
            2018-2019, Luca Errani <luca.errani1@gmail.com>
-           2019, Ulrich Huber <ulrich@huberulrich.de>
-           2019, Justin Jones <bjustjones@netscape.net>
-           2019, Bryan Tan <Technius@users.noreply.github.com>
-           2019, Justus Rossmeier
-           2019, Fabian Keßler <Fabian_Kessler@gmx.de>
-           2019, lehmanju <internet@devpi.de>
-           2003, Ettore Perazzoli
-           1995, Spencer Kimball and Peter Mattis
+           2019-2021, Ulrich Huber <ulrich@huberulrich.de>
+           2019-2019, Justin Jones <bjustjones@netscape.net>
+           2019-2021, Bryan Tan <Technius@users.noreply.github.com>
+           2019-2019, Justus Rossmeier <veecue@users.noreply.github.com>
+           2019-2021, Fabian Keßler <Fabian_Kessler@gmx.de>
+           2019-2020, Julius Lehmann <internet@devpi.de>
+           2020-2021, Tobias Hermann <idotobi@users.noreply.github.com>
+           2020-2021, Roland Lötscher <roland_loetscher@hotmail.com>
 License: GPL-2+
+comment: Source of truth https://github.com/xournalpp/xournalpp/graphs/contributors
+         For a full and detailed list of contributors refer to the git log.
+
+Files: src/control/xojfile/LoadHandlerHelper.cpp
+       src/control/xojfile/LoadHandlerHelper.h
+       src/gui/widgets/ZoomCallib.cpp
+       src/gui/widgets/ZoomCallib.h
+Copyright: 2015, Xournal Team
+License: GPL-2+
+comment: The files were committed by Andreas Butti initially who was active for both
+         Xournal and Xournal++
 
 Files: src/gui/widgets/gtkmenutooltogglebutton.cpp
        src/gui/widgets/gtkmenutooltogglebutton.h
