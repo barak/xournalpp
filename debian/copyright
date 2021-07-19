@@ -91,22 +91,12 @@ Copyright: 1998-2021, David Eberly, Geometric Tools
 License: BSL-1
 Comment: https://www.geometrictools.com/GTE/Mathematics/HashCombine.h
 
-Files: debian/docs
-       debian/package_description
-       debian/control
-       debian/changelog
-       debian/compat
-       debian/rules
-       debian/source/format
+Files: debian/*
 Copyright: 2007, Mathieu Bouchard <mbouchar@bioinfo.ulaval.ca>
            2008, Lucas Nussbaum <lucas@lucas-nussbaum.net>
            2009-2014, Carlo Segre <segre@debian.org>
            2018-2019, Andreas Butti <andreas.butti@gmail.com>
            2020-2021, Barak A. Pearlmutter <bap@debian.org>
-License: GPL-2+
-
-Files: debian/copyright
-Copyright: 2018, Andreas Butti <andreasbutti@gmail.com>
 License: GPL-2+
 
 Files: plugins/MigrateFontSizes/plugin.ini
