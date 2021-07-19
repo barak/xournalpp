@@ -10,5 +10,9 @@ include /usr/share/dpkg/pkg-info.mk
 override_dh_auto_build:
 	dh_auto_build -- translations all
 
+execute_after_dh_auto_install:
+	@echo "Upstream installs unnecessary file."
+	-rm debian/xournalpp/usr/share/xournalpp/ui/README.md
+
 override_dh_dwz:
 	dh_dwz --no-dwz-multifile
