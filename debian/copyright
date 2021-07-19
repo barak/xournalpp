@@ -144,7 +144,6 @@ Copyright: 2001, 2002, 2003, The Free Software Foundation, Inc.
 License: GPL-3+
 Comment: Original Author Paolo Bacchilega <paolo.bacch@tin.it>
           seemingly for the FSF but this is unclear from the code
-License: GPL-3+
 
 Files: src/util/safe_casts.h
 Copyright: 2020, Fabian Keßler <fabian_kessler@gmx.de>
