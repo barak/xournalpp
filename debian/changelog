@@ -1,3 +1,9 @@
+xournalpp (1.1.0-3) unstable; urgency=medium
+
+  * build depend and enable libcppunit-dev, for test infrastructure
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Sat, 06 Nov 2021 21:33:59 +0000
+
 xournalpp (1.1.0-2) unstable; urgency=medium
 
   * bump policy
