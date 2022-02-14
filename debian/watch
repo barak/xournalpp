@@ -1,2 +1,2 @@
 version=4
-https://github.com/xournalpp/@PACKAGE@/tags (?:.*?/)@ANY_VERSION@@ARCHIVE_EXT@
+https://github.com/xournalpp/@PACKAGE@/tags (?:.*?/)v?@ANY_VERSION@@ARCHIVE_EXT@
