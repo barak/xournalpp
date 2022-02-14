@@ -1,3 +1,10 @@
+xournalpp (1.1.1-1) unstable; urgency=medium
+
+  * v? in upstream git tags
+  * new upstream version
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Mon, 14 Feb 2022 19:09:33 +0000
+
 xournalpp (1.1.0-3) unstable; urgency=medium
 
   * build depend and enable libcppunit-dev, for test infrastructure
