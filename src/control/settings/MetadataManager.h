@@ -11,11 +11,14 @@
 
 #pragma once
 
+#include <mutex>
 #include <string>
 #include <vector>
 
-#include "XournalType.h"
+#include <glib.h>
+
 #include "filesystem.h"
+
 
 class MetadataEntry {
 public:
@@ -71,10 +74,10 @@ private:
     /**
      * Load the metadata list (sorted)
      */
-    static vector<MetadataEntry> loadList();
+    static std::vector<MetadataEntry> loadList();
 
 
 private:
-    GMutex mutex{};
+    std::mutex mutex;
     MetadataEntry* metadata;
 };

@@ -49,15 +49,13 @@
 #include "i18n.h"
 #include "pixbuf-utils.h"
 
+using std::string;
+
 XojPageView::XojPageView(XournalView* xournal, const PageRef& page) {
     this->page = page;
     this->registerListener(this->page);
     this->xournal = xournal;
     this->settings = xournal->getControl()->getSettings();
-
-    g_mutex_init(&this->drawingMutex);
-
-    g_mutex_init(&this->repaintRectMutex);
 
     // this does not have to be deleted afterwards:
     // (we need it for undo commands)
@@ -98,12 +96,12 @@ auto XojPageView::getLastVisibleTime() -> int {
 }
 
 void XojPageView::deleteViewBuffer() {
-    g_mutex_lock(&this->drawingMutex);
+    this->drawingMutex.lock();
     if (this->crBuffer) {
         cairo_surface_destroy(this->crBuffer);
         this->crBuffer = nullptr;
     }
-    g_mutex_unlock(&this->drawingMutex);
+    this->drawingMutex.unlock();
 }
 
 auto XojPageView::containsPoint(int x, int y, bool local) const -> bool {
@@ -126,9 +124,9 @@ auto XojPageView::searchTextOnPage(string& text, int* occures, double* top) -> b
             return true;
         }
 
-        int pNr = this->page->getPdfPageNr();
+        auto pNr = this->page->getPdfPageNr();
         XojPdfPageSPtr pdf = nullptr;
-        if (pNr != -1) {
+        if (pNr != npos) {
             Document* doc = xournal->getControl()->getDocument();
 
             doc->lock();
@@ -193,7 +191,7 @@ void XojPageView::startText(double x, double y) {
 
     if (this->textEditor != nullptr) {
         Text* text = this->textEditor->getText();
-        GdkRectangle matchRect = {gint(x - 10), gint(y - 10), 20, 20};
+        GdkRectangle matchRect = {gint(x), gint(y), 1, 1};
         if (!text->intersectsArea(&matchRect)) {
             endText();
         } else {
@@ -207,7 +205,7 @@ void XojPageView::startText(double x, double y) {
 
         for (Element* e: *this->page->getSelectedLayer()->getElements()) {
             if (e->getType() == ELEMENT_TEXT) {
-                GdkRectangle matchRect = {gint(x - 10), gint(y - 10), 20, 20};
+                GdkRectangle matchRect = {gint(x), gint(y), 1, 1};
                 if (e->intersectsArea(&matchRect)) {
                     text = dynamic_cast<Text*>(e);
                     break;
@@ -637,7 +635,7 @@ void XojPageView::addRerenderRect(double x, double y, double width, double heigh
 
     auto rect = Rectangle<double>{x, y, width, height};
 
-    g_mutex_lock(&this->repaintRectMutex);
+    this->repaintRectMutex.lock();
 
     for (auto&& r: this->rerenderRects) {
         // its faster to redraw only one rect than repaint twice the same area
@@ -645,13 +643,13 @@ void XojPageView::addRerenderRect(double x, double y, double width, double heigh
         // intersects any of them, replace it by the union with the new one
         if (r.intersects(rect)) {
             r.unite(rect);
-            g_mutex_unlock(&this->repaintRectMutex);
+            this->repaintRectMutex.unlock();
             return;
         }
     }
 
     this->rerenderRects.push_back(rect);
-    g_mutex_unlock(&this->repaintRectMutex);
+    this->repaintRectMutex.unlock();
 
     this->xournal->getControl()->getScheduler()->addRerenderPage(this);
 }
@@ -806,11 +804,11 @@ void XojPageView::paintPageSync(cairo_t* cr, GdkRectangle* rect) {
 }
 
 auto XojPageView::paintPage(cairo_t* cr, GdkRectangle* rect) -> bool {
-    g_mutex_lock(&this->drawingMutex);
+    this->drawingMutex.lock();
 
     paintPageSync(cr, rect);
 
-    g_mutex_unlock(&this->drawingMutex);
+    this->drawingMutex.unlock();
     return true;
 }
 
@@ -913,7 +911,7 @@ void XojPageView::pageChanged() { rerenderPage(); }
 
 void XojPageView::elementChanged(Element* elem) {
     if (this->inputHandler && elem == this->inputHandler->getStroke()) {
-        g_mutex_lock(&this->drawingMutex);
+        this->drawingMutex.lock();
 
         cairo_t* cr = cairo_create(this->crBuffer);
 
@@ -921,7 +919,7 @@ void XojPageView::elementChanged(Element* elem) {
 
         cairo_destroy(cr);
 
-        g_mutex_unlock(&this->drawingMutex);
+        this->drawingMutex.unlock();
     } else {
         rerenderElement(elem);
     }

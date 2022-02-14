@@ -11,6 +11,9 @@
 
 #pragma once
 
+#include <mutex>
+#include <vector>
+
 #include "gui/inputdevices/PositionInputData.h"
 #include "model/PageListener.h"
 #include "model/PageRef.h"
@@ -54,7 +57,7 @@ public:
 
     void endText();
 
-    bool searchTextOnPage(string& text, int* occures, double* top);
+    bool searchTextOnPage(std::string& text, int* occures, double* top);
 
     bool onKeyPressEvent(GdkEventKey* event);
     bool onKeyReleaseEvent(GdkEventKey* event);
@@ -227,11 +230,11 @@ private:
      */
     int lastVisibleTime = -1;
 
-    GMutex repaintRectMutex{};
-    vector<Rectangle<double>> rerenderRects;
+    std::mutex repaintRectMutex;
+    std::vector<Rectangle<double>> rerenderRects;
     bool rerenderComplete = false;
 
-    GMutex drawingMutex{};
+    std::mutex drawingMutex;
 
     int dispX{};  // position on display - set in Layout::layoutPages
     int dispY{};

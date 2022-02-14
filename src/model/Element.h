@@ -20,7 +20,7 @@
 
 #include "Color.h"
 #include "Rectangle.h"
-#include "XournalType.h"
+
 
 enum ElementType { ELEMENT_STROKE = 1, ELEMENT_IMAGE, ELEMENT_TEXIMAGE, ELEMENT_TEXT };
 
@@ -73,12 +73,12 @@ public:
      */
     virtual Element* clone() = 0;
 
+    void serialize(ObjectOutputStream& out) const;
+    void readSerialized(ObjectInputStream& in);
+
 private:
 protected:
     virtual void calcSize() const = 0;
-
-    void serializeElement(ObjectOutputStream& out) const;
-    void readSerializedElement(ObjectInputStream& in);
 
 protected:
     // If the size has been calculated

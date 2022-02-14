@@ -7,7 +7,8 @@
 
 
 BackgroundSelectDialogBase::BackgroundSelectDialogBase(GladeSearchpath* gladeSearchPath, Document* doc,
-                                                       Settings* settings, const string& glade, const string& mainWnd):
+                                                       Settings* settings, const std::string& glade,
+                                                       const std::string& mainWnd):
         GladeGui(gladeSearchPath, glade, std::move(mainWnd)), settings(settings), doc(doc) {
     this->layoutContainer = gtk_layout_new(nullptr, nullptr);
     gtk_widget_show(this->layoutContainer);
@@ -44,8 +45,8 @@ auto BackgroundSelectDialogBase::getSettings() -> Settings* { return this->setti
 void BackgroundSelectDialogBase::layout() {
     double x = 0;
     double y = 0;
-    double height = 0;
-    double width = 0;
+    double row_height = 0;
+    double max_row_width = 0;
 
     GtkAllocation alloc = {0};
     gtk_widget_get_allocation(this->scrollPreview, &alloc);
@@ -56,21 +57,22 @@ void BackgroundSelectDialogBase::layout() {
         }
 
         if (x + p->getWidth() > alloc.width) {
-            width = std::max(width, x);
-            y += height;
+            y += row_height;
             x = 0;
-            height = 0;
+            row_height = 0;
         }
+        max_row_width = std::max(max_row_width, x + static_cast<double>(p->getWidth()));
 
         gtk_layout_move(GTK_LAYOUT(this->layoutContainer), p->getWidget(), x, y);
 
-        height = std::max(height,
-                          static_cast<double>(p->getHeight()));  // TODO(fabian): page height should be double as well
+        row_height =
+                std::max(row_height,
+                         static_cast<double>(p->getHeight()));  // TODO(fabian): page height should be double as well
 
         x += p->getWidth();
     }
 
-    gtk_layout_set_size(GTK_LAYOUT(this->layoutContainer), width, y);
+    gtk_layout_set_size(GTK_LAYOUT(this->layoutContainer), max_row_width, y + row_height);
 }
 
 void BackgroundSelectDialogBase::show(GtkWindow* parent) {

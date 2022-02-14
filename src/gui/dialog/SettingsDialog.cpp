@@ -13,6 +13,9 @@
 #include "Util.h"
 #include "i18n.h"
 
+using std::string;
+using std::vector;
+
 SettingsDialog::SettingsDialog(GladeSearchpath* gladeSearchPath, Settings* settings, Control* control):
         GladeGui(gladeSearchPath, "settings.glade", "settingsDialog"),
         settings(settings),
@@ -413,6 +416,9 @@ void SettingsDialog::load() {
     GtkWidget* spSnapGridSize = get("spSnapGridSize");
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(spSnapGridSize), settings->getSnapGridSize() / DEFAULT_GRID_SIZE);
 
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(get("edgePanSpeed")), settings->getEdgePanSpeed());
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(get("edgePanMaxMult")), settings->getEdgePanMaxMult());
+
     GtkWidget* spZoomStep = get("spZoomStep");
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(spZoomStep), settings->getZoomStep());
 
@@ -782,6 +788,9 @@ void SettingsDialog::save() {
     GtkWidget* spPairsOffset = get("spPairsOffset");
     int numPairsOffset = gtk_spin_button_get_value(GTK_SPIN_BUTTON(spPairsOffset));
     settings->setPairsOffset(numPairsOffset);
+
+    settings->setEdgePanSpeed(gtk_spin_button_get_value(GTK_SPIN_BUTTON(get("edgePanSpeed"))));
+    settings->setEdgePanMaxMult(gtk_spin_button_get_value(GTK_SPIN_BUTTON(get("edgePanMaxMult"))));
 
     GtkWidget* spZoomStep = get("spZoomStep");
     double zoomStep = gtk_spin_button_get_value(GTK_SPIN_BUTTON(spZoomStep));

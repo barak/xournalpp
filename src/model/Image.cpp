@@ -56,7 +56,7 @@ auto Image::cairoReadFunction(Image* image, unsigned char* data, unsigned int le
     return CAIRO_STATUS_SUCCESS;
 }
 
-void Image::setImage(string data) {
+void Image::setImage(std::string data) {
     if (this->image) {
         cairo_surface_destroy(this->image);
         this->image = nullptr;
@@ -101,10 +101,10 @@ void Image::scale(double x0, double y0, double fx, double fy, double rotation,
 
 void Image::rotate(double x0, double y0, double th) {}
 
-void Image::serialize(ObjectOutputStream& out) {
+void Image::serialize(ObjectOutputStream& out) const {
     out.writeObject("Image");
 
-    serializeElement(out);
+    this->Element::serialize(out);
 
     out.writeDouble(this->width);
     out.writeDouble(this->height);
@@ -117,7 +117,7 @@ void Image::serialize(ObjectOutputStream& out) {
 void Image::readSerialized(ObjectInputStream& in) {
     in.readObject("Image");
 
-    readSerializedElement(in);
+    this->Element::readSerialized(in);
 
     this->width = in.readDouble();
     this->height = in.readDouble();

@@ -20,7 +20,7 @@
 #include "gui/LayoutMapper.h"
 
 #include "Rectangle.h"
-#include "XournalType.h"
+
 
 class XojPageView;
 class XournalView;
@@ -37,7 +37,7 @@ class Layout final {
 public:
     Layout(XournalView* view, ScrollHandling* scrollHandling);
     struct PreCalculated {
-        std::mutex m{};
+        std::mutex m;
 
         // The width and height of all our pages
         size_t minWidth = 0;

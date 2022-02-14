@@ -18,7 +18,7 @@
 #include "serializing/ObjectOutputStream.h"
 
 #include "Element.h"
-#include "XournalType.h"
+
 
 class AudioElement: public Element {
 protected:
@@ -30,20 +30,20 @@ public:
     void setTimestamp(size_t timestamp);
     size_t getTimestamp() const;
 
-    void setAudioFilename(string fn);
-    string getAudioFilename() const;
+    void setAudioFilename(std::string fn);
+    std::string getAudioFilename() const;
 
     virtual bool intersects(double x, double y, double halfSize) = 0;
     virtual bool intersects(double x, double y, double halfSize, double* gap) = 0;
 
 protected:
-    void serializeAudioElement(ObjectOutputStream& out);
-    void readSerializedAudioElement(ObjectInputStream& in);
+    void serialize(ObjectOutputStream& out) const override;
+    void readSerialized(ObjectInputStream& in) override;
 
     void cloneAudioData(const AudioElement* other);
 
 private:
     // Stroke timestamp, to match it to the audio stream
     size_t timestamp = 0;
-    string audioFilename = "";
+    std::string audioFilename = "";
 };

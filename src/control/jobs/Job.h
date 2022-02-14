@@ -11,10 +11,9 @@
 
 #pragma once
 
+#include <mutex>
 #include <string>
 #include <vector>
-
-#include "XournalType.h"
 
 enum JobType { JOB_TYPE_BLOCKING, JOB_TYPE_PREVIEW, JOB_TYPE_RENDER, JOB_TYPE_AUTOSAVE };
 
@@ -85,5 +84,5 @@ private:
     int afterRunId = 0;
 
     int refCount = 1;
-    GMutex refMutex{};
+    std::mutex refMutex;
 };

@@ -12,19 +12,20 @@
 #include <config-dev.h>
 
 #include "control/XournalMain.h"
+#include "util/logger/Logger.h"
 
 #include "CrashHandler.h"
 #include "Stacktrace.h"
+#include "filesystem.h"
 
 #ifdef _WIN32
-#include <windows.h>
+#include "win32/console.h"
 #endif
 
 auto main(int argc, char* argv[]) -> int {
 #ifdef _WIN32
-    // Show and hide the console here. Otherwise, gspawn-win32-helper will create annoying console popups.
-    AllocConsole();
-    ShowWindow(GetConsoleWindow(), SW_HIDE);
+    // Attach to the console here. Otherwise, gspawn-win32-helper will create annoying console popups.
+    attachConsole();
 #endif
 
     // init crash handler
@@ -32,6 +33,11 @@ auto main(int argc, char* argv[]) -> int {
 
 #ifdef DEV_CALL_LOG
     Log::initlog();
+#endif
+
+#ifdef _WIN32
+    // Switch to the FontConfig backend for Pango - See #3371
+    _putenv_s("PANGOCAIRO_BACKEND", "fc");
 #endif
 
     // Use this two line to test the crash handler...

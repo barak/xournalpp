@@ -25,11 +25,11 @@ public:
 public:
     void setFont(const XojFont& font);
     XojFont& getFont();
-    double getFontSize() const;  // same result as getFont()->getSize(), but const
-    string getFontName() const;  // same result as getFont()->getName(), but const
+    double getFontSize() const;       // same result as getFont()->getSize(), but const
+    std::string getFontName() const;  // same result as getFont()->getName(), but const
 
-    string getText() const;
-    void setText(string text);
+    std::string getText() const;
+    void setText(std::string text);
 
     void setWidth(double width);
     void setHeight(double height);
@@ -52,7 +52,7 @@ public:
 
 public:
     // Serialize interface
-    void serialize(ObjectOutputStream& out) override;
+    void serialize(ObjectOutputStream& out) const override;
     void readSerialized(ObjectInputStream& in) override;
 
 protected:
@@ -62,7 +62,7 @@ protected:
 private:
     XojFont font;
 
-    string text;
+    std::string text;
 
     bool inEditing = false;
 };

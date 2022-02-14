@@ -15,7 +15,7 @@
 #include "filesystem.h"
 #include "i18n.h"
 
-Document::Document(DocumentHandler* handler): handler(handler) { g_mutex_init(&this->documentLock); }
+Document::Document(DocumentHandler* handler): handler(handler) {}
 
 Document::~Document() {
     clearDocument(true);
@@ -49,7 +49,7 @@ auto Document::freeTreeContentEntry(GtkTreeModel* treeModel, GtkTreePath* path, 
 }
 
 void Document::lock() {
-    g_mutex_lock(&this->documentLock);
+    this->documentLock.lock();
 
     //	if(tryLock()) {
     //		fprintf(stderr, "Locked by\n");
@@ -61,14 +61,17 @@ void Document::lock() {
 }
 
 void Document::unlock() {
-    g_mutex_unlock(&this->documentLock);
+    this->documentLock.unlock();
 
     //	fprintf(stderr, "Unlocked by\n");
     //	Stacktrace::printStracktrace();
     //	fprintf(stderr, "\n\n\n\n");
 }
 
-auto Document::tryLock() -> bool { return g_mutex_trylock(&this->documentLock); }
+/*
+** Returns true when successfully acquiring lock.
+*/
+auto Document::tryLock() -> bool { return this->documentLock.try_lock(); }
 
 void Document::clearDocument(bool destroy) {
     if (this->preview) {
@@ -120,7 +123,7 @@ auto Document::createSaveFolder(fs::path lastSavePath) -> fs::path {
     return lastSavePath;
 }
 
-auto Document::createSaveFilename(DocumentType type, const string& defaultSaveName) -> fs::path {
+auto Document::createSaveFilename(DocumentType type, const std::string& defaultSaveName) -> fs::path {
     if (!filepath.empty()) {
         // This can be any extension
         fs::path p = filepath.filename();
@@ -129,8 +132,11 @@ auto Document::createSaveFilename(DocumentType type, const string& defaultSaveNa
     }
     if (!pdfFilepath.empty()) {
         fs::path p = pdfFilepath.filename();
-        std::string ext = this->attachPdf ? ".pdf" : "";
-        Util::clearExtensions(p, ext);
+        if (this->attachPdf) {
+            Util::clearExtensions(p, ".pdf");
+        } else {
+            Util::clearExtensions(p);
+        }
         return p;
     }
 
@@ -255,11 +261,11 @@ auto Document::fillPageLabels(GtkTreeModel* treeModel, GtkTreePath* path, GtkTre
         return false;
     }
 
-    int page = doc->findPdfPage(link->dest->getPdfPage());
+    auto page = doc->findPdfPage(link->dest->getPdfPage());
 
     gchar* pageLabel = nullptr;
-    if (page != -1) {
-        pageLabel = g_strdup_printf("%i", page + 1);
+    if (page != npos) {
+        pageLabel = g_strdup_printf("%zu", page + 1);
     }
     gtk_tree_store_set(GTK_TREE_STORE(treeModel), iter, DOCUMENT_LINKS_COLUMN_PAGE_NUMBER, pageLabel, -1);
     g_free(pageLabel);
@@ -338,7 +344,7 @@ auto Document::getPageHeight(PageRef p) -> double { return p->getHeight(); }
 /**
  * @return The last error message to show to the user
  */
-auto Document::getLastErrorMsg() -> string { return lastError; }
+auto Document::getLastErrorMsg() -> std::string { return lastError; }
 
 void Document::deletePage(size_t pNr) {
     auto it = this->pages.begin() + pNr;

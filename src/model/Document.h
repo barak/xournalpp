@@ -14,6 +14,7 @@
 #pragma once
 
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -25,7 +26,6 @@
 #include "DocumentHandler.h"
 #include "LinkDestination.h"
 #include "PageRef.h"
-#include "XournalType.h"
 #include "filesystem.h"
 
 class Document {
@@ -60,7 +60,7 @@ public:
     /**
      * @return The last error message to show to the user
      */
-    string getLastErrorMsg();
+    std::string getLastErrorMsg();
 
     size_t findPdfPage(size_t pdfPage);
 
@@ -70,7 +70,7 @@ public:
     fs::path getFilepath();
     fs::path getPdfFilepath();
     fs::path createSaveFolder(fs::path lastSavePath);
-    fs::path createSaveFilename(DocumentType type, const string& defaultSaveName);
+    fs::path createSaveFilename(DocumentType type, const std::string& defaultSaveName);
 
     fs::path getEvMetadataFilename();
 
@@ -111,14 +111,14 @@ private:
     /**
      *  Password: not handled yet
      */
-    string password;
+    std::string password;
 
-    string lastError;
+    std::string lastError;
 
     /**
      * The pages in the document
      */
-    vector<PageRef> pages;
+    std::vector<PageRef> pages;
 
     /**
      * Index from pdf page number to document page number
@@ -143,7 +143,7 @@ private:
     GtkTreeModel* contentsModel = nullptr;
 
     /**
-     *  create a backup before save, because the original file was an older fileversion
+     *  create a backup before save
      */
     bool createBackupOnSave = false;
 
@@ -155,7 +155,7 @@ private:
     /**
      * The lock of the document
      */
-    GMutex documentLock{};
+    std::mutex documentLock;
 };
 
 template <class InputIter>

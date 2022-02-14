@@ -38,11 +38,11 @@ void Text::setFont(const XojFont& font) { this->font = font; }
 
 auto Text::getFontSize() const -> double { return font.getSize(); }
 
-auto Text::getFontName() const -> string { return font.getName(); }
+auto Text::getFontName() const -> std::string { return font.getName(); }
 
-auto Text::getText() const -> string { return this->text; }
+auto Text::getText() const -> std::string { return this->text; }
 
-void Text::setText(string text) {
+void Text::setText(std::string text) {
     this->text = std::move(text);
 
     calcSize();
@@ -105,10 +105,10 @@ auto Text::intersects(double x, double y, double halfEraserSize, double* gap) ->
     return x >= x1 && x <= x2 && y >= y1 && y <= y2;
 }
 
-void Text::serialize(ObjectOutputStream& out) {
+void Text::serialize(ObjectOutputStream& out) const {
     out.writeObject("Text");
 
-    serializeAudioElement(out);
+    this->AudioElement::serialize(out);
 
     out.writeString(this->text);
 
@@ -120,7 +120,7 @@ void Text::serialize(ObjectOutputStream& out) {
 void Text::readSerialized(ObjectInputStream& in) {
     in.readObject("Text");
 
-    readSerializedAudioElement(in);
+    this->AudioElement::readSerialized(in);
 
     this->text = in.readString();
 

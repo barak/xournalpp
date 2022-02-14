@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -18,7 +19,6 @@
 
 #include "model/Point.h"
 
-#include "XournalType.h"
 
 class EraseableStrokePart;
 class PartList;
@@ -48,7 +48,7 @@ private:
     void addRepaintRect(double x, double y, double width, double height);
 
 private:
-    GMutex partLock{};
+    std::mutex partLock;
     PartList* parts = nullptr;
 
     Range* repaintRect = nullptr;

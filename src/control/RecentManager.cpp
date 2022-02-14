@@ -15,6 +15,8 @@
 #define MIME_PDF "application/x-pdf"
 #define GROUP "xournal++"
 
+using std::string;
+
 RecentManagerListener::~RecentManagerListener() = default;
 
 RecentManager::RecentManager() {
@@ -49,7 +51,7 @@ void RecentManager::addRecentFileFilename(const fs::path& filepath) {
     std::array<gchar*, 2> groups = {group_name.data(), nullptr};
     std::string app_name = g_get_application_name();
     std::string app_exec = std::string(g_get_prgname()) + " %u";
-    std::string mime_type = (filepath.extension() == ".pdf") ? std::string(MIME_PDF) : std::string(MIME);
+    std::string mime_type = Util::hasPdfFileExt(filepath) ? std::string(MIME_PDF) : std::string(MIME);
 
     GtkRecentData recentData{};
     recentData.display_name = nullptr;
@@ -103,6 +105,9 @@ auto RecentManager::sortRecentsEntries(GtkRecentInfo* a, GtkRecentInfo* b) -> gi
 
 auto RecentManager::getMostRecent() -> GtkRecentInfo* {
     GList* filteredItemsXoj = filterRecent(gtk_recent_manager_get_items(gtk_recent_manager_get_default()), true);
+    if (filteredItemsXoj == nullptr) {
+        return nullptr;
+    }
     auto mostRecent = static_cast<GtkRecentInfo*>(filteredItemsXoj->data);
 
     gtk_recent_info_ref(mostRecent);
@@ -137,7 +142,7 @@ auto RecentManager::filterRecent(GList* items, bool xoj) -> GList* {
         if (xoj && Util::hasXournalFileExt(*p)) {
             filteredItems = g_list_prepend(filteredItems, info);
         }
-        if (!xoj && p->extension() == ".pdf") {
+        if (!xoj && Util::hasPdfFileExt(*p)) {
             filteredItems = g_list_prepend(filteredItems, info);
         }
     }

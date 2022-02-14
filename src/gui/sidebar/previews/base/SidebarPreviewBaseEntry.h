@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -19,7 +20,7 @@
 #include "model/PageRef.h"
 
 #include "Util.h"
-#include "XournalType.h"
+
 
 class SidebarPreviewBase;
 
@@ -93,7 +94,7 @@ protected:
     /**
      * Mutex
      */
-    GMutex drawingMutex{};
+    std::mutex drawingMutex{};
 
     /**
      * The Widget which is used for drawing

@@ -61,7 +61,7 @@ void SaveJob::updatePreview(Control* control) {
         cairo_scale(cr, zoom, zoom);
 
         if (page->getBackgroundType().isPdfPage()) {
-            int pgNo = page->getPdfPageNr();
+            auto pgNo = page->getPdfPageNr();
             XojPdfPageSPtr popplerPage = doc->getPdfPage(pgNo);
             if (popplerPage) {
                 popplerPage->render(cr, false);
@@ -87,12 +87,14 @@ auto SaveJob::save() -> bool {
 
     doc->lock();
     h.prepareSave(doc);
-    fs::path const filepath = doc->getFilepath();
+    fs::path filepath = doc->getFilepath();
     doc->unlock();
 
-    auto const target = fs::path{filepath}.replace_extension(".xopp");
+    Util::clearExtensions(filepath, ".pdf");
+    auto const target = fs::path{filepath}.concat(".xopp");
+    auto const createBackup = doc->shouldCreateBackupOnSave();
 
-    if (doc->shouldCreateBackupOnSave()) {
+    if (createBackup) {
         try {
             // Note: The backup must be created for the target as this is the filepath
             // which will be written to. Do not use the `filepath` variable!
@@ -101,7 +103,6 @@ auto SaveJob::save() -> bool {
             g_warning("Could not create backup! Failed with %s", fe.what());
             return false;
         }
-        doc->setCreateBackupOnSave(false);
     }
 
     doc->lock();
@@ -115,6 +116,14 @@ auto SaveJob::save() -> bool {
             g_error("%s", this->lastError.c_str());
         }
         return false;
+    } else if (createBackup) {
+        try {
+            // If a backup was created it can be removed now since no error occured during the save
+            fs::remove(fs::path{target} += "~");
+        } catch (fs::filesystem_error const& fe) { g_warning("Could not delete backup! Failed with %s", fe.what()); }
+    } else {
+        doc->setCreateBackupOnSave(true);
     }
+
     return true;
 }

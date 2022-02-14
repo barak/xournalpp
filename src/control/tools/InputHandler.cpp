@@ -45,7 +45,7 @@ void InputHandler::createStroke(Point p) {
         stroke->setToolType(STROKE_TOOL_PEN);
 
         if (xournal->getControl()->getAudioController()->isRecording()) {
-            string audioFilename = xournal->getControl()->getAudioController()->getAudioFilename();
+            std::string audioFilename = xournal->getControl()->getAudioController()->getAudioFilename();
             size_t sttime = xournal->getControl()->getAudioController()->getStartTime();
             size_t milliseconds = ((g_get_monotonic_time() / 1000) - sttime);
             stroke->setTimestamp(milliseconds);
@@ -53,9 +53,11 @@ void InputHandler::createStroke(Point p) {
         }
     } else if (h->getToolType() == TOOL_HIGHLIGHTER) {
         stroke->setToolType(STROKE_TOOL_HIGHLIGHTER);
+        p.z = Point::NO_PRESSURE;
     } else if (h->getToolType() == TOOL_ERASER) {
         stroke->setToolType(STROKE_TOOL_ERASER);
         stroke->setColor(0xffffffU);
+        p.z = Point::NO_PRESSURE;
     }
 
     stroke->addPoint(p);

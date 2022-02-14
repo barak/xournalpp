@@ -50,6 +50,7 @@
 #include "config.h"
 #include "i18n.h"
 
+using std::string;
 
 Control::Control(GApplication* gtkApp, GladeSearchpath* gladeSearchPath): gtkApp(gtkApp) {
     this->recent = new RecentManager();
@@ -1399,10 +1400,8 @@ void Control::changePageBackgroundColor() {
 void Control::setViewPairedPages(bool enabled) {
     settings->setShowPairedPages(enabled);
     fireActionSelected(GROUP_PAIRED_PAGES, enabled ? ACTION_VIEW_PAIRED_PAGES : ACTION_NOT_SELECTED);
-
-    auto currentPage = getCurrentPageNo();
     win->getXournal()->layoutPages();
-    scrollHandler->scrollToPage(currentPage);
+    scrollHandler->scrollToPage(getCurrentPageNo());
 }
 
 void Control::setViewPresentationMode(bool enabled) {
@@ -1440,18 +1439,15 @@ void Control::setViewPresentationMode(bool enabled) {
     // disable selection of scroll hand tool
     fireEnableAction(ACTION_TOOL_HAND, !enabled);
     fireActionSelected(GROUP_PRESENTATION_MODE, enabled ? ACTION_VIEW_PRESENTATION_MODE : ACTION_NOT_SELECTED);
-
-    auto currentPage = getCurrentPageNo();
     win->getXournal()->layoutPages();
-    scrollHandler->scrollToPage(currentPage);
+    scrollHandler->scrollToPage(getCurrentPageNo());
 }
 
 void Control::setPairsOffset(int numOffset) {
     settings->setPairsOffset(numOffset);
     fireActionSelected(GROUP_PAIRED_PAGES, numOffset ? ACTION_SET_PAIRS_OFFSET : ACTION_NOT_SELECTED);
-    auto currentPage = getCurrentPageNo();
     win->getXournal()->layoutPages();
-    scrollHandler->scrollToPage(currentPage);
+    scrollHandler->scrollToPage(getCurrentPageNo());
 }
 
 void Control::setViewColumns(int numColumns) {
@@ -1491,9 +1487,8 @@ void Control::setViewColumns(int numColumns) {
 
     fireActionSelected(GROUP_FIXED_ROW_OR_COLS, action);
 
-    auto currentPage = getCurrentPageNo();
     win->getXournal()->layoutPages();
-    scrollHandler->scrollToPage(currentPage);
+    scrollHandler->scrollToPage(getCurrentPageNo());
 }
 
 void Control::setViewRows(int numRows) {
@@ -1533,9 +1528,8 @@ void Control::setViewRows(int numRows) {
 
     fireActionSelected(GROUP_FIXED_ROW_OR_COLS, action);
 
-    auto currentPage = getCurrentPageNo();
     win->getXournal()->layoutPages();
-    scrollHandler->scrollToPage(currentPage);
+    scrollHandler->scrollToPage(getCurrentPageNo());
 }
 
 void Control::setViewLayoutVert(bool vert) {
@@ -1551,9 +1545,8 @@ void Control::setViewLayoutVert(bool vert) {
 
     fireActionSelected(GROUP_LAYOUT_HORIZONTAL, action);
 
-    auto currentPage = getCurrentPageNo();
     win->getXournal()->layoutPages();
-    scrollHandler->scrollToPage(currentPage);
+    scrollHandler->scrollToPage(getCurrentPageNo());
 }
 
 void Control::setViewLayoutR2L(bool r2l) {
@@ -1569,9 +1562,8 @@ void Control::setViewLayoutR2L(bool r2l) {
 
     fireActionSelected(GROUP_LAYOUT_LR, action);
 
-    auto currentPage = getCurrentPageNo();
     win->getXournal()->layoutPages();
-    scrollHandler->scrollToPage(currentPage);
+    scrollHandler->scrollToPage(getCurrentPageNo());
 }
 
 void Control::setViewLayoutB2T(bool b2t) {
@@ -1587,9 +1579,8 @@ void Control::setViewLayoutB2T(bool b2t) {
 
     fireActionSelected(GROUP_LAYOUT_TB, action);
 
-    auto currentPage = getCurrentPageNo();
     win->getXournal()->layoutPages();
-    scrollHandler->scrollToPage(currentPage);
+    scrollHandler->scrollToPage(getCurrentPageNo());
 }
 
 /**
@@ -1908,9 +1899,8 @@ void Control::showSettings() {
     if (verticalSpace != settings->getAddVerticalSpace() || horizontalSpace != settings->getAddHorizontalSpace() ||
         verticalSpaceAmount != settings->getAddVerticalSpaceAmount() ||
         horizontalSpaceAmount != settings->getAddHorizontalSpaceAmount()) {
-        auto currentPage = getCurrentPageNo();
         win->getXournal()->layoutPages();
-        scrollHandler->scrollToPage(currentPage);
+        scrollHandler->scrollToPage(getCurrentPageNo());
     }
 
     if (stylusCursorType != settings->getStylusCursorType() || highlightPosition != settings->isHighlightPosition()) {
@@ -1993,7 +1983,7 @@ auto Control::openFile(fs::path filepath, int scrollToPage, bool forceOpen) -> b
         return loadXoptTemplate(filepath);
     }
 
-    if (filepath.extension() == ".pdf") {
+    if (Util::hasPdfFileExt(filepath)) {
         return loadPdf(filepath, scrollToPage);
     }
 
@@ -2416,7 +2406,7 @@ auto Control::saveAs() -> bool {
         return false;
     }
 
-    // no lock needed, this is an uncritically operation
+    // no lock needed, this is an uncritical operation
     this->doc->setCreateBackupOnSave(false);
     return save();
 }
@@ -2518,8 +2508,8 @@ void Control::applyPreferredLanguage() {
 }
 
 void Control::initButtonTool() {
-    vector<Button> buttons{Button::BUTTON_ERASER,       Button::BUTTON_STYLUS_ONE,  Button::BUTTON_STYLUS_TWO,
-                           Button::BUTTON_MOUSE_MIDDLE, Button::BUTTON_MOUSE_RIGHT, Button::BUTTON_TOUCH};
+    std::vector<Button> buttons{Button::BUTTON_ERASER,       Button::BUTTON_STYLUS_ONE,  Button::BUTTON_STYLUS_TWO,
+                                Button::BUTTON_MOUSE_MIDDLE, Button::BUTTON_MOUSE_RIGHT, Button::BUTTON_TOUCH};
     ButtonConfig* cfg;
     for (auto b: buttons) {
         cfg = settings->getButtonConfig(b);
@@ -2529,8 +2519,8 @@ void Control::initButtonTool() {
 
 auto Control::askToReplace(fs::path const& filepath) const -> bool {
     if (fs::exists(filepath)) {
-        string msg = FS(FORMAT_STR("The file {1} already exists! Do you want to replace it?") %
-                        filepath.filename().u8string());
+        std::string msg = FS(FORMAT_STR("The file {1} already exists! Do you want to replace it?") %
+                             filepath.filename().u8string());
         int res = XojMsgBox::replaceFileQuestion(getGtkWindow(), msg);
         return res == GTK_RESPONSE_OK;
     }

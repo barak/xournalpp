@@ -40,10 +40,15 @@ namespace Util {
 [[maybe_unused]] [[nodiscard]] bool hasXournalFileExt(const fs::path& path);
 
 /**
- * Clear the the last known xournal extension (last .xoj, .xopp etc.)
+ * @return true if this file has a pdf extension
+ */
+bool hasPdfFileExt(const fs::path& path);
+
+/**
+ * Clear the xournal extensions ignoring case (.xoj, .xopp)
  *
  * @param ext An extension to clear additionally, eg .pdf (would also clear
- *  .pdf.xopp etc.)
+ *  .PDF.xopp etc.)
  */
 void clearExtensions(fs::path& path, const std::string& ext = "");
 
@@ -124,5 +129,7 @@ fs::path getLongPath(const fs::path& path);
 [[maybe_unused]] [[nodiscard]] fs::path getTmpDirSubfolder(const fs::path& subfolder = "");
 [[maybe_unused]] [[nodiscard]] fs::path getAutosaveFilepath();
 [[maybe_unused]] [[nodiscard]] fs::path getGettextFilepath(const char* localeDir);
+[[maybe_unused]] [[nodiscard]] fs::path getDataPath();
+[[maybe_unused]] [[nodiscard]] fs::path getLocalePath();
 
 }  // namespace Util

@@ -42,7 +42,7 @@ void RenderJob::rerenderRectangle(Rectangle<double> const& rect) {
 
     bool backgroundVisible = view->page->isLayerVisible(0);
     if (backgroundVisible && view->page->getBackgroundType().isPdfPage()) {
-        int pgNo = view->page->getPdfPageNr();
+        auto pgNo = view->page->getPdfPageNr();
         XojPdfPageSPtr popplerPage = doc->getPdfPage(pgNo);
         PdfCache* cache = view->xournal->getCache();
         PdfView::drawPage(cache, popplerPage, crRect, zoom, pageWidth, pageHeight);
@@ -54,7 +54,7 @@ void RenderJob::rerenderRectangle(Rectangle<double> const& rect) {
 
     cairo_destroy(crRect);
 
-    g_mutex_lock(&view->drawingMutex);
+    view->drawingMutex.lock();
 
     cairo_t* crPageBuffer = cairo_create(view->crBuffer);
 
@@ -67,20 +67,20 @@ void RenderJob::rerenderRectangle(Rectangle<double> const& rect) {
 
     cairo_surface_destroy(rectBuffer);
 
-    g_mutex_unlock(&view->drawingMutex);
+    view->drawingMutex.unlock();
 }
 
 void RenderJob::run() {
     double zoom = this->view->xournal->getZoom();
 
-    g_mutex_lock(&this->view->repaintRectMutex);
+    this->view->repaintRectMutex.lock();
 
     bool rerenderComplete = this->view->rerenderComplete;
     auto rerenderRects = std::move(this->view->rerenderRects);
 
     this->view->rerenderComplete = false;
 
-    g_mutex_unlock(&this->view->repaintRectMutex);
+    this->view->repaintRectMutex.unlock();
 
     int dpiScaleFactor = this->view->xournal->getDpiScaleFactor();
 
@@ -103,7 +103,7 @@ void RenderJob::run() {
         doc->lock();
 
         if (this->view->page->getBackgroundType().isPdfPage()) {
-            int pgNo = this->view->page->getPdfPageNr();
+            auto pgNo = this->view->page->getPdfPageNr();
             popplerPage = doc->getPdfPage(pgNo);
         }
 
@@ -114,21 +114,21 @@ void RenderJob::run() {
         int height = this->view->page->getHeight();
 
         bool backgroundVisible = this->view->page->isLayerVisible(0);
-        if (backgroundVisible) {
+        if (backgroundVisible && this->view->page->getBackgroundType().isPdfPage()) {
             PdfView::drawPage(this->view->xournal->getCache(), popplerPage, cr2, zoom, width, height);
         }
         localView.drawPage(this->view->page, cr2, false);
 
         cairo_destroy(cr2);
 
-        g_mutex_lock(&this->view->drawingMutex);
+        this->view->drawingMutex.lock();
 
         if (this->view->crBuffer) {
             cairo_surface_destroy(this->view->crBuffer);
         }
         this->view->crBuffer = crBuffer;
 
-        g_mutex_unlock(&this->view->drawingMutex);
+        this->view->drawingMutex.unlock();
         doc->unlock();
     } else {
         for (Rectangle<double> const& rect: rerenderRects) {

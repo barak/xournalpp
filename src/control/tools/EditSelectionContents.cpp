@@ -28,6 +28,8 @@
 
 #include "Selection.h"
 
+using std::vector;
+
 EditSelectionContents::EditSelectionContents(Rectangle<double> bounds, Rectangle<double> snappedBounds,
                                              const PageRef& sourcePage, Layer* sourceLayer, XojPageView* sourceView):
         lastBounds(bounds),
@@ -73,6 +75,7 @@ void EditSelectionContents::replaceInsertOrder(std::deque<std::pair<Element*, La
  * Returns all containing elements of this selection
  */
 auto EditSelectionContents::getElements() -> vector<Element*>* { return &this->selected; }
+auto EditSelectionContents::getElements() const -> const vector<Element*>* { return &this->selected; }
 
 /**
  * Returns the insert order of this selection
@@ -546,7 +549,7 @@ auto EditSelectionContents::copySelection(PageRef page, XojPageView* view, doubl
     return new InsertsUndoAction(page, layer, new_elems);
 }
 
-void EditSelectionContents::serialize(ObjectOutputStream& out) {
+void EditSelectionContents::serialize(ObjectOutputStream& out) const {
     out.writeObject("EditSelectionContents");
 
     out.writeDouble(this->originalBounds.x);

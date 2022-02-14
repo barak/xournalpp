@@ -12,15 +12,15 @@
 #pragma once
 
 #include <list>
+#include <mutex>
 #include <string>
 #include <vector>
 
 #include <cairo.h>
+#include <glib.h>
 
 #include "pdf/base/XojPdfPage.h"
 
-#include "XournalType.h"
-using std::list;
 
 class PdfCacheEntry;
 
@@ -59,10 +59,10 @@ private:
     PdfCacheEntry* cache(XojPdfPageSPtr popplerPage, cairo_surface_t* img, double zoom);
 
 private:
-    GMutex renderMutex{};
+    std::mutex renderMutex;
 
-    list<PdfCacheEntry*> data;
-    list<PdfCacheEntry*>::size_type size = 0;
+    std::list<PdfCacheEntry*> data;
+    std::list<PdfCacheEntry*>::size_type size = 0;
 
     double zoom = -1;
     double zoomRefreshThreshold;

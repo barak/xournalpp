@@ -23,7 +23,7 @@
 #include "view/ElementContainer.h"
 
 #include "CursorSelectionType.h"
-#include "XournalType.h"
+
 
 class UndoRedoHandler;
 class Layer;
@@ -88,7 +88,8 @@ public:
     /**
      * Returns all containing elements of this selection
      */
-    vector<Element*>* getElements();
+    std::vector<Element*>* getElements();
+    const std::vector<Element*>* getElements() const;
 
     /**
      * Returns the insert order of this selection
@@ -155,8 +156,8 @@ public:
 
 public:
     // Serialize interface
-    void serialize(ObjectOutputStream& out);
-    void readSerialized(ObjectInputStream& in);
+    void serialize(ObjectOutputStream& out) const override;
+    void readSerialized(ObjectInputStream& in) override;
 
 private:
     /**

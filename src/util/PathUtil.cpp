@@ -3,9 +3,12 @@
 #include <array>
 #include <fstream>
 
+#include <config-paths.h>
+#include <config.h>
 #include <glib.h>
 #include <stdlib.h>
 
+#include "Stacktrace.h"
 #include "StringUtils.h"
 #include "Util.h"
 #include "XojMsgBox.h"
@@ -61,15 +64,19 @@ auto Util::readString(fs::path const& path, bool showErrorToUser) -> std::option
     return std::nullopt;
 }
 
-auto Util::getEscapedPath(const fs::path& path) -> string {
-    string escaped = path.string();
+auto Util::getEscapedPath(const fs::path& path) -> std::string {
+    std::string escaped = path.string();
     StringUtils::replaceAllChars(escaped, {replace_pair('\\', "\\\\"), replace_pair('\"', "\\\"")});
     return escaped;
 }
 
 auto Util::hasXournalFileExt(const fs::path& path) -> bool {
-    auto extension = path.extension();
+    auto extension = StringUtils::toLowerCase(path.extension().string());
     return extension == ".xoj" || extension == ".xopp";
+}
+
+auto Util::hasPdfFileExt(const fs::path& path) -> bool {
+    return StringUtils::toLowerCase(path.extension().string()) == ".pdf";
 }
 
 auto Util::clearExtensions(fs::path& path, const std::string& ext) -> void {
@@ -122,7 +129,7 @@ auto Util::toUri(const fs::path& path) -> std::optional<std::string> {
         return std::nullopt;
     }
 
-    string uriString(uri);
+    std::string uriString(uri);
     g_free(uri);
     return {std::move(uriString)};
 }
@@ -146,11 +153,11 @@ void Util::openFileWithDefaultApplication(const fs::path& filename) {
     constexpr auto const OPEN_PATTERN = "xdg-open \"{1}\"";
 #endif
 
-    string command = FS(FORMAT_STR(OPEN_PATTERN) % Util::getEscapedPath(filename));
+    std::string command = FS(FORMAT_STR(OPEN_PATTERN) % Util::getEscapedPath(filename));
     if (system(command.c_str()) != 0) {
-        string msg = FS(_F("File couldn't be opened. You have to do it manually:\n"
-                           "URL: {1}") %
-                        filename.u8string());
+        std::string msg = FS(_F("File couldn't be opened. You have to do it manually:\n"
+                                "URL: {1}") %
+                             filename.u8string());
         XojMsgBox::showErrorToUser(nullptr, msg);
     }
 }
@@ -163,11 +170,11 @@ void Util::openFileWithFilebrowser(const fs::path& filename) {
 #else  // linux, unix, ...
     constexpr auto const OPEN_PATTERN = R"(nautilus "file://{1}" || dolphin "file://{1}" || konqueror "file://{1}" &)";
 #endif
-    string command = FS(FORMAT_STR(OPEN_PATTERN) % Util::getEscapedPath(filename));
+    std::string command = FS(FORMAT_STR(OPEN_PATTERN) % Util::getEscapedPath(filename));
     if (system(command.c_str()) != 0) {
-        string msg = FS(_F("File couldn't be opened. You have to do it manually:\n"
-                           "URL: {1}") %
-                        filename.u8string());
+        std::string msg = FS(_F("File couldn't be opened. You have to do it manually:\n"
+                                "URL: {1}") %
+                             filename.u8string());
         XojMsgBox::showErrorToUser(nullptr, msg);
     }
 }
@@ -184,7 +191,8 @@ auto Util::getGettextFilepath(const char* localeDir) -> fs::path {
         }
     }
     const char* dir = (gettextEnv) ? directories.c_str() : localeDir;
-    g_message("TEXTDOMAINDIR = %s, PACKAGE_LOCALE_DIR = %s, chosen directory = %s", gettextEnv, localeDir, dir);
+    g_message("TEXTDOMAINDIR = %s, Platform-specific locale dir = %s, chosen directory = %s", gettextEnv, localeDir,
+              dir);
     return fs::path(dir);
 }
 
@@ -246,7 +254,7 @@ auto Util::ensureFolderExists(const fs::path& p) -> fs::path {
         fs::create_directories(p);
     } catch (fs::filesystem_error const& fe) {
         Util::execInUiThread([=]() {
-            string msg = FS(_F("Could not create folder: {1}\nFailed with error: {2}") % p.u8string() % fe.what());
+            std::string msg = FS(_F("Could not create folder: {1}\nFailed with error: {2}") % p.u8string() % fe.what());
             g_warning("%s %s", msg.c_str(), fe.what());
             XojMsgBox::showErrorToUser(nullptr, msg);
         });
@@ -295,4 +303,34 @@ bool Util::safeRenameFile(fs::path const& from, fs::path const& to) {
         fs::remove(from);
     }
     return true;
+}
+
+auto Util::getDataPath() -> fs::path {
+#ifdef _WIN32
+    TCHAR szFileName[MAX_PATH];
+    GetModuleFileName(nullptr, szFileName, MAX_PATH);
+    auto exePath = std::string(szFileName);
+    std::string::size_type pos = exePath.find_last_of("\\/");
+    fs::path p = exePath.substr(0, pos);
+    p = p / ".." / "share" / PROJECT_PACKAGE;
+    return p;
+#elif defined(__APPLE__)
+    fs::path p = Stacktrace::getExePath();
+    p = p / ".." / "Resources";
+    return p;
+#else
+    fs::path p = PACKAGE_DATA_DIR;
+    p /= PROJECT_PACKAGE;
+    return p;
+#endif
+}
+
+auto Util::getLocalePath() -> fs::path {
+#ifdef _WIN32
+    return getDataPath() / ".." / "locale";
+#elif defined(__APPLE__)
+    return getDataPath() / "share" / "locale";
+#else
+    return getDataPath() / ".." / "locale";
+#endif
 }

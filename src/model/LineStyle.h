@@ -16,8 +16,6 @@
 
 #include "serializing/Serializeable.h"
 
-#include "XournalType.h"
-
 
 class LineStyle: public Serializeable {
 public:
@@ -29,7 +27,7 @@ public:
 
 public:
     // Serialize interface
-    void serialize(ObjectOutputStream& out);
+    void serialize(ObjectOutputStream& out) const;
     void readSerialized(ObjectInputStream& in);
 
 public:

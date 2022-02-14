@@ -29,6 +29,8 @@
 #include "gui/inputdevices/InputEvents.h"
 #include "util/DeviceListHelper.h"
 
+using std::string;
+
 MainWindow::MainWindow(GladeSearchpath* gladeSearchPath, Control* control):
         GladeGui(gladeSearchPath, "main.glade", "mainWindow") {
     this->control = control;
@@ -44,11 +46,13 @@ MainWindow::MainWindow(GladeSearchpath* gladeSearchPath, Control* control):
     g_object_ref(mainContentWidget);
     g_object_ref(sidebarWidget);
 
+    GtkSettings* appSettings = gtk_settings_get_default();
+    g_object_set(appSettings, "gtk-application-prefer-dark-theme", control->getSettings()->isDarkTheme(), NULL);
+
     loadMainCSS(gladeSearchPath, "xournalpp.css");
 
     GtkOverlay* overlay = GTK_OVERLAY(get("mainOverlay"));
     this->floatingToolbox = new FloatingToolbox(this, overlay);
-
 
     for (int i = 0; i < TOOLBAR_DEFINITIONS_LEN; i++) {
         GtkWidget* w = get(TOOLBAR_DEFINITIONS[i].guiName);
@@ -183,9 +187,7 @@ void MainWindow::rebindMenubarAccelerators() {
 }
 
 MainWindow::~MainWindow() {
-    for (int i = 0; i < TOOLBAR_DEFINITIONS_LEN; i++) {
-        g_object_unref(this->toolbarWidgets[i]);
-    }
+    for (int i = 0; i < TOOLBAR_DEFINITIONS_LEN; i++) { g_object_unref(this->toolbarWidgets[i]); }
 
     delete[] this->toolbarWidgets;
     this->toolbarWidgets = nullptr;
@@ -613,9 +615,7 @@ void MainWindow::toolbarSelected(ToolbarData* d) {
 
 auto MainWindow::clearToolbar() -> ToolbarData* {
     if (this->selectedToolbar != nullptr) {
-        for (int i = 0; i < TOOLBAR_DEFINITIONS_LEN; i++) {
-            ToolMenuHandler::unloadToolbar(this->toolbarWidgets[i]);
-        }
+        for (int i = 0; i < TOOLBAR_DEFINITIONS_LEN; i++) { ToolMenuHandler::unloadToolbar(this->toolbarWidgets[i]); }
 
         this->toolbar->freeDynamicToolbarItems();
     }
@@ -717,8 +717,8 @@ void MainWindow::rebuildLayerMenu() { layerVisibilityChanged(); }
 void MainWindow::layerVisibilityChanged() {
     LayerController* lc = control->getLayerController();
 
-    int layer = lc->getCurrentLayerId();
-    int maxLayer = lc->getLayerCount();
+    auto layer = lc->getCurrentLayerId();
+    auto maxLayer = lc->getLayerCount();
 
     control->fireEnableAction(ACTION_DELETE_LAYER, layer > 0);
     control->fireEnableAction(ACTION_GOTO_NEXT_LAYER, layer < maxLayer);
