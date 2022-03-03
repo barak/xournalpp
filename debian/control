@@ -1,5 +1,6 @@
 Source: xournalpp
 Maintainer: Barak A. Pearlmutter <bap@debian.org>
+Uploaders: Mike Gabriel <sunweaver@debian.org>
 Section: x11
 Priority: optional
 Standards-Version: 4.6.0
