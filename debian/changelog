@@ -2,8 +2,10 @@ xournalpp (1.1.2-1) unstable; urgency=medium
 
   * Add Mike Gabriel as co-maintainer
   * new upstream version
+  * Update lintian override info to new format on line 2, 3.
+  * Update standards version to 4.6.1, no changes needed.
 
- -- Barak A. Pearlmutter <bap@debian.org>  Mon, 24 Oct 2022 13:28:31 +0100
+ -- Barak A. Pearlmutter <bap@debian.org>  Mon, 24 Oct 2022 13:59:45 +0100
 
 xournalpp (1.1.1-1) unstable; urgency=medium
 
