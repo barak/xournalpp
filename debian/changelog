@@ -1,13 +1,9 @@
-xournalpp (1.1.2~dev-1) UNRELEASED; urgency=medium
+xournalpp (1.1.2-1) unstable; urgency=medium
 
-  [ Bryan Tan ]
-  * Automated version bump to 1.1.2~dev
-
-  [ Barak A. Pearlmutter ]
   * Add Mike Gabriel as co-maintainer
-  * Track upstream 1.1 branch for bug fixes etc
+  * new upstream version
 
- -- Barak A. Pearlmutter <bap@debian.org>  Thu, 29 Sep 2022 16:38:20 +0100
+ -- Barak A. Pearlmutter <bap@debian.org>  Mon, 24 Oct 2022 13:28:31 +0100
 
 xournalpp (1.1.1-1) unstable; urgency=medium
 
