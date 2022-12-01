@@ -275,6 +275,10 @@ void MainWindow::setGtkTouchscreenScrollingForDeviceMapping() {
 }
 
 void MainWindow::setGtkTouchscreenScrollingEnabled(bool enabled) {
+    if (!control->getSettings()->getGtkTouchInertialScrollingEnabled()) {
+        enabled = false;
+    }
+
     if (enabled == gtkTouchscreenScrollingEnabled.load() || winXournal == nullptr) {
         return;
     }
@@ -283,13 +287,12 @@ void MainWindow::setGtkTouchscreenScrollingEnabled(bool enabled) {
 
     Util::execInUiThread(
             [=]() {
-                gtk_scrolled_window_set_kinetic_scrolling(GTK_SCROLLED_WINDOW(winXournal),
-                                                          gtkTouchscreenScrollingEnabled.load());
+                const bool touchScrollEnabled = gtkTouchscreenScrollingEnabled.load();
+
+                gtk_scrolled_window_set_kinetic_scrolling(GTK_SCROLLED_WINDOW(winXournal), touchScrollEnabled);
             },
             G_PRIORITY_HIGH);
 }
-
-bool MainWindow::getGtkTouchscreenScrollingEnabled() const { return gtkTouchscreenScrollingEnabled.load(); }
 
 /**
  * Allow to hide menubar, but only if global menu is not enabled
