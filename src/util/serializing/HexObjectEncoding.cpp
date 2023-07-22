@@ -1,7 +1,10 @@
-#include "HexObjectEncoding.h"
+#include "util/serializing/HexObjectEncoding.h"
 
-#include <cinttypes>
-#include <cstdio>
+#include <cinttypes>  // for PRIx8
+#include <cstdint>    // for uint8_t
+#include <cstdio>     // for sprintf
+
+#include <glib.h>  // for g_free, g_malloc, g_string_append_len
 
 HexObjectEncoding::HexObjectEncoding() = default;
 

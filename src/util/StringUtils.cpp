@@ -1,10 +1,11 @@
-#include "StringUtils.h"
+#include "util/StringUtils.h"
 
 #include <cstring>
 #include <sstream>  // std::istringstream
 #include <utility>
 
 #include <glib.h>
+
 using std::string;
 using std::vector;
 

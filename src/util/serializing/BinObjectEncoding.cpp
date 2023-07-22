@@ -1,4 +1,6 @@
-#include "BinObjectEncoding.h"
+#include "util/serializing/BinObjectEncoding.h"
+
+#include <glib.h>  // for g_string_append_len
 
 BinObjectEncoding::BinObjectEncoding() = default;
 

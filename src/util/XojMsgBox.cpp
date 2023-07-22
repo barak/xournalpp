@@ -1,10 +1,17 @@
-#include "XojMsgBox.h"
+#include "util/XojMsgBox.h"
 
-#include "i18n.h"
+#include <utility>  // for pair
+
+#include <glib-object.h>  // for g_object_set_property, g_value_init, g_valu...
+#include <glib.h>         // for g_free, g_markup_escape_text, g_error_free
+
+#include "util/i18n.h"  // for _, FS, _F
 
 #ifdef _WIN32
 // Needed for help dialog workaround on Windows; see XojMsgBox::showHelp
-#include <shlwapi.h>
+#include <windows.h>
+// <windows.h> must be included first
+#include <shellapi.h>  // for ShellExecute
 #endif
 
 using std::map;
@@ -59,7 +66,9 @@ auto XojMsgBox::showPluginMessage(const string& pluginName, const string& msg, c
     g_object_set_property(G_OBJECT(dialog), "secondary-text", &val);
     g_value_unset(&val);
 
-    for (auto& kv: button) { gtk_dialog_add_button(GTK_DIALOG(dialog), kv.second.c_str(), kv.first); }
+    for (auto& kv: button) {
+        gtk_dialog_add_button(GTK_DIALOG(dialog), kv.second.c_str(), kv.first);
+    }
 
     int res = gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);

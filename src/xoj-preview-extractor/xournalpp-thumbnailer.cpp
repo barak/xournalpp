@@ -10,27 +10,36 @@
  */
 
 // Set to true to write a log with errors and debug logs to /tmp/xojtmb.log
-#include "filesystem.h"
 #define DEBUG_THUMBNAILER false
 
+#include <algorithm>  // for max, min
+#include <cstdio>     // for fclose, fopen, fwrite, FILE
+#include <iostream>   // for endl, ostream, basic_ostream
+#include <locale>     // for locale
+#include <string>     // for string, basic_string, allocator
+#include <vector>     // for vector
 
-#include <algorithm>
+#include <cairo.h>         // for cairo_create, cairo_image_surf...
+#include <glib.h>          // for gchar, g_get_home_dir, g_getenv
+#include <libintl.h>       // for bindtextdomain, textdomain
+#include <librsvg/rsvg.h>  // for RsvgDimensionData, rsvg_handle...
+
+#include "util/PathUtil.h"             // for getLocalePath
+#include "util/PlaceholderString.h"    // for PlaceholderString
+#include "util/XojPreviewExtractor.h"  // for XojPreviewExtractor, PREVIEW_R...
+#include "util/i18n.h"                 // for _F, _
+
+#include "config.h"      // for GETTEXT_PACKAGE, ENABLE_NLS
+#include "filesystem.h"  // for path, operator/, u8path, exists
+
+#ifdef DEBUG_THUMBERNAILER
 #include <fstream>
-#include <iostream>
+#endif
 
-#include <config-paths.h>
-#include <config.h>
-
-#include "PathUtil.h"
-#include "XojPreviewExtractor.h"
-#include "i18n.h"
 using std::cerr;
 using std::cout;
 using std::endl;
 using std::string;
-#include <cairo-svg.h>
-#include <cairo.h>
-#include <librsvg/rsvg.h>
 
 void initLocalisation() {
 #ifdef ENABLE_NLS

@@ -1,73 +1,58 @@
-## Build poppler ##
+cmake_minimum_required(VERSION 3.13)
+cmake_policy(VERSION 3.13)
 
-## Basic variables ##
+# Todo: add to target by generator expression
 
-include_directories (
-  "${PROJECT_BINARY_DIR}/src"
-  "${PROJECT_SOURCE_DIR}/src"
-  "${PROJECT_SOURCE_DIR}/src/util"
 
-  ${xournalpp_INCLUDE_DIRS}
-)
+##############################
+# xoj default option target
+##############################
 
-# Build xournalpp-thumbnailer as it doesn't need CXX_FLAGS from below
-add_subdirectory (xoj-preview-extractor)
-
-# Used for both util and xournalpp targets
-add_definitions(-g -Wreturn-type -Wuninitialized -Wunused-value -Wunused-variable -Wconversion)
-
-if (NOT WIN32 AND (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU"))
-  set(xournalpp_LDFLAGS ${xournalpp_LDFLAGS} -rdynamic)
+add_library(defaults INTERFACE)
+target_include_directories(defaults INTERFACE ${PROJECT_BINARY_DIR}/src)
+add_library(xoj::defaults ALIAS defaults)
+if (MSVC) # clang-cl.exe, cl.exe
+  target_compile_definitions(defaults INTERFACE NOMINMAX WIN32_LEAN_AND_MEAN)
+  target_compile_options(defaults INTERFACE -utf-8)
+else(MSVC) # gnu clang with gnu driver, 
+  target_compile_options(defaults INTERFACE -Wall -Wreturn-type -Wuninitialized -Wunused-value -Wunused-variable -Wconversion)
 endif ()
-
-option (DEBUG_COMPILE "Pass -Wall to CXX_FLAGS" OFF)
-mark_as_advanced (FORCE DEBUG_COMPILE)
-
-if (DEBUG_COMPILE)
-  add_definitions (-Wall)
-endif (DEBUG_COMPILE)
-
+# Todo (support-v3.10): guard this variable with cmake_dependent_option for CMake 3.10, and NOT(GCC)
+# then downgrade cmake_minimum_required to CMake 3.10
 if (DEV_ENABLE_GCOV)
-  add_definitions (--coverage)
+  target_compile_options(defaults INTERFACE --coverage)
+  target_link_options(defaults INTERFACE --coverage) #cmake v3.13
 endif (DEV_ENABLE_GCOV)
 
-# Used to compile xournalpp and xournalpp-test
-set (xournalpp_LDFLAGS
-  util
-  ${xournalpp_LDFLAGS}
-)
+##############################
+# util
+##############################
 
-## Build util lib ##
-add_subdirectory (util)
+add_subdirectory(util)
 
-## Sources ##
+##############################
+# xournalpp-core
+##############################
 
-# These dirs are xournalpp only so it's safe to add then recursively
-unset (xournalpp_SOURCES_RECURSE)
-file (GLOB_RECURSE xournalpp_SOURCES_RECURSE
-  control/*.cpp
-  enums/*.cpp
-  gui/*.cpp
-  io/*.cpp
-  model/*.cpp
-  plugin/*.cpp
-  undo/*.cpp
-  view/*.cpp
-)
+add_subdirectory(core)
 
-# Here GLOB_RECURSE wouldn't be safe
-unset (xournalpp_SOURCES)
-file (GLOB xournalpp_SOURCES
-  pdf/base/*.cpp
-)
+##############################
+# xournalpp main program
+##############################
 
-# Concatenate SOURCES lists
-set (xournalpp_SOURCES ${xournalpp_SOURCES_RECURSE} ${xournalpp_SOURCES})
-unset (xournalpp_SOURCES_RECURSE)
 
-file (GLOB xournalpp_SOURCES_RECURSE
-  pdf/popplerapi/*.cpp
-)
+add_executable(xournalpp exe/Xournalpp.cpp)
+target_link_libraries(xournalpp PRIVATE xoj::core xoj::util)
+set_target_properties(xournalpp PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+        MACOSX_BUNDLE $<IF:$<PLATFORM_ID:Darwin>,TRUE,${CMAKE_MACOSX_BUNDLE}>
+        WIN32_EXECUTABLE $<IF:$<PLATFORM_ID:Windows>,TRUE,${CMAKE_WIN32_EXECUTABLE}>
+        )
+
+###############################
+# Generate icons
+# Todo(fabian): move this into an own windows specific cmake script
+# e.g. exe/win32/CMakeLists.txt
+###############################
 
 ###############################
 # Add MacOS specific files
@@ -77,83 +62,55 @@ file (GLOB xournalpp_SOURCES_RECURSE
 
 if (APPLE)
   # MacOS specific source files
-  # Concatenate SOURCES lists
-  set (xournalpp_SOURCES ${xournalpp_SOURCES_RECURSE} ${xournalpp_SOURCES})
-  unset (xournalpp_SOURCES_RECURSE)
-  file (GLOB xournalpp_SOURCES_RECURSE osx/*.cpp osx/*.h)
+  file (GLOB xournalpp-sources-osx exe/osx/*.cpp exe/osx/*.h)
+  target_sources(xournalpp PRIVATE ${xournalpp-sources-osx})
+  target_include_directories(xournalpp PRIVATE exe)
 endif()
 
 if (WIN32)
   # generate .ico from .png
+  find_package(ImageMagick REQUIRED COMPONENTS convert)
   set (ICON_SIZES 16 32 48 256)
   foreach (SIZE IN LISTS ICON_SIZES)
     set (RESIZED_ICON ${PROJECT_BINARY_DIR}/xournalpp-icon-${SIZE}.png)
     add_custom_command (
-	  OUTPUT ${RESIZED_ICON}
-	  COMMAND rsvg-convert ${PROJECT_SOURCE_DIR}/ui/pixmaps/com.github.xournalpp.xournalpp.svg --width=${SIZE} --height=${SIZE} -o ${RESIZED_ICON}
+                OUTPUT ${RESIZED_ICON}
+                COMMAND rsvg-convert ${PROJECT_SOURCE_DIR}/ui/pixmaps/com.github.xournalpp.xournalpp.svg --width=${SIZE} --height=${SIZE} -o ${RESIZED_ICON}
 	)
-    set (ICON_DEPS ${ICON_DEPS} ${RESIZED_ICON})
-	unset (RESIZED_ICON)
+  set (ICON_DEPS ${ICON_DEPS} ${RESIZED_ICON})
+  unset (RESIZED_ICON)
   endforeach()
   add_custom_command (
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/win32/xournalpp.ico
-	COMMAND convert ${ICON_DEPS} ${CMAKE_CURRENT_BINARY_DIR}/win32/xournalpp.ico
-	DEPENDS ${ICON_DEPS}
+                COMMAND convert ${ICON_DEPS} ${CMAKE_CURRENT_BINARY_DIR}/win32/xournalpp.ico
+                DEPENDS ${ICON_DEPS}
   )
-  unset (ICON_SIZES)
-  unset (ICON_DEPS)
-  add_custom_target (xournalpp_icon DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/win32/xournalpp.ico)
-
-  # Concatenate SOURCES lists
-  set (xournalpp_SOURCES ${xournalpp_SOURCES_RECURSE} ${xournalpp_SOURCES})
-  unset (xournalpp_SOURCES_RECURSE)
-
-  file (GLOB xournalpp_SOURCES_RECURSE
-    win32/*.cpp
-  )
-endif()
-
-# Concatenate SOURCES lists
-set (xournalpp_SOURCES ${xournalpp_SOURCES_RECURSE} ${xournalpp_SOURCES})
-unset (xournalpp_SOURCES_RECURSE)
-
-## Core library ##
-
-# Used for xournalpp and xournalpp-test
-add_library (xournalpp-core OBJECT ${xournalpp_SOURCES})
-add_dependencies (xournalpp-core util)
-target_compile_features (xournalpp-core PUBLIC ${PROJECT_CXX_FEATURES})
-# Can't use target_link_directories since we require CMake >= 3.10
-target_include_directories (xournalpp-core PRIVATE $<TARGET_PROPERTY:util,INTERFACE_INCLUDE_DIRECTORIES>)
-
-## xournalpp main program ##
-add_executable (xournalpp
-  $<TARGET_OBJECTS:xournalpp-core>
-  Xournalpp.cpp
-)
-
-if (WIN32)
-  set (CMAKE_RC_COMPILER_INIT windres)
-  enable_language (RC)
-  set (CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> -O coff -i <SOURCE> -o <OBJECT>")
+  unset(ICON_SIZES)
+  unset(ICON_DEPS)
+  add_custom_target(xournalpp_icon DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/win32/xournalpp.ico)
   add_dependencies(xournalpp xournalpp_icon)
-  configure_file(win32/xpp.rc.in win32/xpp.rc)
+  
+  # windows specific source files
+  file (GLOB xournalpp-sources-win32 exe/win32/*.cpp exe/win32/*.h)
+  target_sources(xournalpp PRIVATE ${xournalpp-sources-win32})
+  target_include_directories(xournalpp PRIVATE exe)
+  # windows specific appinfo
+  if(NOT MSVC)
+    target_compile_options(xournalpp PRIVATE -mwindows)
+    set(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> -O coff -i <SOURCE> -o <OBJECT>")
+    set(CMAKE_RC_COMPILER_INIT windres)
+  endif()
+  enable_language(RC)
+
+  configure_file(exe/win32/xpp.rc.in ${CMAKE_CURRENT_BINARY_DIR}/win32/xpp.rc)
   target_sources(xournalpp PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/win32/xpp.rc)
 endif ()
+# Until here
+################################
 
-add_dependencies (xournalpp
-  xournalpp-core
-  util
-)
+install(TARGETS xournalpp
+        RUNTIME DESTINATION bin
+        COMPONENT xournalpp
+        )
 
-target_link_libraries (xournalpp ${xournalpp_LDFLAGS})
-
-install (TARGETS xournalpp
-  RUNTIME DESTINATION bin
-  COMPONENT xournalpp
-)
-
-if (ENABLE_CPPUNIT)
-  add_subdirectory (${CMAKE_SOURCE_DIR}/test ${CMAKE_BINARY_DIR}/test)
-endif (ENABLE_CPPUNIT)
-
+add_subdirectory(xoj-preview-extractor)

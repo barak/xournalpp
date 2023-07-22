@@ -1,18 +1,22 @@
-#include "PathUtil.h"
+#include "util/PathUtil.h"
 
-#include <array>
-#include <fstream>
+#include <cstdlib>      // for system
+#include <fstream>      // for ifstream, char_traits, basic_ist...
+#include <iterator>     // for begin
+#include <string_view>  // for basic_string_view, operator""sv
+#include <type_traits>  // for remove_reference<>::type
+#include <utility>      // for move
 
-#include <config-paths.h>
-#include <config.h>
-#include <glib.h>
-#include <stdlib.h>
+#include <config-paths.h>  // for PACKAGE_DATA_DIR
+#include <glib.h>          // for gchar, g_free, g_filename_to_uri
 
-#include "Stacktrace.h"
-#include "StringUtils.h"
-#include "Util.h"
-#include "XojMsgBox.h"
-#include "i18n.h"
+#include "util/PlaceholderString.h"  // for PlaceholderString
+#include "util/StringUtils.h"        // for replace_pair, StringUtils
+#include "util/Util.h"               // for getPid, execInUiThread
+#include "util/XojMsgBox.h"          // for XojMsgBox
+#include "util/i18n.h"               // for FS, _F, FORMAT_STR
+
+#include "config.h"  // for PROJECT_NAME
 
 #ifdef GHC_FILESYSTEM
 // Fix of ghc::filesystem bug (path::operator/=() won't support string_views)
@@ -41,6 +45,10 @@ auto Util::getLongPath(const fs::path& path) -> fs::path {
 auto Util::getLongPath(const fs::path& path) -> fs::path { return path; }
 #endif
 
+#ifdef __APPLE__
+#include "util/Stacktrace.h"
+#endif
+
 /**
  * Read a file to a string
  *
@@ -56,7 +64,7 @@ auto Util::readString(fs::path const& path, bool showErrorToUser) -> std::option
         s.resize(fs::file_size(path));
         ifs.read(s.data(), s.size());
         return {std::move(s)};
-    } catch (fs::filesystem_error const& e) {
+    } catch (const fs::filesystem_error& e) {
         if (showErrorToUser) {
             XojMsgBox::showErrorToUser(nullptr, e.what());
         }
@@ -197,7 +205,7 @@ auto Util::getGettextFilepath(const char* localeDir) -> fs::path {
 }
 
 auto Util::getAutosaveFilepath() -> fs::path {
-    fs::path p(getConfigSubfolder("autosave"));
+    fs::path p(getCacheSubfolder("autosaves"));
     p /= std::to_string(getPid()) + ".xopp";
     return p;
 }
@@ -252,7 +260,7 @@ auto Util::getTmpDirSubfolder(const fs::path& subfolder) -> fs::path {
 auto Util::ensureFolderExists(const fs::path& p) -> fs::path {
     try {
         fs::create_directories(p);
-    } catch (fs::filesystem_error const& fe) {
+    } catch (const fs::filesystem_error& fe) {
         Util::execInUiThread([=]() {
             std::string msg = FS(_F("Could not create folder: {1}\nFailed with error: {2}") % p.u8string() % fe.what());
             g_warning("%s %s", msg.c_str(), fe.what());
@@ -266,7 +274,7 @@ auto Util::isChildOrEquivalent(fs::path const& path, fs::path const& base) -> bo
     auto safeCanonical = [](fs::path const& p) {
         try {
             return fs::weakly_canonical(p);
-        } catch (fs::filesystem_error const& fe) {
+        } catch (const fs::filesystem_error& fe) {
             g_warning("Util::isChildOrEquivalent: Error resolving paths, failed with %s.\nFalling back to "
                       "lexicographical path",
                       fe.what());
@@ -294,7 +302,7 @@ bool Util::safeRenameFile(fs::path const& from, fs::path const& to) {
     try {
         fs::remove(to);
         fs::rename(from, to);
-    } catch (fs::filesystem_error const& fe) {
+    } catch (const fs::filesystem_error& fe) {
         // Attempt copy and delete
         g_warning("Renaming file %s to %s failed with %s. This may happen when source and target are on different "
                   "filesystems. Attempt to copy the file.",
@@ -312,7 +320,7 @@ auto Util::getDataPath() -> fs::path {
     auto exePath = std::string(szFileName);
     std::string::size_type pos = exePath.find_last_of("\\/");
     fs::path p = exePath.substr(0, pos);
-    p = p / ".." / "share" / PROJECT_PACKAGE;
+    p = p / ".." / "share" / PROJECT_NAME;
     return p;
 #elif defined(__APPLE__)
     fs::path p = Stacktrace::getExePath().parent_path();
@@ -322,7 +330,7 @@ auto Util::getDataPath() -> fs::path {
     return p;
 #else
     fs::path p = PACKAGE_DATA_DIR;
-    p /= PROJECT_PACKAGE;
+    p /= PROJECT_NAME;
     return p;
 #endif
 }

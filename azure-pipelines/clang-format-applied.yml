@@ -5,7 +5,10 @@ pr:
     - '*'
   paths:
     include:
-      - '*'
+      - '*.c'
+      - '*.cpp'
+      - '*.h'
+      - '*.hpp'
     exclude:
       - po/xournalpp.pot
       - po/*.po
@@ -15,49 +18,45 @@ stages:
   jobs:
   - job: 'Build_Test'
     pool:
-      vmImage: 'ubuntu-18.04'
+      vmImage: 'ubuntu-20.04'
     displayName: 'Test for correct Clang formatting'
+    variables:
+    - name: CLANG_FORMAT_VERSIONS
+      value: "15 16"
     steps:
+    - checkout: self
     - bash: |
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-        sudo apt-add-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-12 main"
+        for VERSION in $(CLANG_FORMAT_VERSIONS); do
+          sudo apt-add-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-$VERSION main"
+        done
         sudo apt-get update
-        sudo apt-get install -y clang-format-12
+        for VERSION in $(CLANG_FORMAT_VERSIONS); do
+          sudo apt-get install -y clang-format-$VERSION
+        done
       displayName: 'Install clang-format'
     - bash: |
-        # Checkout the master branch as we require it to get the list of modified files
-        git checkout $(System.PullRequest.TargetBranch)
-        git fetch origin +$(Build.SourceBranch)
+        git config --global clangFormat.extensions "c,h,cpp,hpp,hxx,cxx,cc,hh'"
+        #
+        echo $(git status)
+        git fetch origin $(System.PullRequest.TargetBranch):$(System.PullRequest.TargetBranch)
+        git switch -c this_pr 
+        git switch $(System.PullRequest.TargetBranch)
+        git switch this_pr
+        BASE_COMMIT=$(git merge-base this_pr $(System.PullRequest.TargetBranch))
+        #
+        echo Computing diff to commit hash $BASE_COMMIT
+        # Exit on git merge-base failure
+        [[ -z "$BASE_COMMIT" ]] && { echo "Error: BASE_COMMIT is empty" ; exit 1; }
+        git fetch origin $BASE_COMMIT
 
-        BASE_COMMIT=$(git merge-base FETCH_HEAD $(System.PullRequest.TargetBranch))
-        FILES=$(git --no-pager diff --name-only $BASE_COMMIT FETCH_HEAD -- '*.cpp' '*.hpp' '*.h')
-
-        echo "List of modified source files:"
-        for f in $FILES; do echo "$f"; done
-
-        # Checkout the PR so we can check the modified files for correct formatting
-        git checkout FETCH_HEAD
-
-        # Apply clang-format, modifying all badly formatted files
-        if [ ! -z "$FILES" ]; then
-            git --no-pager diff -U0 $BASE_COMMIT -- $FILES | perl azure-pipelines/util/format_diff_lines.pl
-        fi
-
+        for VERSION in $(CLANG_FORMAT_VERSIONS); do
+          echo "Testing $(clang-format-$VERSION --version)"
+          # A bug in llvm's .deb packages makes git-clang-format-$VERSION call clang-format instead of clang-format-$VERSION
+          # The --binary option gives a workaround
+          git clang-format-$VERSION --binary="clang-format-$VERSION" --diff $BASE_COMMIT -- && { echo "Success: changes are compatible with clang-format-$VERSION"; exit 0; }
+        done
+        # Failure: None of the allowed clang-format versions validated the changes
+        echo "Error: changes are not compatible with any of the allowed clang-format versions: $CLANG_FORMAT_VERSIONS"
+        exit 1
       displayName: 'Run clang-format on modified files'
-    - bash: |
-        # Check for modified files
-        if [ -z "$(git status --porcelain)" ]; then 
-            # Working directory clean
-            echo "The code was properly formatted using clang-format before being submitted."
-            exit 0
-        else 
-            # Uncommitted changes
-            echo "The code was not formatted using clang-format before being submitted."
-            echo "To format the code, try running the following command from the root of the repository:"
-            echo "    git --no-pager diff -U0 -- '*.cpp' '*.c' '*.h' '*.hpp' | perl azure-pipelines/util/format_diff_lines.pl"
-            echo
-            echo "The formatting changes required are shown below."
-            git --no-pager diff
-            exit 1
-        fi
-      displayName: 'Check for badly formatted modified files'

@@ -1,7 +1,11 @@
-#include "ObjectOutputStream.h"
+#include "util/serializing/ObjectOutputStream.h"
 
-#include "ObjectEncoding.h"
-#include "Serializeable.h"
+#include <cairo.h>  // for CAIRO_STATUS_SUCCESS
+
+#include "util/serializing/ObjectEncoding.h"  // for ObjectEncoding
+#include "util/serializing/Serializable.h"    // for XML_VERSION_STR
+
+template void ObjectOutputStream::writeData(const std::vector<double>& data);
 
 ObjectOutputStream::ObjectOutputStream(ObjectEncoding* encoder) {
     g_assert(encoder != nullptr);
@@ -42,7 +46,7 @@ void ObjectOutputStream::writeString(const char* str) { writeString(std::string(
 
 void ObjectOutputStream::writeString(const std::string& s) {
     this->encoder->addStr("_s");
-    int len = s.length();
+    int len = static_cast<int>(s.length());
     this->encoder->addData(&len, sizeof(int));
     this->encoder->addData(s.c_str(), len);
 }
@@ -58,22 +62,21 @@ void ObjectOutputStream::writeData(const void* data, int len, int width) {
     }
 }
 
-static auto cairoWriteFunction(GString* string, const unsigned char* data, unsigned int length) -> cairo_status_t {
-    g_string_append_len(string, reinterpret_cast<const gchar*>(data), length);
-    return CAIRO_STATUS_SUCCESS;
+template <typename T>
+void ObjectOutputStream::writeData(const std::vector<T>& data) {
+    this->encoder->addStr("_b");
+    const int len = static_cast<int>(data.size());
+    const int width = sizeof(T);
+    this->encoder->addData(&len, sizeof(int));
+    this->encoder->addData(&width, sizeof(int));
+    this->encoder->addData(data.data(), static_cast<int>(data.size() * sizeof(T)));
 }
 
-void ObjectOutputStream::writeImage(cairo_surface_t* img) {
-    GString* imgStr = g_string_sized_new(102400);
-
-    cairo_surface_write_to_png_stream(img, reinterpret_cast<cairo_write_func_t>(&cairoWriteFunction), imgStr);
-
+void ObjectOutputStream::writeImage(const std::string_view& imgData) {
     this->encoder->addStr("_m");
-    this->encoder->addData(&imgStr->len, sizeof(gsize));
-
-    this->encoder->addData(imgStr->str, imgStr->len);
-
-    g_string_free(imgStr, true);
+    size_t len = imgData.length();
+    this->encoder->addData(&len, sizeof(size_t));
+    this->encoder->addData(imgData.data(), static_cast<int>(len));
 }
 
 auto ObjectOutputStream::getStr() -> GString* { return this->encoder->getData(); }

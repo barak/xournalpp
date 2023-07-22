@@ -22,9 +22,9 @@ echo "copy installed files"
 (cd ../build && cmake .. -DCMAKE_INSTALL_PREFIX= && DESTDIR=../windows-setup/"$setup_dir" cmake --build . --target install)
 
 echo "copy libraries"
-ldd ../build/src/xournalpp.exe | grep '\/mingw.*\.dll' -o | sort -u | xargs -I{} cp "{}" "$setup_dir"/bin/
+ldd ../build/xournalpp.exe | grep '\/mingw.*\.dll' -o | sort -u | xargs -I{} cp "{}" "$setup_dir"/bin/
 # CI workaround: copy libcrypto and libssl in case they are not already copied.
-ldd ../build/src/xournalpp.exe | grep -E 'lib(ssl|crypto)[^\.]*\.dll' -o | sort -u | xargs -I{} cp "/mingw64/bin/{}" "$setup_dir"/bin/
+ldd ../build/xournalpp.exe | grep -E 'lib(ssl|crypto)[^\.]*\.dll' -o | sort -u | xargs -I{} cp "/mingw64/bin/{}" "$setup_dir"/bin/
 
 # Copy system locale files
 for trans in ../build/po/*.gmo; do
@@ -56,6 +56,9 @@ cp -r /mingw64/share/glib-2.0 "$setup_dir"/share/
 
 echo "copy poppler shared"
 cp -r /mingw64/share/poppler "$setup_dir"/share/
+
+echo "copy gtksourceview shared"
+cp -r /mingw64/share/gtksourceview-4 "$setup_dir"/share
 
 echo "copy gspawn-win64-helper"
 cp /mingw64/bin/gspawn-win64-helper.exe "$setup_dir"/bin

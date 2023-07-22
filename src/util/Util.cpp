@@ -1,16 +1,24 @@
-#include "Util.h"
+#include "util/Util.h"
 
-#include <array>
-#include <cassert>
-#include <cstdlib>
+#include <array>    // for array
+#include <cstdlib>  // for system
+#include <string>   // for allocator, string
+#include <utility>  // for move
+#include <vector>   // for vector
 
-#include <unistd.h>
+#include <gdk/gdk.h>  // for gdk_cairo_set_source_rgba, gdk_t...
 
-#include "Color.h"
-#include "PathUtil.h"
-#include "StringUtils.h"
-#include "XojMsgBox.h"
-#include "i18n.h"
+#include "util/Color.h"              // for argb_to_GdkRGBA, rgb_to_GdkRGBA
+#include "util/OutputStream.h"       // for OutputStream
+#include "util/PlaceholderString.h"  // for PlaceholderString
+#include "util/XojMsgBox.h"          // for XojMsgBox
+#include "util/i18n.h"               // for FS, _F
+
+#if defined(_MSC_VER)
+#include <windows.h>
+#else
+#include <unistd.h>  // for getpid, pid_t
+#endif
 
 struct CallbackUiData {
     explicit CallbackUiData(std::function<void()> callback): callback(std::move(callback)) {}
@@ -40,18 +48,23 @@ void Util::execInUiThread(std::function<void()>&& callback, gint priority) {
                               new CallbackUiData(std::move(callback)), nullptr);
 }
 
-void Util::cairo_set_source_rgbi(cairo_t* cr, Color color) {
-    auto rgba = rgb_to_GdkRGBA(color);
-    gdk_cairo_set_source_rgba(cr, &rgba);
-}
-
 void Util::cairo_set_source_rgbi(cairo_t* cr, Color color, double alpha) {
     auto rgba = argb_to_GdkRGBA(color, alpha);
     gdk_cairo_set_source_rgba(cr, &rgba);
 }
 
-auto Util::getPid() -> pid_t { return ::getpid(); }
+void Util::cairo_set_source_argb(cairo_t* cr, Color color) {
+    auto rgba = argb_to_GdkRGBA(color);
+    gdk_cairo_set_source_rgba(cr, &rgba);
+}
 
+auto Util::getPid() -> PID {
+#if defined(_MSC_VER)
+    return GetCurrentProcessId();
+#else
+    return ::getpid();
+#endif
+}
 
 auto Util::paintBackgroundWhite(GtkWidget* widget, cairo_t* cr, void*) -> gboolean {
     GtkAllocation alloc;
@@ -60,6 +73,10 @@ auto Util::paintBackgroundWhite(GtkWidget* widget, cairo_t* cr, void*) -> gboole
     cairo_rectangle(cr, 0, 0, alloc.width, alloc.height);
     cairo_fill(cr);
     return false;
+}
+
+void Util::cairo_set_dash_from_vector(cairo_t* cr, const std::vector<double>& dashes, double offset) {
+    cairo_set_dash(cr, dashes.data(), static_cast<int>(dashes.size()), offset);
 }
 
 void Util::writeCoordinateString(OutputStream* out, double xVal, double yVal) {
