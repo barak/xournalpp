@@ -2,6 +2,7 @@ xournalpp (1.1.3+dev-1) UNRELEASED; urgency=medium
 
   * track upstream development to 030727652
   * upstream commit 9172ee83 fixes GCC-13 FTBFS (closes: #1037904)
+  * Update standards version to 4.6.2, no changes needed.
 
  -- Barak A. Pearlmutter <bap@debian.org>  Sat, 22 Jul 2023 09:05:40 +0200
 
