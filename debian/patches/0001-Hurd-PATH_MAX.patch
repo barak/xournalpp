@@ -8,10 +8,10 @@ Define PATH_MAX if undefined, to address Hurd build failure.
  1 file changed, 7 insertions(+)
 
 diff --git a/src/util/Stacktrace.cpp b/src/util/Stacktrace.cpp
-index 7f3da85..25a9d13 100644
+index e268ff6..c41a6fe 100644
 --- a/src/util/Stacktrace.cpp
 +++ b/src/util/Stacktrace.cpp
-@@ -66,6 +66,13 @@ fs::path Stacktrace::getExePath() {
+@@ -70,6 +70,13 @@ fs::path Stacktrace::getExePath() {
  }
  #else
  auto Stacktrace::getExePath() -> fs::path {

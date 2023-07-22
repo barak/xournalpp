@@ -1,0 +1,35 @@
+From: "Barak A. Pearlmutter" <barak+git@pearlmutter.net>
+Date: Sat, 22 Jul 2023 09:20:39 +0200
+Subject: spelling
+
+---
+ src/core/gui/toolbarMenubar/model/ToolbarModel.cpp | 2 +-
+ ui/toolbar.ini                                     | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/core/gui/toolbarMenubar/model/ToolbarModel.cpp b/src/core/gui/toolbarMenubar/model/ToolbarModel.cpp
+index e19376d..0f76e13 100644
+--- a/src/core/gui/toolbarMenubar/model/ToolbarModel.cpp
++++ b/src/core/gui/toolbarMenubar/model/ToolbarModel.cpp
+@@ -136,7 +136,7 @@ const char* TOOLBAR_INI_HEADER =
+         "\n"
+         " Tool configuration: VERY_FINE,FINE,MEDIUM,THICK,VERY_THICK\n"
+         "\n"
+-        " Item seperation: SEPARATOR,SPACER\n"
++        " Item separation: SEPARATOR,SPACER\n"
+         "\n";
+ 
+ void ToolbarModel::save(fs::path const& filepath) {
+diff --git a/ui/toolbar.ini b/ui/toolbar.ini
+index f5ae365..6809b2a 100755
+--- a/ui/toolbar.ini
++++ b/ui/toolbar.ini
+@@ -36,7 +36,7 @@
+ #
+ # Tool configuration: VERY_FINE,FINE,MEDIUM,THICK,VERY_THICK
+ #
+-# Item seperation: SEPARATOR,SPACER
++# Item separation: SEPARATOR,SPACER
+ #
+ 
+ # Portrait: The name in brackets have to be unique, but is not displayed, it should not start with an underline (_)
