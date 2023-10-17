@@ -1,3 +1,14 @@
+xournalpp (1.2.2-1) unstable; urgency=medium
+
+  [ Benjamin Hennion ]
+  * New upstream version:
+    - Fixed various memory leaks and segmentation faults
+    - Fixed some issues with input sequences mixing up devices and buttons
+    - Fixed LaTeX tool failing to open some PDF files
+    - Fixed audio output device selection
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Tue, 17 Oct 2023 11:57:15 +0100
+
 xournalpp (1.2.1-1) unstable; urgency=medium
 
   [ rolandlo ]
