@@ -7,7 +7,10 @@ xournalpp (1.2.2-1) unstable; urgency=medium
     - Fixed LaTeX tool failing to open some PDF files
     - Fixed audio output device selection
 
- -- Barak A. Pearlmutter <bap@debian.org>  Tue, 17 Oct 2023 11:57:15 +0100
+  [ Barak A. Pearlmutter ]
+  * Switch from liblua5.3 to liblua5.4
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Tue, 17 Oct 2023 12:19:06 +0100
 
 xournalpp (1.2.1-1) unstable; urgency=medium
 
