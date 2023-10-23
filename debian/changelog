@@ -1,3 +1,9 @@
+xournalpp (1.2.2-2) unstable; urgency=medium
+
+  * Build-depend on lsb-release as the build system tries to call lsb_release
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Mon, 23 Oct 2023 10:42:52 +0100
+
 xournalpp (1.2.2-1) unstable; urgency=medium
 
   [ Benjamin Hennion ]
