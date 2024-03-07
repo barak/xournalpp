@@ -13,6 +13,8 @@
 #include "control/settings/PageTemplateSettings.h"       // for PageTemplate...
 #include "control/settings/Settings.h"                   // for Settings
 #include "control/stockdlg/ImageOpenDlg.h"               // for ImageOpenDlg
+#include "gui/MainWindow.h"                              // for MainWindow
+#include "gui/XournalView.h"                             // for XournalView
 #include "gui/dialog/backgroundSelect/ImagesDialog.h"    // for ImagesDialog
 #include "gui/dialog/backgroundSelect/PdfPagesDialog.h"  // for PdfPagesDialog
 #include "model/BackgroundImage.h"                       // for BackgroundImage
@@ -21,6 +23,7 @@
 #include "model/XojPage.h"                               // for XojPage
 #include "pdf/base/XojPdfPage.h"                         // for XojPdfPageSPtr
 #include "undo/GroupUndoAction.h"                        // for GroupUndoAction
+#include "undo/MissingPdfUndoAction.h"                   // for MissingPdfUn...
 #include "undo/PageBackgroundChangedUndoAction.h"        // for PageBackgrou...
 #include "undo/UndoAction.h"                             // for UndoAction
 #include "undo/UndoRedoHandler.h"                        // for UndoRedoHandler
@@ -29,7 +32,8 @@
 #include "util/XojMsgBox.h"                              // for XojMsgBox
 #include "util/i18n.h"                                   // for FS, _, _F
 
-#include "Control.h"  // for Control
+#include "Control.h"     // for Control
+#include "filesystem.h"  // for path
 
 
 PageBackgroundChangeController::PageBackgroundChangeController(Control* control):
@@ -64,6 +68,29 @@ void PageBackgroundChangeController::changeAllPagesBackground(const PageType& pt
     ignoreEvent = true;
     currentPageType.setSelected(pt);
     ignoreEvent = false;
+}
+
+void PageBackgroundChangeController::changePdfPagesBackground(const fs::path& filepath, bool attachPdf) {
+    Document* doc = this->control->getDocument();
+
+    const fs::path oldFilepath = doc->getPdfFilepath();
+    const bool oldAttachPdf = doc->isAttachPdf();
+
+    if (!doc->readPdf(filepath, false, attachPdf)) {
+        std::string msg = FS(_F("Error reading PDF: {1}") % doc->getLastErrorMsg());
+        XojMsgBox::showErrorToUser(this->control->getGtkWindow(), msg);
+        return;
+    }
+    this->control->getWindow()->getXournal()->recreatePdfCache();
+
+    for (size_t p = 0; p < doc->getPageCount(); p++) {
+        if (doc->getPage(p)->getBackgroundType().format == PageTypeFormat::Pdf) {
+            this->control->firePageChanged(p);
+        }
+    }
+
+    auto undoAction = std::make_unique<MissingPdfUndoAction>(oldFilepath, oldAttachPdf);
+    this->control->getUndoRedoHandler()->addUndoAction(std::move(undoAction));
 }
 
 void PageBackgroundChangeController::changeCurrentPageBackground(PageTypeInfo* info) {

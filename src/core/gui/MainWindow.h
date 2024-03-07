@@ -24,6 +24,7 @@
 
 #include "control/layer/LayerCtrlListener.h"  // for LayerCtrlListener
 #include "model/Font.h"                       // for XojFont
+#include "util/Point.h"
 #include "util/raii/GObjectSPtr.h"
 
 #include "GladeGui.h"            // for GladeGui
@@ -115,6 +116,14 @@ public:
     [[maybe_unused]] Menubar* getMenubar() const;
 
     /**
+     * Get the position of the top left corner of screen (X11) or the window (Wayland)
+     * relative to the Xournal Widget top left corner
+     *
+     * @see Util::toWidgetCoords()
+     */
+    utl::Point<double> getNegativeXournalWidgetPos() const;
+
+    /**
      * Disable kinetic scrolling if there is a touchscreen device that was manually mapped to another enabled input
      * device class. This is required so the GtkScrolledWindow does not swallow all the events.
      */
@@ -156,9 +165,9 @@ private:
     static bool deleteEventCallback(GtkWidget* widget, GdkEvent* event, Control* control);
 
     /**
-     * Callback fro window states, we ned to know if the window is fullscreen
+     * Window is maximized/minimized
      */
-    static bool windowStateEventCallback(GtkWidget* window, GdkEventWindowState* event, MainWindow* win);
+    static void windowMaximizedCallback(GObject* window, GParamSpec*, MainWindow* win);
 
     /**
      * Callback for drag & drop files

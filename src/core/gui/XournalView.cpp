@@ -509,6 +509,17 @@ auto XournalView::getVisibleRect(const XojPageView* redrawable) const -> Rectang
     return gtk_xournal_get_visible_area(this->widget, redrawable);
 }
 
+void XournalView::recreatePdfCache() {
+    this->cache.reset();
+
+    Document* doc = control->getDocument();
+    doc->lock();
+    if (doc->getPdfPageCount() != 0) {
+        this->cache = std::make_unique<PdfCache>(doc->getPdfDocument(), control->getSettings());
+    }
+    doc->unlock();
+}
+
 /**
  * @return Helper class for Touch specific fixes
  */
@@ -541,12 +552,10 @@ void XournalView::zoomChanged() {
 
     if (zoom->isZoomPresentationMode() || zoom->isZoomFitMode()) {
         scrollTo(currentPage);
-    } else {
+    } else if (zoom->isZoomSequenceActive()) {
         auto pos = zoom->getScrollPositionAfterZoom();
-        if (pos.x != -1 && pos.y != -1) {
-            Layout* layout = gtk_xournal_get_layout(this->widget);
-            layout->scrollAbs(pos.x, pos.y);
-        }
+        Layout* layout = gtk_xournal_get_layout(this->widget);
+        layout->scrollAbs(pos.x, pos.y);
     }
 
     Document* doc = control->getDocument();
@@ -765,13 +774,10 @@ void XournalView::documentChanged(DocumentChangeType type) {
 
     viewPages.clear();
 
-    this->cache.reset();
+    recreatePdfCache();
 
     Document* doc = control->getDocument();
     doc->lock();
-    if (doc->getPdfPageCount() != 0) {
-        this->cache = std::make_unique<PdfCache>(doc->getPdfDocument(), control->getSettings());
-    }
 
     size_t pagecount = doc->getPageCount();
     viewPages.reserve(pagecount);

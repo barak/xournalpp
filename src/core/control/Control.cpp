@@ -175,7 +175,7 @@ Control::~Control() {
     g_source_remove(this->changeTimout);
     this->enableAutosave(false);
 
-    deleteLastAutosaveFile("");
+    deleteLastAutosaveFile();
     this->scheduler->stop();
     this->changedPages.clear();  // can be removed, will be done by implicit destructor
 
@@ -219,55 +219,30 @@ Control::~Control() {
     this->fullscreenHandler = nullptr;
 }
 
-
-void Control::renameLastAutosaveFile() {
-    if (this->lastAutosaveFilename.empty()) {
-        return;
-    }
-
-    auto const& filename = this->lastAutosaveFilename;
-    auto renamed = Util::getAutosaveFilepath();
-    Util::clearExtensions(renamed);
-    if (!filename.empty() && filename.string().front() != '.') {
-        // This file must be a fresh, unsaved document. Since this file is
-        // already in the autosave directory, we need to change the renamed filename.
-        renamed += ".old.autosave.xopp";
-    } else {
-        // The file is a saved document with the form ".<filename>.autosave.xopp"
-        renamed += filename.filename();
-    }
-
-    g_message("%s", FS(_F("Autosave renamed from {1} to {2}") % this->lastAutosaveFilename.string() % renamed.string())
-                            .c_str());
-
-    if (!fs::exists(filename)) {
-        this->save(false);
-    }
-
-    std::vector<string> errors;
+void Control::setLastAutosaveFile(fs::path newAutosaveFile) {
     try {
-        Util::safeRenameFile(filename, renamed);
+        if (!this->lastAutosaveFilename.empty() && !fs::equivalent(newAutosaveFile, this->lastAutosaveFilename) &&
+            fs::exists(newAutosaveFile)) {
+            deleteLastAutosaveFile();
+        }
     } catch (const fs::filesystem_error& e) {
-        auto fmtstr = _F("Could not rename autosave file from \"{1}\" to \"{2}\": {3}");
-        errors.emplace_back(FS(fmtstr % filename.u8string() % renamed.u8string() % e.what()));
+        auto fmtstr = FS(_F("Filesystem error: {1}") % e.what());
+        Util::execInUiThread([fmtstr, win = getGtkWindow()]() { XojMsgBox::showErrorToUser(win, fmtstr); });
     }
-
-
-    if (!errors.empty()) {
-        string error = std::accumulate(errors.begin() + 1, errors.end(), *errors.begin(),
-                                       [](const string& e1, const string& e2) { return e1 + "\n" + e2; });
-        Util::execInUiThread([=]() {
-            string msg = FS(_F("Autosave failed with an error: {1}") % error);
-            XojMsgBox::showErrorToUser(getGtkWindow(), msg);
-        });
-    }
+    this->lastAutosaveFilename = std::move(newAutosaveFile);
 }
 
-void Control::setLastAutosaveFile(fs::path newAutosaveFile) { this->lastAutosaveFilename = std::move(newAutosaveFile); }
-
-void Control::deleteLastAutosaveFile(fs::path newAutosaveFile) {
-    fs::remove(this->lastAutosaveFilename);
-    this->lastAutosaveFilename = std::move(newAutosaveFile);
+void Control::deleteLastAutosaveFile() {
+    try {
+        if (fs::exists(this->lastAutosaveFilename)) {
+            fs::remove(this->lastAutosaveFilename);
+        }
+    } catch (const fs::filesystem_error& e) {
+        auto fmtstr = FS(_F("Could not remove old autosave file \"{1}\": {2}") % this->lastAutosaveFilename.string() %
+                         e.what());
+        Util::execInUiThread([fmtstr, win = getGtkWindow()]() { XojMsgBox::showErrorToUser(win, fmtstr); });
+    }
+    this->lastAutosaveFilename.clear();
 }
 
 auto Control::checkChangedDocument(Control* control) -> bool {
@@ -360,10 +335,6 @@ auto Control::autosaveCallback(Control* control) -> bool {
         // do nothing, nothing changed
         return true;
     }
-
-
-    g_message("Info: autosave document...");
-
 
     auto* job = new AutosaveJob(control);
     control->scheduler->addJob(job, JOB_PRIORITY_NONE);
@@ -1268,8 +1239,16 @@ void Control::manageToolbars() {
     ToolbarManageDialog dlg(this->gladeSearchPath, this->win->getToolbarModel());
     dlg.show(GTK_WINDOW(this->win->getWindow()));
 
-    this->win->updateToolbarMenu();
+    if (auto tbs = this->win->getToolbarModel()->getToolbars();
+        std::find(tbs->begin(), tbs->end(), this->win->getSelectedToolbar()) == tbs->end()) {
+        // The active toolbar has been deleted!
+        assert(!tbs->empty());
+        this->win->toolbarSelected(tbs->front());
+        XojMsgBox::showErrorToUser(GTK_WINDOW(this->win->getWindow()),
+                                   _("You deleted the active toolbar. Falling back to the default toolbar."));
+    }
 
+    this->win->updateToolbarMenu();
     auto filepath = Util::getConfigFile(TOOLBAR_CONFIG);
     this->win->getToolbarModel()->save(filepath);
 }
@@ -2308,86 +2287,6 @@ auto Control::openFile(fs::path filepath, int scrollToPage, bool forceOpen) -> b
 
     LoadHandler loadHandler;
     Document* loadedDocument = loadHandler.loadDocument(filepath);
-    if ((loadedDocument != nullptr && loadHandler.isAttachedPdfMissing()) ||
-        !loadHandler.getMissingPdfFilename().empty()) {
-        // give the user a second chance to select a new PDF filepath, or to discard the PDF
-        const fs::path missingFilePath = fs::path(loadHandler.getMissingPdfFilename());
-
-        std::string parentFolderPath;
-        std::string filename;
-#if defined(WIN32)
-        parentFolderPath = missingFilePath.parent_path().string();
-        filename = missingFilePath.filename().string();
-#else
-        // since POSIX systems detect the whole Windows path as a filename, this checks whether missingFilePath
-        // contains a Windows path
-        std::regex regex(R"([A-Z]:\\(?:.*\\)*(.*))");
-        std::cmatch matchInfo;
-
-        if (std::regex_match(missingFilePath.filename().string().c_str(), matchInfo, regex) && matchInfo[1].matched) {
-            parentFolderPath = missingFilePath.filename().string();
-            filename = matchInfo[1].str();
-        } else {
-            parentFolderPath = missingFilePath.parent_path().string();
-            filename = missingFilePath.filename().string();
-        }
-#endif
-        std::string msg;
-        if (loadHandler.isAttachedPdfMissing()) {
-            msg = FS(_F("The attached background file could not be found. It might have been moved, "
-                        "renamed or deleted."));
-        } else {
-            msg = FS(_F("The background file \"{1}\" could not be found. It might have been moved, renamed or "
-                        "deleted.\nIt was last seen at: \"{2}\"") %
-                     filename % parentFolderPath);
-        }
-
-        // try to find file in current directory
-        auto proposedPdfFilepath = filepath.parent_path() / filename;
-        bool proposePdfFile = !loadHandler.isAttachedPdfMissing() && !filename.empty() &&
-                              fs::exists(proposedPdfFilepath) && !fs::is_directory(proposedPdfFilepath);
-        if (proposePdfFile) {
-            msg += FS(_F("\nProposed replacement file: \"{1}\"") % proposedPdfFilepath.string());
-        }
-        GtkWidget* dialog = gtk_message_dialog_new(getGtkWindow(), GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION,
-                                                   GTK_BUTTONS_NONE, "%s", msg.c_str());
-
-        enum dialogOptions { USE_PROPOSED, SELECT_OTHER, REMOVE, CANCEL };
-
-        if (proposePdfFile) {
-            gtk_dialog_add_button(GTK_DIALOG(dialog), _("Use proposed PDF"), USE_PROPOSED);
-        }
-        gtk_dialog_add_button(GTK_DIALOG(dialog), _("Select another PDF"), SELECT_OTHER);
-        gtk_dialog_add_button(GTK_DIALOG(dialog), _("Remove PDF Background"), REMOVE);
-        gtk_dialog_add_button(GTK_DIALOG(dialog), _("Cancel"), CANCEL);
-        gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(this->getWindow()->getWindow()));
-        int res = gtk_dialog_run(GTK_DIALOG(dialog));
-        gtk_widget_destroy(dialog);
-
-        switch (res) {
-            case USE_PROPOSED:
-                if (!proposedPdfFilepath.empty()) {
-                    loadHandler.setPdfReplacement(proposedPdfFilepath, false);
-                    loadedDocument = loadHandler.loadDocument(filepath);
-                }
-                break;
-            case SELECT_OTHER: {
-                bool attachToDocument = false;
-                XojOpenDlg dlg(getGtkWindow(), this->settings);
-                auto pdfFilename = dlg.showOpenDialog(true, attachToDocument);
-                if (!pdfFilename.empty()) {
-                    loadHandler.setPdfReplacement(pdfFilename, attachToDocument);
-                    loadedDocument = loadHandler.loadDocument(filepath);
-                }
-            } break;
-            case REMOVE:
-                loadHandler.removePdfBackground();
-                loadedDocument = loadHandler.loadDocument(filepath);
-                break;
-            default:
-                break;
-        }
-    }
 
     if (!loadedDocument) {
         string msg = FS(_F("Error opening file \"{1}\"") % filepath.u8string()) + "\n" + loadHandler.getLastError();
@@ -2420,8 +2319,14 @@ auto Control::openFile(fs::path filepath, int scrollToPage, bool forceOpen) -> b
     // not as file to load
     settings->setLastSavePath(filepath.parent_path());
 
-
     fileLoaded(scrollToPage);
+
+    if ((loadedDocument != nullptr && loadHandler.isAttachedPdfMissing()) ||
+        !loadHandler.getMissingPdfFilename().empty()) {
+        // give the user a second chance to select a new PDF filepath, or to discard the PDF
+        promptMissingPdf(loadHandler, filepath);
+    }
+
     return true;
 }
 
@@ -2492,6 +2397,85 @@ void Control::fileLoaded(int scrollToPage) {
     win->getXournal()->forceUpdatePagenumbers();
     getCursor()->updateCursor();
     updateDeletePageButton();
+}
+
+void Control::promptMissingPdf(LoadHandler& loadHandler, const fs::path& filepath) {
+    const fs::path missingFilePath = fs::path(loadHandler.getMissingPdfFilename());
+
+    // create error message
+    std::string parentFolderPath;
+    std::string filename;
+#if defined(WIN32)
+    parentFolderPath = missingFilePath.parent_path().string();
+    filename = missingFilePath.filename().string();
+#else
+    // since POSIX systems detect the whole Windows path as a filename, this checks whether missingFilePath
+    // contains a Windows path
+    std::regex regex(R"([A-Z]:\\(?:.*\\)*(.*))");
+    std::cmatch matchInfo;
+
+    if (std::regex_match(missingFilePath.filename().string().c_str(), matchInfo, regex) && matchInfo[1].matched) {
+        parentFolderPath = missingFilePath.filename().string();
+        filename = matchInfo[1].str();
+    } else {
+        parentFolderPath = missingFilePath.parent_path().string();
+        filename = missingFilePath.filename().string();
+    }
+#endif
+    std::string msg;
+    if (loadHandler.isAttachedPdfMissing()) {
+        msg = FS(_F("The attached background file could not be found. It might have been moved, "
+                    "renamed or deleted."));
+    } else {
+        msg = FS(_F("The background file \"{1}\" could not be found. It might have been moved, renamed or "
+                    "deleted.\nIt was last seen at: \"{2}\"") %
+                 filename % parentFolderPath);
+    }
+
+    // try to find file in current directory
+    auto proposedPdfFilepath = filepath.parent_path() / filename;
+    bool proposePdfFile = !loadHandler.isAttachedPdfMissing() && !filename.empty() && fs::exists(proposedPdfFilepath) &&
+                          !fs::is_directory(proposedPdfFilepath);
+    if (proposePdfFile) {
+        msg += FS(_F("\nProposed replacement file: \"{1}\"") % proposedPdfFilepath.string());
+    }
+
+    // create the dialog
+    GtkWidget* dialog = gtk_message_dialog_new(getGtkWindow(), GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_NONE,
+                                               "%s", msg.c_str());
+
+    enum dialogOptions { USE_PROPOSED, SELECT_OTHER, REMOVE, CANCEL };
+
+    if (proposePdfFile) {
+        gtk_dialog_add_button(GTK_DIALOG(dialog), _("Use proposed PDF"), USE_PROPOSED);
+    }
+    gtk_dialog_add_button(GTK_DIALOG(dialog), _("Select another PDF"), SELECT_OTHER);
+    gtk_dialog_add_button(GTK_DIALOG(dialog), _("Remove PDF Background"), REMOVE);
+    gtk_dialog_add_button(GTK_DIALOG(dialog), _("Cancel"), CANCEL);
+    gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(this->getWindow()->getWindow()));
+    int res = gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy(dialog);
+
+    switch (res) {
+        case USE_PROPOSED:
+            if (!proposedPdfFilepath.empty()) {
+                this->pageBackgroundChangeController->changePdfPagesBackground(proposedPdfFilepath, false);
+            }
+            break;
+        case SELECT_OTHER: {
+            bool attachToDocument = false;
+            XojOpenDlg dlg(getGtkWindow(), this->settings);
+            auto pdfFilename = dlg.showOpenDialog(true, attachToDocument);
+            if (!pdfFilename.empty()) {
+                this->pageBackgroundChangeController->changePdfPagesBackground(pdfFilename, attachToDocument);
+            }
+        } break;
+        case REMOVE:
+            this->pageBackgroundChangeController->changeAllPagesBackground(PageType(PageTypeFormat::Plain));
+            break;
+        default:
+            break;
+    }
 }
 
 class MetadataCallbackData {
