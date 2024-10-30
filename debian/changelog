@@ -1,3 +1,18 @@
+xournalpp (1.2.4-1) unstable; urgency=medium
+
+  [ Roland Lötscher ]
+  * New Upstream Version
+    - Fixed various dark/light theme inconsistencies
+    - Improved edge panning for large selections
+    - Fixed various crashes, freezes and memory leaks
+    - MacOS: Added support for opening xopp-files from Finder
+    - Added builds for Ubuntu 24.04 and MacOS ARM
+
+  [ Barak A. Pearlmutter ]
+  * Update standards version to 4.7.0, no changes needed.
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Wed, 30 Oct 2024 11:01:36 +0000
+
 xournalpp (1.2.3-1) unstable; urgency=medium
 
   [ Roland Lötscher ]
