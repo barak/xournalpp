@@ -4,35 +4,35 @@ Upstream-Contact: https://github.com/xournalpp/xournalpp/issues/
 Source: https://github.com/xournalpp/xournalpp/
 
 Files: *
-Copyright: 2010-2021, Andreas Butti <andreas.butti@gmail.com>
-           2012-2018, Wilson Brenna <wilson@wbrenna.homelinux.com>
-           2015-2016, Marek Pikuła <marek@pikula.tk>
-           2017-2019, Peter Klausing <peetCreative@users.noreply.github.com>
-           2018-2019, Moreno Razzoli <morrolinux@users.noreply.github.com>
-           2018-2019, Luca Errani <luca.errani1@gmail.com>
-           2019-2021, Ulrich Huber <ulrich@huberulrich.de>
-           2019-2019, Justin Jones <bjustjones@netscape.net>
-           2019-2021, Bryan Tan <Technius@users.noreply.github.com>
-           2019-2019, Justus Rossmeier <veecue@users.noreply.github.com>
-           2019-2021, Fabian Keßler <Fabian_Kessler@gmx.de>
-           2019-2020, Julius Lehmann <internet@devpi.de>
-           2020-2021, Tobias Hermann <idotobi@users.noreply.github.com>
-           2020-2021, Roland Lötscher <roland_loetscher@hotmail.com>
+Copyright: 2010–2021, Andreas Butti <andreas.butti@gmail.com>
+           2012–2018, Wilson Brenna <wilson@wbrenna.homelinux.com>
+           2015–2016, Marek Pikuła <marek@pikula.tk>
+           2017–2019, Peter Klausing <peetCreative@users.noreply.github.com>
+           2018–2019, Moreno Razzoli <morrolinux@users.noreply.github.com>
+           2018–2019, Luca Errani <luca.errani1@gmail.com>
+           2019–2021, Ulrich Huber <ulrich@huberulrich.de>
+           2019–2019, Justin Jones <bjustjones@netscape.net>
+           2019–2021, Bryan Tan <Technius@users.noreply.github.com>
+           2019–2019, Justus Rossmeier <veecue@users.noreply.github.com>
+           2019–2021, Fabian Keßler <Fabian_Kessler@gmx.de>
+           2019–2020, Julius Lehmann <internet@devpi.de>
+           2020–2021, Tobias Hermann <idotobi@users.noreply.github.com>
+           2020–2021, Roland Lötscher <roland_loetscher@hotmail.com>
 License: GPL-2+
 Comment: Source of truth https://github.com/xournalpp/xournalpp/graphs/contributors
          For a full and detailed list of contributors refer to the git log.
 
-Files: src/control/xojfile/LoadHandlerHelper.cpp
-       src/control/xojfile/LoadHandlerHelper.h
-       src/gui/widgets/ZoomCallib.cpp
-       src/gui/widgets/ZoomCallib.h
+Files: src/core/control/xojfile/LoadHandlerHelper.cpp
+       src/core/control/xojfile/LoadHandlerHelper.h
+       src/core/gui/widgets/ZoomCallib.cpp
+       src/core/gui/widgets/ZoomCallib.h
 Copyright: 2015, Xournal Team
 License: GPL-2+
 Comment: The files were committed by Andreas Butti initially who was active for both
          Xournal and Xournal++
 
-Files: src/gui/widgets/gtkmenutooltogglebutton.cpp
-       src/gui/widgets/gtkmenutooltogglebutton.h
+Files: src/core/gui/widgets/gtkmenutooltogglebutton.cpp
+       src/core/gui/widgets/gtkmenutooltogglebutton.h
 Copyright: 2004, Paolo Borelli
            2003, Ricardo Fernandez Pascual
 License: LGPL-2+
@@ -58,45 +58,28 @@ Comment: See https://github.com/xournalpp/xournalpp/issues/3103#issuecomment-844
 
 Files: cmake/find/FindFilesystem.cmake
        cmake/include/clang-tidy.cmake
-Copyright: 2000-2021, Kitware, Inc. and Contributors
+Copyright: 2000–2021, Kitware, Inc. and Contributors
 License: BSD-3-clause
-
-Files: cmake/find/FindICU.cmake
-Copyright: 2011-2016, POINSOT Julien
-License: BSD-2-clause
-Comment: https://github.com/julp/FindICU.cmake
-         could maybe be replaced with
-         https://cmake.org/cmake/help/latest/module/FindICU.html
 
 Files: cmake/include/Copyright.txt
 Copyright: 2015, Marek Pikuła <marpirk@gmail.com>
            Xournal++ team
 License: BSD-3-clause
 
-Files: cmake/include/ExternalDeb.cmake
-       cmake/include/GitRepo.cmake
-Copyright: 2015, Marek Pikuła <marek@pikula.co>
-License: BSD-3-clause
-
 Files: cmake/find/Gettext.cmake
-Copyright: 2012-2013, Valama development team
+Copyright: 2012–2013, Valama development team
 License: GPL-3+
 
 Files: desktop/com.github.xournalpp.xournalpp.appdata.xml
 Copyright: 2019, Tobias Mueller <tobiasmue@gnome.org>
 License: CC0-1.0
 
-Files: src/util/hashcombine.h
-Copyright: 1998-2021, David Eberly, Geometric Tools
-License: BSL-1
-Comment: https://www.geometrictools.com/GTE/Mathematics/HashCombine.h
-
 Files: debian/*
 Copyright: 2007, Mathieu Bouchard <mbouchar@bioinfo.ulaval.ca>
            2008, Lucas Nussbaum <lucas@lucas-nussbaum.net>
-           2009-2014, Carlo Segre <segre@debian.org>
-           2018-2019, Andreas Butti <andreas.butti@gmail.com>
-           2020-2021, Barak A. Pearlmutter <bap@debian.org>
+           2009–2014, Carlo Segre <segre@debian.org>
+           2018–2019, Andreas Butti <andreas.butti@gmail.com>
+           2020–2024, Barak A. Pearlmutter <bap@debian.org>
 License: GPL-2+
 
 Files: plugins/MigrateFontSizes/plugin.ini
@@ -117,13 +100,13 @@ Files: plugins/QuickScreenshot/plugin.ini
 Copyright: 2020, Debbie Reynolds
 License: GPL-2+
 
-Files: src/gui/GladeSearchpath.h
-       src/gui/GladeSearchpath.cpp
+Files: src/core/gui/GladeSearchpath.cpp
+       src/core/gui/GladeSearchpath.h
 Copyright: 2011, Andreas Butti
 License: GPL-2+
 
-Files: src/gui/dialog/LatexDialog.h
-       src/gui/dialog/LatexDialog.cpp
+Files: src/core/gui/dialog/LatexDialog.h
+       src/core/gui/dialog/LatexDialog.cpp
 Copyright: 2013, Wilson Brenna
 License: GPL-2+
 
@@ -135,7 +118,7 @@ License: GPL-3+
 Comment: Original Author Paolo Bacchilega <paolo.bacch@tin.it>
           seemingly for the FSF but this is unclear from the code
 
-Files: src/util/safe_casts.h
+Files: src/util/include/util/safe_casts.h
 Copyright: 2020, Fabian Keßler <fabian_kessler@gmx.de>
 License: BSL-1
 
@@ -180,32 +163,6 @@ License: BSL-1
  FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,
  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  DEALINGS IN THE SOFTWARE.
-
-License: BSD-2-clause
- Copy of text from https://opensource.org/licenses/BSD-2-Clause follows:
- .
- =======================================================================
- .
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions are met:
- .
- 1. Redistributions of source code must retain the above copyright notice, this
- list of conditions and the following disclaimer.
- .
- 2. Redistributions in binary form must reproduce the above copyright notice,
- this list of conditions and the following disclaimer in the documentation
- and/or other materials provided with the distribution.
- .
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 License: BSD-3-clause
  Redistribution and use in source and binary forms, with or without
