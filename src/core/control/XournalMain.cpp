@@ -51,7 +51,8 @@
 
 namespace {
 
-constexpr auto APP_FLAGS = GApplicationFlags(G_APPLICATION_SEND_ENVIRONMENT | G_APPLICATION_NON_UNIQUE);
+constexpr auto APP_FLAGS =
+        GApplicationFlags(G_APPLICATION_SEND_ENVIRONMENT | G_APPLICATION_NON_UNIQUE | G_APPLICATION_HANDLES_OPEN);
 
 /// Configuration migration status.
 enum class MigrateStatus {
@@ -84,8 +85,14 @@ void initCAndCoutLocales() {
 
 void initLocalisation() {
 #ifdef ENABLE_NLS
-    fs::path localeDir = Util::getGettextFilepath(Util::getLocalePath().u8string().c_str());
+    fs::path localeDir = Util::getGettextFilepath(Util::getLocalePath());
+
+#ifdef _WIN32
+    wbindtextdomain(GETTEXT_PACKAGE, localeDir.wstring().c_str());
+#else
     bindtextdomain(GETTEXT_PACKAGE, localeDir.u8string().c_str());
+#endif
+
     textdomain(GETTEXT_PACKAGE);
 
 #ifdef _WIN32
@@ -440,10 +447,30 @@ void on_command_line(GApplication*, GApplicationCommandLine*, XMPtr) {
     // Todo: implement this, if someone files the bug report
 }
 
-void on_open_files(GApplication*, gpointer, gint, gchar*, XMPtr) {
-    g_message("XournalMain::on_open_files: This should never happen, please file a bugreport with a detailed "
-              "description how to reproduce this message");
-    // Todo: implement this, if someone files the bug report
+void on_open_files(GApplication* application, GFile** files, gint numFiles, gchar* hint, XMPtr app_data) {
+    if (numFiles != 1) {
+        const std::string msg = _("Sorry, Xournal++ can only open one file at once.\n"
+                                  "Others are ignored.");
+        XojMsgBox::showErrorToUser(GTK_WINDOW(app_data->win->getWindow()), msg);
+    }
+
+    const fs::path p = Util::fromGFilename(g_file_get_path(files[0]), false);
+
+    try {
+        if (fs::exists(p)) {
+            app_data->control->openFile(p);
+        } else {
+            const std::string msg = FS(_F("File {1} does not exist.") % p.u8string());
+            XojMsgBox::showErrorToUser(GTK_WINDOW(app_data->win->getWindow()), msg);
+        }
+    } catch (const fs::filesystem_error& e) {
+        const std::string msg = FS(_F("Filesystem error: {1}\n"
+                                      "Sorry, Xournal++ cannot open the file: {2}\n"
+                                      "Consider copying the file to a local directory.") %
+                                   e.what() % p.u8string());
+        XojMsgBox::showErrorToUser(GTK_WINDOW(app_data->win->getWindow()), msg);
+    }
+    gtk_window_present(GTK_WINDOW(app_data->win->getWindow()));
 }
 
 void on_startup(GApplication* application, XMPtr app_data) {
@@ -456,39 +483,6 @@ void on_startup(GApplication* application, XMPtr app_data) {
     initResourcePath(app_data->gladePath.get(), "ui/xournalpp.css", false);
 
     app_data->control = std::make_unique<Control>(application, app_data->gladePath.get(), app_data->disableAudio);
-
-    // Set up icons
-    {
-        const auto uiPath = app_data->gladePath->getFirstSearchPath();
-        const auto lightColorIcons = (uiPath / "iconsColor-light").u8string();
-        const auto darkColorIcons = (uiPath / "iconsColor-dark").u8string();
-        const auto lightLucideIcons = (uiPath / "iconsLucide-light").u8string();
-        const auto darkLucideIcons = (uiPath / "iconsLucide-dark").u8string();
-
-        // icon load order from lowest priority to highest priority
-        std::vector<std::string> iconLoadOrder = {};
-        const auto chosenTheme = app_data->control->getSettings()->getIconTheme();
-        switch (chosenTheme) {
-            case ICON_THEME_COLOR:
-                iconLoadOrder = {darkLucideIcons, lightLucideIcons, darkColorIcons, lightColorIcons};
-                break;
-            case ICON_THEME_LUCIDE:
-                iconLoadOrder = {darkColorIcons, lightColorIcons, darkLucideIcons, lightLucideIcons};
-                break;
-            default:
-                g_message("Unknown icon theme!");
-        }
-        const auto darkTheme = app_data->control->getSettings()->isDarkTheme();
-        if (darkTheme) {
-            for (size_t i = 0; 2 * i + 1 < iconLoadOrder.size(); ++i) {
-                std::swap(iconLoadOrder[2 * i], iconLoadOrder[2 * i + 1]);
-            }
-        }
-
-        for (auto& p: iconLoadOrder) {
-            gtk_icon_theme_prepend_search_path(gtk_icon_theme_get_default(), p.c_str());
-        }
-    }
 
     auto& globalLatexTemplatePath = app_data->control->getSettings()->latexSettings.globalTemplatePath;
     if (globalLatexTemplatePath.empty()) {
@@ -526,9 +520,10 @@ void on_startup(GApplication* application, XMPtr app_data) {
                 opened = app_data->control->newFile("", p);
             }
         } catch (const fs::filesystem_error& e) {
-            const std::string msg = FS(_F("Sorry, Xournal++ cannot open remote files at the moment.\n"
-                                          "You have to copy the file to a local directory.") %
-                                       p.u8string() % e.what());
+            const std::string msg = FS(_F("Filesystem error: {1}\n"
+                                          "Sorry, Xournal++ cannot open the file: {2}\n"
+                                          "Consider copying the file to a local directory.") %
+                                       e.what() % p.u8string());
             XojMsgBox::showErrorToUser(GTK_WINDOW(app_data->win->getWindow()), msg);
             opened = app_data->control->newFile("", p);
         }
@@ -630,6 +625,7 @@ auto XournalMain::run(int argc, char** argv) -> int {
 
     XournalMainPrivate app_data;
     GtkApplication* app = gtk_application_new("com.github.xournalpp.xournalpp", APP_FLAGS);
+    g_object_set(G_OBJECT(app), "register-session", true, NULL);  // Needed for opening files on MacOS from Finder
     g_set_prgname("com.github.xournalpp.xournalpp");
     g_signal_connect(app, "activate", G_CALLBACK(&on_activate), &app_data);
     g_signal_connect(app, "command-line", G_CALLBACK(&on_command_line), &app_data);

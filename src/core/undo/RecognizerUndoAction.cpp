@@ -36,7 +36,7 @@ void RecognizerUndoAction::addSourceElement(Stroke* s) {
     for (Stroke* s2: this->original) {
         if (s2 == s) {
             g_warning("RecognizerUndoAction::addSourceElement() twice the same\n");
-            Stacktrace::printStracktrace();
+            Stacktrace::printStacktrace();
             return;
         }
     }
@@ -73,4 +73,4 @@ auto RecognizerUndoAction::redo(Control* control) -> bool {
     return true;
 }
 
-auto RecognizerUndoAction::getText() -> std::string { return _("Stroke recognizer"); }
+auto RecognizerUndoAction::getText() -> std::string { return _("Shape Recognizer"); }
