@@ -11,7 +11,7 @@ endif()
 ## Project related Variables
 ## Also update changelog in debian folder!
 project(xournalpp
-        VERSION 1.2.4
+        VERSION 1.2.5
         DESCRIPTION "Xournal++ - Open source hand note-taking program"
         HOMEPAGE_URL "https://xournalpp.github.io/"
         LANGUAGES CXX C)
@@ -360,9 +360,6 @@ Configuration:
     Filesystem library:         ${CXX_FILESYSTEM_NAMESPACE}
     Profiling enabled:          ${ENABLE_PROFILING}
 ")
-
-option(CMAKE_DEBUG_INCLUDES_LDFLAGS "List include dirs and ldflags for xournalpp target" OFF)
-mark_as_advanced(FORCE CMAKE_DEBUG_INCLUDES_LDFLAGS)
 
 ##############################
 # Packaging options

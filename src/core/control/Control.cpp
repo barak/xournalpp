@@ -5,11 +5,11 @@
 #include <exception>  // for exce...
 #include <iterator>   // for end
 #include <locale>
-#include <memory>     // for make...
-#include <numeric>    // for accu...
-#include <optional>   // for opti...
-#include <regex>      // for regex
-#include <utility>    // for move
+#include <memory>    // for make...
+#include <numeric>   // for accu...
+#include <optional>  // for opti...
+#include <regex>     // for regex
+#include <utility>   // for move
 
 #include "control/AudioController.h"                             // for Audi...
 #include "control/ClipboardHandler.h"                            // for Clip...
@@ -85,6 +85,7 @@
 #include "undo/InsertDeletePageUndoAction.h"                     // for Inse...
 #include "undo/InsertUndoAction.h"                               // for Inse...
 #include "undo/MoveSelectionToLayerUndoAction.h"                 // for Move...
+#include "undo/PageSizeChangeUndoAction.h"                       // for PageSizeChangeUndoAction
 #include "undo/UndoAction.h"                                     // for Undo...
 #include "util/Color.h"                                          // for oper...
 #include "util/PathUtil.h"                                       // for clea...
@@ -1093,6 +1094,14 @@ void Control::makeGeometryTool() {
     std::unique_ptr<InputHandlerClass> geometryToolInputHandler =
             std::make_unique<InputHandlerClass>(this->win->getXournal(), geometryToolController.get());
     geometryToolInputHandler->registerToPool(tool->getHandlerPool());
+    Range range = view->getVisiblePart();
+    if (range.isValid()) {
+        double originX = (range.minX + range.maxX) * .5;
+        double originY = (range.minY + range.maxY) * .5;
+        geometryToolController->translate(originX, originY);
+    } else {
+        geometryToolController->translate(view->getWidth() * .5, view->getHeight() * .5);
+    }
     xournal->input->setGeometryToolInputHandler(std::move(geometryToolInputHandler));
     fireActionSelected(GROUP_GEOMETRY_TOOL, a);
     geometryTool->notify();
@@ -1567,8 +1576,11 @@ void Control::paperFormat() {
 
     if (width > 0) {
         this->doc->lock();
+        double oldW = page->getWidth();
+        double oldH = page->getHeight();
         Document::setPageSize(page, width, height);
         this->doc->unlock();
+        this->undoRedo->addUndoAction(std::make_unique<PageSizeChangeUndoAction>(page, oldW, oldH));
     }
 
     size_t pageNo = doc->indexOf(page);
