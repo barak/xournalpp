@@ -1,3 +1,13 @@
+xournalpp (1.2.6-1) unstable; urgency=medium
+
+  [ Roland Lötscher ]
+  * New Upstream Version
+    - Fixed compass outline drawing
+    - Exposed selected text to the windowing system
+    - Fixed loading of jpeg images and CJK and Cyrillic font rendering on MacOS
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Mon, 24 Feb 2025 15:19:28 +0000
+
 xournalpp (1.2.5-1) unstable; urgency=medium
 
   [ Benjamin Hennion ]
