@@ -32,6 +32,7 @@ constexpr GLogLevelFlags RECORDED_LOG_LEVELS = GLogLevelFlags(0xff);  //< Record
 static void log_handler(const gchar* log_domain, GLogLevelFlags log_level, const gchar* message,
                         std::stringstream* logBuffer) {
     if ((log_level & RECORDED_LOG_LEVELS) != 0) {
+        *logBuffer << g_get_monotonic_time() << "µs: ";
         if (log_level & G_LOG_FLAG_FATAL) {
             *logBuffer << "FATAL ";
         }
@@ -102,6 +103,9 @@ void installCrashHandlers() {
 static void crashHandler(int sig) {
     if (alreadyCrashed)  // crasehd again on emergency save
     {
+        // Forward the signal for the system's default handling
+        signal(sig, SIG_DFL);
+        kill(getpid(), sig);
         exit(2);
     }
     alreadyCrashed = true;
@@ -162,6 +166,10 @@ static void crashHandler(int sig) {
     }
 
     emergencySave();
+
+    // Forward the signal for the system's default handling
+    signal(sig, SIG_DFL);
+    kill(getpid(), sig);
 
     exit(1);
 }
