@@ -3,7 +3,7 @@ Maintainer: Barak A. Pearlmutter <bap@debian.org>
 Uploaders: Mike Gabriel <sunweaver@debian.org>
 Section: x11
 Priority: optional
-Standards-Version: 4.7.0
+Standards-Version: 4.7.2
 Build-Depends: debhelper-compat (= 13), cmake,
 	libcppunit-dev,
 	help2man,

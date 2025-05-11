@@ -1,3 +1,19 @@
+xournalpp (1.2.7-1) unstable; urgency=medium
+
+  [ Benjamin Hennion ]
+  * New Upstream Version
+    - Improved error logs
+    - Fixed some undefined behaviours and memory leaks
+    - Fixed handling of linebreaks in latex tool
+    - Linux: forward crash signals to system handler after emergency save
+    - Fixed wrong glyph spacing in texts using small fonts
+    - Fixed rasterization of Tex elements on PDF/SVG export or printing
+
+  [ Barak A. Pearlmutter ]
+  * Update standards version to 4.7.2, no changes needed.
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Sun, 11 May 2025 11:53:43 +0100
+
 xournalpp (1.2.6-1) unstable; urgency=medium
 
   [ Roland Lötscher ]
