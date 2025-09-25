@@ -297,7 +297,7 @@ auto XojPageView::onButtonPressEvent(const PositionInputData& pos) -> bool {
             this->verticalSpace.reset();
         }
         auto* zoomControl = this->getXournal()->getControl()->getZoomControl();
-        this->verticalSpace = std::make_unique<VerticalToolHandler>(this->page, this->settings, y, pos.isControlDown());
+        this->verticalSpace = std::make_unique<VerticalToolHandler>(this->page, this->getXournal()->getControl(), y, pos.isControlDown());
         this->overlayViews.emplace_back(this->verticalSpace->createView(this, zoomControl, this->settings));
     } else if (h->getToolType() == TOOL_SELECT_RECT || h->getToolType() == TOOL_SELECT_REGION ||
                h->getToolType() == TOOL_SELECT_MULTILAYER_RECT || h->getToolType() == TOOL_SELECT_MULTILAYER_REGION ||
@@ -449,7 +449,10 @@ auto XojPageView::onButtonDoublePressEvent(const PositionInputData& pos) -> bool
             } else if (elemType == ELEMENT_TEXIMAGE) {
                 Control* control = this->xournal->getControl();
                 this->xournal->clearSelection();
+                auto* doc = this->xournal->getControl()->getDocument();
+                doc->lock();
                 auto* sel = new EditSelection(control->getUndoRedoHandler(), object, this, this->getPage());
+                doc->unlock();
                 this->xournal->setSelection(sel);
                 control->runLatex();
             }
@@ -675,7 +678,10 @@ auto XojPageView::onButtonReleaseEvent(const PositionInputData& pos) -> bool {
         size_t layerOfFinalizedSel = this->selection->finalize(this->page);
         if (layerOfFinalizedSel) {
             xournal->getControl()->getLayerController()->switchToLay(layerOfFinalizedSel);
+            auto* doc = this->xournal->getControl()->getDocument();
+            doc->lock();
             xournal->setSelection(new EditSelection(control->getUndoRedoHandler(), this->selection.get(), this));
+            doc->unlock();
         } else {
             const double zoom = xournal->getZoom();
             if (this->selection->userTapped(zoom)) {
