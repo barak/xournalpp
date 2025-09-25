@@ -1,4 +1,5 @@
 xournalpp (1.2.8-1) unstable; urgency=medium
+  [ Benjamin Hennion ]
 
   * Improved the behavior of the selection tools
   * Fixed various visual artifacts
@@ -9,7 +10,10 @@ xournalpp (1.2.8-1) unstable; urgency=medium
   * Made using GtkSourceView and Plugins proper CMake options
   * Updated translations
 
- -- Benjamin Hennion <17818041+bhennion@users.noreply.github.com>  Mon, 01 Sep 2025 10:40:09 +0200
+  [ Barak A. Pearlmutter ]
+  * Remove unnecessary rules-requires-root:no line
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Thu, 25 Sep 2025 15:27:07 +0100
 
 xournalpp (1.2.7-1) unstable; urgency=medium
 
