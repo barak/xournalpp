@@ -1,22 +1,17 @@
 xournalpp (1.2.10-1) unstable; urgency=medium
 
-  * Updated translations 
-
- -- Benjamin Hennion <17818041+bhennion@users.noreply.github.com>  Sun, 07 Dec 2025 11:26:46 +0100
-
-xournalpp (1.2.9-1) UNRELEASED; urgency=medium
-
   [ Benjamin Hennion ]
   * New Upstream Version
     - Fixed diplay bug when mixing versions
     - Fixed clipboard issues
     - Fixed dangerous background overriding
     - Fixed image attach mode
+    - Updated translations
 
   [ Barak A. Pearlmutter ]
   * Update debian/watch to version 5
 
- -- Barak A. Pearlmutter <bap@debian.org>  Thu, 11 Dec 2025 09:58:55 +0000
+ -- Barak A. Pearlmutter <bap@debian.org>  Thu, 11 Dec 2025 10:03:15 +0000
 
 xournalpp (1.2.8-1) unstable; urgency=medium
 
