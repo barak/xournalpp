@@ -1,3 +1,12 @@
+xournalpp (1.2.9-1) unstable; urgency=medium
+
+  * Fixed diplay bug when mixing versions
+  * Fixed clipboard issues
+  * Fixed dangerous background overriding
+  * Fixed image attach mode 
+
+ -- Benjamin Hennion <17818041+bhennion@users.noreply.github.com>  Wed, 03 Dec 2025 10:36:35 +0100
+
 xournalpp (1.2.8-2) UNRELEASED; urgency=medium
 
   * Update debian/watch to version 5
