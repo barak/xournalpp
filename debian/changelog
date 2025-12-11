@@ -1,6 +1,6 @@
 xournalpp (1.2.8-1) unstable; urgency=medium
-  [ Benjamin Hennion ]
 
+  [ Benjamin Hennion ]
   * Improved the behavior of the selection tools
   * Fixed various visual artifacts
   * Fixed some behavior of Mouse+Keyboard combo devices
@@ -103,7 +103,7 @@ xournalpp (1.2.2-1) unstable; urgency=medium
 
 xournalpp (1.2.1-1) unstable; urgency=medium
 
-  [ rolandlo ]
+  [ Roland Lötscher ]
   * New upstream version:
     - Added a default toolbar so that the app does not start without toolbar on
       new installations
