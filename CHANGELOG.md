@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.10
+
+* Fixed Continuous Integration
+* Updated translations
+
 ## 1.2.9
 
 Bugfixes from various community contributors:
