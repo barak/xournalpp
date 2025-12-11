@@ -1,14 +1,13 @@
-xournalpp (1.2.9-1) unstable; urgency=medium
+xournalpp (1.2.9-1) UNRELEASED; urgency=medium
 
-  * Fixed diplay bug when mixing versions
-  * Fixed clipboard issues
-  * Fixed dangerous background overriding
-  * Fixed image attach mode 
+  [ Benjamin Hennion ]
+  * New Upstream Version
+    - Fixed diplay bug when mixing versions
+    - Fixed clipboard issues
+    - Fixed dangerous background overriding
+    - Fixed image attach mode
 
- -- Benjamin Hennion <17818041+bhennion@users.noreply.github.com>  Wed, 03 Dec 2025 10:36:35 +0100
-
-xournalpp (1.2.8-2) UNRELEASED; urgency=medium
-
+  [ Barak A. Pearlmutter ]
   * Update debian/watch to version 5
 
  -- Barak A. Pearlmutter <bap@debian.org>  Thu, 11 Dec 2025 09:58:55 +0000
@@ -16,14 +15,15 @@ xournalpp (1.2.8-2) UNRELEASED; urgency=medium
 xournalpp (1.2.8-1) unstable; urgency=medium
 
   [ Benjamin Hennion ]
-  * Improved the behavior of the selection tools
-  * Fixed various visual artifacts
-  * Fixed some behavior of Mouse+Keyboard combo devices
-  * Fixed filename extension stripping
-  * Fixed CLI using relative paths
-  * Fixed various crashes
-  * Made using GtkSourceView and Plugins proper CMake options
-  * Updated translations
+  * New Upstream Version
+    - Improved the behavior of the selection tools
+    - Fixed various visual artifacts
+    - Fixed some behavior of Mouse+Keyboard combo devices
+    - Fixed filename extension stripping
+    - Fixed CLI using relative paths
+    - Fixed various crashes
+    - Made using GtkSourceView and Plugins proper CMake options
+    - Updated translations
 
   [ Barak A. Pearlmutter ]
   * Remove unnecessary rules-requires-root:no line
