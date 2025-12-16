@@ -30,7 +30,7 @@
 #include "util/i18n.h"                 // for _F, _
 
 #include "config.h"      // for GETTEXT_PACKAGE, ENABLE_NLS
-#include "filesystem.h"  // for path, operator/, u8path, exists
+#include "filesystem.h"  // for path, operator/, exists
 
 #ifdef DEBUG_THUMBERNAILER
 #include <fstream>
@@ -43,7 +43,7 @@ using std::string;
 
 void initLocalisation() {
 #ifdef ENABLE_NLS
-    bindtextdomain(GETTEXT_PACKAGE, Util::getLocalePath().u8string().c_str());
+    bindtextdomain(GETTEXT_PACKAGE, char_cast(Util::getLocalePath().u8string().c_str()));
     textdomain(GETTEXT_PACKAGE);
 #endif  // ENABLE_NLS
 
@@ -82,22 +82,22 @@ static const std::string iconName = "com.github.xournalpp.xournalpp";
 fs::path findAppIcon() {
     std::vector<fs::path> basedirs;
 #if DEBUG_THUMBNAILER
-    basedirs.emplace_back(fs::u8path("../ui/pixmaps"));
+    basedirs.emplace_back(fs::path("../ui/pixmaps"));
 #endif
     // $HOME/.icons
-    basedirs.emplace_back(fs::u8path(g_get_home_dir()) / ".icons");
+    basedirs.emplace_back(Util::GFilename(g_get_home_dir()).toPath().value_or(fs::path()) / ".icons");
     // $XDG_DATA_DIRS/icons
     if (const char* datadirs = g_getenv("XDG_DATA_DIRS")) {
-        std::string dds = datadirs;
+        std::string_view dds = datadirs;
         std::string::size_type lastp = 0;
         std::string::size_type p;
-        while ((p = dds.find(":", lastp)) != std::string::npos) {
-            std::string path = dds.substr(lastp, p - lastp);
-            basedirs.emplace_back(fs::u8path(path) / "icons");
+        while ((p = dds.find(G_SEARCHPATH_SEPARATOR, lastp)) != std::string::npos) {
+            auto file = Util::GFilename::assumeOwnerhip(g_strndup(dds.data() + lastp, p - lastp));
+            basedirs.emplace_back(file.toPath().value_or(fs::path()) / "icons");
             lastp = p + 1;
         }
     }
-    basedirs.emplace_back(fs::u8path("/usr/share/pixmaps"));
+    basedirs.emplace_back(fs::path("/usr/share/pixmaps"));
 
     const auto iconFile = iconName + ".svg";
     // Search through base directories
@@ -166,7 +166,9 @@ int main(int argc, char* argv[]) {
                     return CAIRO_STATUS_READ_ERROR;
                 }
 
-                for (auto i = 0; i < length; i++) { data[i] = closure->data[closure->pos + i]; }
+                for (auto i = 0U; i < length; i++) {
+                    data[i] = closure->data[closure->pos + i];
+                }
                 closure->pos += length;
                 return CAIRO_STATUS_SUCCESS;
             };
@@ -185,14 +187,15 @@ int main(int argc, char* argv[]) {
             logMessage((_F("xoj-preview-extractor: could not find icon \"{1}\"") % iconName).str(), true);
         } else {
             rsvg_handle_set_dpi(handle, 90);  // does the dpi matter for an icon overlay?
-            RsvgDimensionData dims;
-            rsvg_handle_get_dimensions(handle, &dims);
-
             // Render at bottom right
             cairo_t* cr = cairo_create(thumbnail);
-            cairo_translate(cr, width - iconSize, height - iconSize);
-            cairo_scale(cr, iconSize / dims.width, iconSize / dims.height);
-            rsvg_handle_render_cairo(handle, cr);
+            const RsvgRectangle viewport{width - iconSize, height - iconSize, iconSize, iconSize};
+            GError* error = nullptr;
+            rsvg_handle_render_document(handle, cr, &viewport, &error);
+            if (error != nullptr) {
+                g_warning("Could not render the icon");
+                g_clear_error(&error);
+            }
         }
         cairo_surface_write_to_png(thumbnail, argv[2]);
     } else {

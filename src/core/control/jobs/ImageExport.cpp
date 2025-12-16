@@ -14,6 +14,7 @@
 #include "model/PageType.h"              // for PageType
 #include "model/XojPage.h"               // for XojPage
 #include "pdf/base/XojPdfPage.h"         // for XojPdfPageSPtr, XojPdfPage
+#include "util/StringUtils.h"            // for char_cast
 #include "util/Util.h"                   // for DPI_NORMALIZATION_FACTOR
 #include "util/i18n.h"                   // for _
 #include "view/DocumentView.h"           // for DocumentView
@@ -100,7 +101,8 @@ auto ImageExport::createSurface(double width, double height, size_t id, double z
             cairo_scale(this->cr, zoomRatio, zoomRatio);
             return zoomRatio;
         case EXPORT_GRAPHICS_SVG:
-            this->surface = cairo_svg_surface_create(getFilenameWithNumber(id).u8string().c_str(), width, height);
+            this->surface =
+                    cairo_svg_surface_create(char_cast(getFilenameWithNumber(id).u8string().c_str()), width, height);
             cairo_svg_surface_restrict_to_version(this->surface, CAIRO_SVG_VERSION_1_2);
             this->cr = cairo_create(this->surface);
             break;
@@ -119,7 +121,7 @@ auto ImageExport::freeSurface(size_t id) -> bool {
     cairo_status_t status = CAIRO_STATUS_SUCCESS;
     if (format == EXPORT_GRAPHICS_PNG) {
         auto filepath = getFilenameWithNumber(id);
-        status = cairo_surface_write_to_png(surface, filepath.u8string().c_str());
+        status = cairo_surface_write_to_png(surface, char_cast(filepath.u8string().c_str()));
     }
     cairo_surface_destroy(surface);
 
@@ -158,7 +160,7 @@ auto ImageExport::getFilenameWithNumber(size_t no) const -> fs::path {
 void ImageExport::exportImagePage(size_t pageId, size_t id, double zoomRatio, ExportGraphicsFormat format,
                                   DocumentView& view) {
     doc->lock();
-    PageRef page = doc->getPage(pageId);
+    ConstPageRef page = doc->getPage(pageId);
     doc->unlock();
 
     zoomRatio = createSurface(page->getWidth(), page->getHeight(), id, zoomRatio);
@@ -183,13 +185,17 @@ void ImageExport::exportImagePage(size_t pageId, size_t id, double zoomRatio, Ex
         }
     }
 
+    xoj::view::BackgroundFlags flags;
+    flags.showPDF = xoj::view::HIDE_PDF_BACKGROUND;  // Already exported (if any)
+    flags.showImage = exportBackground == EXPORT_BACKGROUND_NONE ? xoj::view::HIDE_IMAGE_BACKGROUND :
+                                                                   xoj::view::SHOW_IMAGE_BACKGROUND;
+    flags.showRuling = exportBackground <= EXPORT_BACKGROUND_UNRULED ? xoj::view::HIDE_RULING_BACKGROUND :
+                                                                       xoj::view::SHOW_RULING_BACKGROUND;
+
     if (layerRange) {
-        view.drawLayersOfPage(*layerRange, page, this->cr, true /* dont render eraseable */,
-                              true /* don't rerender the pdf background */, exportBackground == EXPORT_BACKGROUND_NONE,
-                              exportBackground <= EXPORT_BACKGROUND_UNRULED);
+        view.drawLayersOfPage(*layerRange, page, this->cr, true /* dont render eraseable */, flags);
     } else {
-        view.drawPage(page, this->cr, true /* dont render eraseable */, true /* don't rerender the pdf background */,
-                      exportBackground == EXPORT_BACKGROUND_NONE, exportBackground <= EXPORT_BACKGROUND_UNRULED);
+        view.drawPage(page, this->cr, true /* dont render eraseable */, flags);
     }
 
     if (!freeSurface(id)) {
@@ -230,7 +236,7 @@ void ImageExport::exportGraphics(ProgressListener* stateListener) {
     }
 
     DocumentView view;
-    int current = 0;
+    size_t current = 0;
 
     for (size_t i = 0; i < count; i++) {
         auto id = i + 1;
@@ -239,9 +245,8 @@ void ImageExport::exportGraphics(ProgressListener* stateListener) {
         }
 
         if (selectedPages[i]) {
-            stateListener->setCurrentState(current++);
-
-            exportImagePage(i, id, zoomRatio, format, view);  // Todo(narrowing): remove cast
+            exportImagePage(i, id, zoomRatio, format, view);
+            stateListener->setCurrentState(++current);
         }
     }
 }

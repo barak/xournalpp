@@ -6,6 +6,7 @@
 #include <glib-object.h>  // for g_object_unref
 
 #include "util/Stacktrace.h"  // for Stacktrace
+#include "util/StringUtils.h"
 
 /*
  * The contents of a background image
@@ -18,14 +19,16 @@
 
 struct BackgroundImage::Content {
     Content(fs::path path, GError** error):
-            path(std::move(path)), pixbuf(gdk_pixbuf_new_from_file(this->path.u8string().c_str(), error)) {}
+            path(std::move(path)), pixbuf(gdk_pixbuf_new_from_file(char_cast(this->path.u8string().c_str()), error)) {}
 
     Content(GInputStream* stream, fs::path path, GError** error):
             path(std::move(path)), pixbuf(gdk_pixbuf_new_from_stream(stream, nullptr, error)) {}
 
     ~Content() {
-        g_object_unref(this->pixbuf);
-        this->pixbuf = nullptr;
+        if (this->pixbuf) {
+            g_object_unref(this->pixbuf);
+            this->pixbuf = nullptr;
+        }
     };
 
     Content(const Content&) = delete;
@@ -39,16 +42,6 @@ struct BackgroundImage::Content {
     bool attach = false;
 };
 
-BackgroundImage::BackgroundImage() = default;
-
-BackgroundImage::BackgroundImage(const BackgroundImage& img) = default;
-
-BackgroundImage::BackgroundImage(BackgroundImage&& img) noexcept: img(std::move(img.img)) {}
-
-BackgroundImage::~BackgroundImage() = default;
-
-auto BackgroundImage::operator==(const BackgroundImage& img) -> bool { return this->img == img.img; }
-
 void BackgroundImage::free() { this->img.reset(); }
 
 void BackgroundImage::loadFile(fs::path const& path, GError** error) {
@@ -59,7 +52,7 @@ void BackgroundImage::loadFile(GInputStream* stream, fs::path const& path, GErro
     this->img = std::make_shared<Content>(stream, path, error);
 }
 
-auto BackgroundImage::getCloneId() -> int { return this->img ? this->img->pageId : -1; }
+auto BackgroundImage::getCloneId() const -> int { return this->img ? this->img->pageId : -1; }
 
 void BackgroundImage::setCloneId(int id) {
     if (this->img) {
@@ -88,6 +81,7 @@ void BackgroundImage::setAttach(bool attach) {
     this->img->attach = attach;
 }
 
-auto BackgroundImage::getPixbuf() const -> GdkPixbuf* { return this->img ? this->img->pixbuf : nullptr; }
+auto BackgroundImage::getPixbuf() -> GdkPixbuf* { return this->img ? this->img->pixbuf : nullptr; }
+auto BackgroundImage::getPixbuf() const -> const GdkPixbuf* { return this->img ? this->img->pixbuf : nullptr; }
 
 auto BackgroundImage::isEmpty() const -> bool { return !this->img; }

@@ -57,7 +57,7 @@ auto FloatingToolbox::floatingToolboxActivated() -> bool {
     ButtonConfig* cfg = nullptr;
 
     // check if any buttons assigned to bring up toolbox
-    for (int id = 0; id < BUTTON_COUNT; id++) {
+    for (unsigned int id = 0; id < BUTTON_COUNT; id++) {
         cfg = settings->getButtonConfig(id);
 
         if (cfg->getAction() == TOOL_FLOATING_TOOLBOX) {
@@ -70,25 +70,18 @@ auto FloatingToolbox::floatingToolboxActivated() -> bool {
         return true;  // return true
     }
 
-    if (this->countWidgets() > 0)  // FloatingToolbox contains something
-    {
-        return true;  // return true
-    }
-
-    return false;
+    return this->hasWidgets();
 }
 
 
-auto FloatingToolbox::countWidgets() -> int {
-    int count = 0;
-
+auto FloatingToolbox::hasWidgets() -> bool {
     for (int index = TBFloatFirst; index <= TBFloatLast; index++) {
-        const char* guiName = TOOLBAR_DEFINITIONS[index].guiName;
-        GtkToolbar* toolbar1 = GTK_TOOLBAR(this->mainWindow->get(guiName));
-        count += gtk_toolbar_get_n_items(toolbar1);
+        GtkToolbar* toolbar1 = GTK_TOOLBAR(this->mainWindow->get(TOOLBAR_DEFINITIONS[index].guiName));
+        if (gtk_toolbar_get_n_items(toolbar1) > 0) {
+            return true;
+        }
     }
-
-    return count;
+    return false;
 }
 
 
@@ -107,16 +100,10 @@ void FloatingToolbox::showForConfiguration() {
 
 
 void FloatingToolbox::show() {
-    gtk_widget_hide(this->floatingToolbox);  // force showing in new position
     gtk_widget_show_all(this->floatingToolbox);
-
-    if (this->floatingToolboxState != configuration) {
-        gtk_widget_hide(this->mainWindow->get("labelFloatingToolbox"));
-    }
-
-    if (this->floatingToolboxState == configuration || countWidgets() > 0) {
-        gtk_widget_hide(this->mainWindow->get("showIfEmpty"));
-    }
+    gtk_widget_set_visible(this->mainWindow->get("labelFloatingToolbox"), this->floatingToolboxState == configuration);
+    gtk_widget_set_visible(this->mainWindow->get("showIfEmpty"),
+                           this->floatingToolboxState != configuration && !hasWidgets());
 }
 
 
@@ -144,39 +131,78 @@ void FloatingToolbox::flagRecalculateSizeRequired() { this->floatingToolboxState
  */
 auto FloatingToolbox::getOverlayPosition(GtkOverlay* overlay, GtkWidget* widget, GdkRectangle* allocation,
                                          FloatingToolbox* self) -> bool {
-    if (widget == self->floatingToolbox) {
-        gtk_widget_get_allocation(widget, allocation);  // get existing width and height
+    if (widget != self->floatingToolbox) {
+        return false;
+    }
 
-        if (self->floatingToolboxState != noChange ||
-            allocation->height < 2)  // if recalcSize or configuration or  initiation.
-        {
-            GtkRequisition natural;
-            gtk_widget_get_preferred_size(widget, nullptr, &natural);
-            allocation->width = natural.width;
-            allocation->height = natural.height;
-        }
+    gtk_widget_get_allocation(widget, allocation);
 
-        switch (self->floatingToolboxState) {
-            case recalcSize:  // fallthrough 		note: recalc done above
-            case noChange:
-                // show centered on x,y
-                allocation->x = self->floatingToolboxX - allocation->width / 2;
-                allocation->y = self->floatingToolboxY - allocation->height / 2;
-                self->floatingToolboxState = noChange;
-                break;
+    if (self->floatingToolboxState != noChange || allocation->height < 2) {
+        GtkRequisition natural;
+        gtk_widget_get_preferred_size(widget, nullptr, &natural);
+        allocation->width = natural.width;
+        allocation->height = natural.height;
+    }
 
-            case configuration:
-                allocation->x = self->floatingToolboxX;
-                allocation->y = self->floatingToolboxY;
-                allocation->width = std::max(allocation->width + 32, 50);  // always room for one more...
-                allocation->height = std::max(allocation->height, 50);
-                break;
-        }
+    // Get scrolled window for boundary clamping
+    GtkWidget* mainBox = self->mainWindow->get("mainBox");
+    GtkWidget* boxContents = self->mainWindow->get("boxContents");
 
+    GtkWidget* scrolledWindow = nullptr;
+    GList* children = gtk_container_get_children(GTK_CONTAINER(boxContents));
+    if (children != nullptr) {
+        scrolledWindow = GTK_WIDGET(children->data);
+        g_list_free(children);
+    }
+
+    if (scrolledWindow == nullptr) {
+        // Fallback: no clamping if scrolled window not found
+        allocation->x = self->floatingToolboxX - allocation->width / 2;
+        allocation->y = self->floatingToolboxY - allocation->height / 2;
+        self->floatingToolboxState = noChange;
         return true;
     }
 
-    return false;
+    // Get scrolled window position relative to mainBox
+    gint scrollX, scrollY;
+    gtk_widget_translate_coordinates(scrolledWindow, mainBox, 0, 0, &scrollX, &scrollY);
+
+    GtkAllocation scrollAllocation;
+    gtk_widget_get_allocation(scrolledWindow, &scrollAllocation);
+
+    switch (self->floatingToolboxState) {
+        case recalcSize:
+            [[fallthrough]];
+        case noChange: {
+            int centerX = self->floatingToolboxX - allocation->width / 2;
+            int centerY = self->floatingToolboxY - allocation->height / 2;
+
+            // Clamp to scrolled window bounds with margin
+            constexpr int margin = 10;
+            int minX = scrollX + margin;
+            int maxX = scrollX + scrollAllocation.width - allocation->width - margin;
+            int minY = scrollY + margin;
+            int maxY = scrollY + scrollAllocation.height - allocation->height - margin;
+
+            // Ensure valid clamp bounds when toolbox is larger than viewport
+            maxX = std::max(maxX, minX);
+            maxY = std::max(maxY, minY);
+
+            allocation->x = std::clamp(centerX, minX, maxX);
+            allocation->y = std::clamp(centerY, minY, maxY);
+            self->floatingToolboxState = noChange;
+            break;
+        }
+
+        case configuration:
+            allocation->x = self->floatingToolboxX;
+            allocation->y = self->floatingToolboxY;
+            allocation->width = std::max(allocation->width + 32, 50);
+            allocation->height = std::max(allocation->height, 50);
+            break;
+    }
+
+    return true;
 }
 
 

@@ -20,23 +20,14 @@
 #include "filesystem.h"  // for path
 
 struct BackgroundImage {
-    BackgroundImage();
-    BackgroundImage(const BackgroundImage& img);
-    BackgroundImage(BackgroundImage&& img) noexcept;
-    ~BackgroundImage();
-
-    BackgroundImage& operator=(const BackgroundImage& img) = default;
-    BackgroundImage& operator=(BackgroundImage&& img) = default;
-
-
-    bool operator==(const BackgroundImage& img);
+    friend bool operator==(const BackgroundImage& lhs, const BackgroundImage& rhs) = default;
 
     void free();
 
     void loadFile(fs::path const& filepath, GError** error);
     void loadFile(GInputStream* stream, fs::path const& filepath, GError** error);
 
-    int getCloneId();
+    int getCloneId() const;
     void setCloneId(int id);
     void clearSaveState();
 
@@ -46,7 +37,8 @@ struct BackgroundImage {
     bool isAttached() const;
     void setAttach(bool attach);
 
-    GdkPixbuf* getPixbuf() const;
+    GdkPixbuf* getPixbuf();
+    const GdkPixbuf* getPixbuf() const;
 
     bool isEmpty() const;
 

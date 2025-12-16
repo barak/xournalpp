@@ -39,7 +39,6 @@ TouchDrawingInputHandler::TouchDrawingInputHandler(InputContext* inputContext): 
 TouchDrawingInputHandler::~TouchDrawingInputHandler() = default;
 
 auto TouchDrawingInputHandler::handleImpl(InputEvent const& event) -> bool {
-    auto* mainWindow = inputContext->getView()->getControl()->getWindow();
     ToolHandler* toolHandler = this->inputContext->getToolHandler();
 
     // Do we need to end the touch sequence?
@@ -102,7 +101,7 @@ auto TouchDrawingInputHandler::handleImpl(InputEvent const& event) -> bool {
     if (this->deviceClassPressed && event.type == MOTION_EVENT && toolHandler->getToolType() != TOOL_HAND) {
         GtkXournal* xournal = inputContext->getXournal();
 
-        this->inputContext->getView()->getCursor()->setRotationAngle(event.relativeX);
+        this->inputContext->getView()->getCursor()->setRotationAngle(event.relative.x);
 
         this->actionMotion(event);
         XournalppCursor* cursor = xournal->view->getCursor();

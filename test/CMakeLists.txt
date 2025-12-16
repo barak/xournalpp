@@ -54,8 +54,24 @@ file (GLOB_RECURSE test-units-sources
 
 # Define test-units target
 add_executable (test-units EXCLUDE_FROM_ALL ${test-units-sources})
-target_link_libraries (test-units xoj::core xoj::util std::filesystem gtest)
+target_link_libraries (test-units xoj::core xoj::util gtest)
+target_compile_features(test-units PRIVATE cxx_std_20)
 target_include_directories(test-units PRIVATE "${PROJECT_BINARY_DIR}/test")
+
+###############################################################################
+# Define test-gtk-integration
+###############################################################################
+
+# Get all test-gtk test source files
+file (GLOB_RECURSE test-gtk-sources
+        gtk_tests/*.cpp
+        )
+
+# Define test-gtk-integration target
+add_executable (test-gtk-integration EXCLUDE_FROM_ALL ${test-gtk-sources})
+target_link_libraries (test-gtk-integration xoj::core xoj::util gtest_main gtest)
+target_compile_features(test-gtk-integration PRIVATE cxx_std_20)
+target_include_directories(test-gtk-integration PRIVATE "${PROJECT_BINARY_DIR}/test")
 
 ###############################################################################
 # Discover and Register Tests
@@ -69,4 +85,11 @@ gtest_discover_tests(test-units
     ENVIRONMENT "${TEST_ENV_VARS}"
   $<$<NOT:$<STREQUAL:${TEST_GDK_PIXBUF_LOADER_CACHE},"">>:
     DEPENDS create-gdk-pixbuf-loader-cache>
+)
+gtest_discover_tests(test-gtk-integration
+        DISCOVERY_TIMEOUT 30
+        PROPERTIES
+        ENVIRONMENT "${TEST_ENV_VARS}"
+        $<$<NOT:$<STREQUAL:${TEST_GDK_PIXBUF_LOADER_CACHE},"">>:
+        DEPENDS create-gdk-pixbuf-loader-cache>
 )

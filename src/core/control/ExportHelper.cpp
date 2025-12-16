@@ -16,7 +16,7 @@
 #include "util/i18n.h"                      // for _
 #include "util/raii/GObjectSPtr.h"          // for GObjectSPtr
 
-#include "filesystem.h"  // for operator==, path, u8path
+#include "filesystem.h"  // for operator==, path
 
 namespace ExportHelper {
 
@@ -92,13 +92,13 @@ auto exportImg(Document* doc, const char* output, const char* range, const char*
  * @return 0 on success, -3 on export failure
  */
 auto exportPdf(Document* doc, const char* output, const char* range, const char* layerRange,
-               ExportBackgroundType exportBackground, bool progressiveMode) -> int {
+               ExportBackgroundType exportBackground, bool progressiveMode, ExportBackend backend) -> int {
 
     xoj::util::GObjectSPtr<GFile> file(g_file_new_for_commandline_arg(output), xoj::util::adopt);
 
-    std::unique_ptr<XojPdfExport> pdfe = XojPdfExportFactory::createExport(doc, nullptr);
+    std::unique_ptr<XojPdfExport> pdfe = XojPdfExportFactory::createExport(doc, nullptr, backend);
     pdfe->setExportBackground(exportBackground);
-    auto path = fs::u8path(g_file_peek_path(file.get()));
+    auto path = Util::GFilename(g_file_peek_path(file.get())).toPath().value_or(fs::path());
 
     // Check if we're trying to overwrite the background PDF file
     auto backgroundPDF = doc->getPdfFilepath();

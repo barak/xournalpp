@@ -1,12 +1,34 @@
+xournalpp (1.3.0-1) unstable; urgency=medium
+
+  [ Benjamin Hennion ]
+  * New Upstream Version
+    - PDF exports now preserves the background PDF's inner structure (hyperlink, comments, ...)
+    - Grid snapping now follows the displayed grid for all background types
+    - New graph background with periodically thicker lines
+    - New laser pointer tool, writing ephemeral strokes
+    - Allow to use an external editor for LaTeX entries
+    - Add the possibility of recoloring the screen output (e.g. for night mode or accessibility)
+    - Add the possibility of choosing the PDF marker opacity
+    - Configurable behaviour in fullscreen or presentation modes
+    - Allow to optionally scroll beyond the page's edges
+    - The toolbars can now contain several instances of the same button
+    - Major changes in the plugin interface
+    - Many smaller new features and bugfixes
+
+  [ Barak A. Pearlmutter ]
+  * Fix changelog grammar
+
+ -- Barak A. Pearlmutter <bap@debian.org>  Tue, 16 Dec 2025 10:23:59 +0000
+
 xournalpp (1.2.10-1) unstable; urgency=medium
 
   [ Benjamin Hennion ]
   * New Upstream Version
-    - Fixed diplay bug when mixing versions
-    - Fixed clipboard issues
-    - Fixed dangerous background overriding
-    - Fixed image attach mode
-    - Updated translations
+    - Fix diplay bug when mixing versions
+    - Fix clipboard issues
+    - Fix dangerous background overriding
+    - Fix image attach mode
+    - Update translations
 
   [ Barak A. Pearlmutter ]
   * Update debian/watch to version 5
@@ -17,14 +39,14 @@ xournalpp (1.2.8-1) unstable; urgency=medium
 
   [ Benjamin Hennion ]
   * New Upstream Version
-    - Improved the behavior of the selection tools
-    - Fixed various visual artifacts
-    - Fixed some behavior of Mouse+Keyboard combo devices
-    - Fixed filename extension stripping
-    - Fixed CLI using relative paths
-    - Fixed various crashes
-    - Made using GtkSourceView and Plugins proper CMake options
-    - Updated translations
+    - Improve the behavior of the selection tools
+    - Fix various visual artifacts
+    - Fix some behavior of Mouse+Keyboard combo devices
+    - Fix filename extension stripping
+    - Fix CLI using relative paths
+    - Fix various crashes
+    - Make using GtkSourceView and Plugins proper CMake options
+    - Update translations
 
   [ Barak A. Pearlmutter ]
   * Remove unnecessary rules-requires-root:no line
@@ -35,12 +57,12 @@ xournalpp (1.2.7-1) unstable; urgency=medium
 
   [ Benjamin Hennion ]
   * New Upstream Version
-    - Improved error logs
-    - Fixed some undefined behaviours and memory leaks
-    - Fixed handling of linebreaks in latex tool
+    - Improve error logs
+    - Fix some undefined behaviours and memory leaks
+    - Fix handling of linebreaks in latex tool
     - Linux: forward crash signals to system handler after emergency save
-    - Fixed wrong glyph spacing in texts using small fonts
-    - Fixed rasterization of Tex elements on PDF/SVG export or printing
+    - Fix wrong glyph spacing in texts using small fonts
+    - Fix rasterization of Tex elements on PDF/SVG export or printing
 
   [ Barak A. Pearlmutter ]
   * Update standards version to 4.7.2, no changes needed.
@@ -51,9 +73,9 @@ xournalpp (1.2.6-1) unstable; urgency=medium
 
   [ Roland Lötscher ]
   * New Upstream Version
-    - Fixed compass outline drawing
-    - Exposed selected text to the windowing system
-    - Fixed loading of jpeg images and CJK and Cyrillic font rendering on MacOS
+    - Fix compass outline drawing
+    - Expose selected text to the windowing system
+    - Fix loading of jpeg images and CJK and Cyrillic font rendering on MacOS
 
  -- Barak A. Pearlmutter <bap@debian.org>  Mon, 24 Feb 2025 15:19:28 +0000
 
@@ -61,11 +83,11 @@ xournalpp (1.2.5-1) unstable; urgency=medium
 
   [ Benjamin Hennion ]
   * New Upstream Version
-    - Fixed regressions when exporting to PDF
-    - Fixed crash when importing some SVG files
+    - Fix regressions when exporting to PDF
+    - Fix crash when importing some SVG files
     - Have geometry tools appear in the middle of the view
-    - Fixed issues with Windows installer
-    - Fixed missing translations on Windows
+    - Fix issues with Windows installer
+    - Fix missing translations on Windows
 
  -- Barak A. Pearlmutter <bap@debian.org>  Mon, 09 Dec 2024 11:51:39 +0000
 
@@ -73,11 +95,11 @@ xournalpp (1.2.4-1) unstable; urgency=medium
 
   [ Roland Lötscher ]
   * New Upstream Version
-    - Fixed various dark/light theme inconsistencies
-    - Improved edge panning for large selections
-    - Fixed various crashes, freezes and memory leaks
-    - MacOS: Added support for opening xopp-files from Finder
-    - Added builds for Ubuntu 24.04 and MacOS ARM
+    - Fix various dark/light theme inconsistencies
+    - Improve edge panning for large selections
+    - Fix various crashes, freezes and memory leaks
+    - MacOS: Add support for opening xopp-files from Finder
+    - Add builds for Ubuntu 24.04 and MacOS ARM
 
   [ Barak A. Pearlmutter ]
   * Update standards version to 4.7.0, no changes needed.
@@ -89,11 +111,11 @@ xournalpp (1.2.3-1) unstable; urgency=medium
 
   [ Roland Lötscher ]
   * New Upstream Version
-    - Fixed background color and truncated text in LaTeX tool
-    - Fixed zoom jumping and zoom steps
-    - Fixed various segfaults and rendering issues
-    - Fixed pressure values and project URL when saving documents
-    - Enabled font hint metrics in PDF export to improve text alignment
+    - Fix background color and truncated text in LaTeX tool
+    - Fix zoom jumping and zoom steps
+    - Fix various segfaults and rendering issues
+    - Fix pressure values and project URL when saving documents
+    - Enable font hint metrics in PDF export to improve text alignment
 
  -- Barak A. Pearlmutter <bap@debian.org>  Thu, 07 Mar 2024 09:18:23 +0000
 
@@ -107,10 +129,10 @@ xournalpp (1.2.2-1) unstable; urgency=medium
 
   [ Benjamin Hennion ]
   * New upstream version:
-    - Fixed various memory leaks and segmentation faults
-    - Fixed some issues with input sequences mixing up devices and buttons
-    - Fixed LaTeX tool failing to open some PDF files
-    - Fixed audio output device selection
+    - Fix various memory leaks and segmentation faults
+    - Fix some issues with input sequences mixing up devices and buttons
+    - Fix LaTeX tool failing to open some PDF files
+    - Fix audio output device selection
 
   [ Barak A. Pearlmutter ]
   * Switch from liblua5.3 to liblua5.4
@@ -121,10 +143,10 @@ xournalpp (1.2.1-1) unstable; urgency=medium
 
   [ Roland Lötscher ]
   * New upstream version:
-    - Added a default toolbar so that the app does not start without toolbar on
+    - Add a default toolbar so that the app does not start without toolbar on
       new installations
-    - Fixed some crashes and various issues with the crash log handling
-    - Added options to the command line and preferences to disable the audio
+    - Fix some crashes and various issues with the crash log handling
+    - Add options to the command line and preferences to disable the audio
       system used for audio recording
     - The official release builds are now all built with gtksourceview styling
       for the LaTeX tool and in "RelWithDeb" mode. Thus failing asserts do not

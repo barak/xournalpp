@@ -1,54 +1,20 @@
 #include "util/PlaceholderString.h"
 
-#include <cstddef>    // for size_t
+#include <charconv>
 #include <exception>  // for exception
-#include <utility>    // for move
+#include <string>
 
 #include <glib.h>  // for g_error
 
-/**
- * Format String
- */
-class PlaceholderElementString: public PlaceholderElement {
-public:
-    explicit PlaceholderElementString(std::string text): text(std::move(text)) {}
-
-    auto format(std::string format) const -> std::string override { return text; }
-
-private:
-    std::string text;
-};
-
-/**
- * Format int
- */
-class PlaceholderElementInt: public PlaceholderElement {
-public:
-    explicit PlaceholderElementInt(int64_t value): value(value) {}
-
-    auto format(std::string format) const -> std::string override { return std::to_string(value); }
-
-private:
-    int64_t value;
-};
+#include "util/safe_casts.h"  // for as_unsigned
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-PlaceholderString::PlaceholderString(std::string text): text(std::move(text)) {}
+PlaceholderString::PlaceholderString(std::string_view text): text(text) {}
 
-auto PlaceholderString::operator%(int64_t value) -> PlaceholderString& {
-    data.emplace_back(std::make_unique<PlaceholderElementInt>(value));
-    return *this;
-}
-
-auto PlaceholderString::operator%(std::string value) -> PlaceholderString& {
-    data.emplace_back(std::make_unique<PlaceholderElementString>(std::move(value)));
-    return *this;
-}
-
-auto PlaceholderString::formatPart(std::string format) const -> std::string {
+auto PlaceholderString::formatPart(std::string_view format) const -> std::string {
     std::string formatDef;
 
     std::size_t comma = format.find(',');
@@ -58,10 +24,10 @@ auto PlaceholderString::formatPart(std::string format) const -> std::string {
     }
 
     int index = 0;
-    try {
-        index = std::stoi(format);
-    } catch (const std::exception& e) {
-        g_error("Could not parse \"%s\" as int, error: %s", format.c_str(), e.what());
+
+    auto res = std::from_chars(format.data(), format.data() + format.size(), index);
+    if (res.ec != std::errc()) {
+        g_error("Could not parse \"%s\" as int, error: %i", format.data(), int(res.ec));
     }
 
     // Placeholder index starting at 1, vector at 0
@@ -74,7 +40,7 @@ auto PlaceholderString::formatPart(std::string format) const -> std::string {
         return notFound;
     }
 
-    auto const& pe = data[index];
+    auto const& pe = data[as_unsigned(index)];
 
     return pe->format(formatDef);
 }
