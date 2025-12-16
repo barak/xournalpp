@@ -17,8 +17,9 @@ xournalpp (1.3.0-1) unstable; urgency=medium
 
   [ Barak A. Pearlmutter ]
   * Fix changelog grammar
+  * Tweak debian/watch to reject tag 20131011-alpha
 
- -- Barak A. Pearlmutter <bap@debian.org>  Tue, 16 Dec 2025 10:23:59 +0000
+ -- Barak A. Pearlmutter <bap@debian.org>  Tue, 16 Dec 2025 10:27:56 +0000
 
 xournalpp (1.2.10-1) unstable; urgency=medium
 

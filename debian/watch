@@ -1,3 +1,5 @@
 version: 5
-Source: https://github.com/xournalpp/@PACKAGE@/tags
-Matching-Pattern: (?:.*?/)v?@ANY_VERSION@@ARCHIVE_EXT@
+Template: GitHub
+Owner: @PACKAGE@
+Project: @PACKAGE@
+Version-Type: SEMANTIC_VERSION
