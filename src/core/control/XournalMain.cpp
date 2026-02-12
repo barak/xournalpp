@@ -166,8 +166,8 @@ void exitOnMissingPdfFileName(const LoadHandler& loader) {
 
 /**
  * @brief Export the input file as a bunch of image files (one per page)
- * @param input Path to the input file
- * @param output Path to the output file(s)
+ * @param infile Path to the input file
+ * @param outfile Path to the output file(s)
  * @param range Page range to be parsed. If range=nullptr, exports the whole file
  * @param layerRange Layer range to be parsed. Will only export those layers, for every exported page.
  *                  If a number is too high for the number of layers on a given page, it is just ignored.
@@ -179,51 +179,64 @@ void exitOnMissingPdfFileName(const LoadHandler& loader) {
  *
  *  The priority is: pngDpi overwrites pngWidth overwrites pngHeight
  *
- * @return 0 on success, -2 on failure opening the input file, -3 on export failure
+ * @return 0 on success
+ *
+ * Calls std::exit(-2) on failure opening the input file and std::exit(-3) on export failure
  */
-auto exportImg(const char* input, const char* output, const char* range, const char* layerRange, int pngDpi,
-               int pngWidth, int pngHeight, ExportBackgroundType exportBackground) -> int {
+auto exportImg(fs::path infile, fs::path outfile, const char* range, const char* layerRange, int pngDpi, int pngWidth,
+               int pngHeight, ExportBackgroundType exportBackground) -> int {
+
     LoadHandler loader;
-    auto doc = loader.loadDocument(input);
+
+    auto doc = loader.loadDocument(infile);
     if (doc == nullptr) {
-        g_error("%s", loader.getLastError().c_str());
+        g_message("%s", loader.getLastError().c_str());
+        std::exit(-2);
     }
 
     exitOnMissingPdfFileName(loader);
 
-    return ExportHelper::exportImg(doc.get(), output, range, layerRange, pngDpi, pngWidth, pngHeight, exportBackground);
+    const auto res = ExportHelper::exportImg(doc.get(), std::move(outfile), range, layerRange, pngDpi, pngWidth,
+                                             pngHeight, exportBackground);
+    if (res != 0) {
+        std::exit(res);
+    }
+    return 0;
 }
 
 /**
  * @brief Save a xopp-file with given pdf-background
  *
- * @param input Path to the input .pdf file
- * @param output Path to the output .xopp file
+ * @param infile Path to the input .pdf file
+ * @param outfile Path to the output .xopp file
  * @return int 0 on success
+ *
+ * Calls std::exit(-2) on failure reading the input file and std::exit(-3) on save failure
  */
-auto saveDoc(const char* input, const char* output) -> int {
+auto saveDoc(fs::path infile, fs::path outfile) -> int {
     SaveHandler saver;
-    const fs::path in = Util::fromGFilename(input);
     auto handler = std::make_unique<DocumentHandler>();
     auto newDoc = std::make_unique<Document>(handler.get());
-    const bool res = newDoc->readPdf(in, /*initPages=*/true, false);
+    const bool res = newDoc->readPdf(infile, /*initPages=*/true, false);
     if (!res) {
-        g_error("%s", FC(_F("Error: {1}") % newDoc->getLastErrorMsg().c_str()));
+        g_message("%s", FC(_F("Error: {1}") % newDoc->getLastErrorMsg().c_str()));
+        std::exit(-2);
     }
-    const fs::path out = fs::absolute(Util::fromGFilename(output));
+    const fs::path out = fs::absolute(outfile);
     saver.prepareSave(newDoc.get(), out);
     saver.saveTo(out);
 
     if (!saver.getErrorMessage().empty()) {
-        g_error("%s", FC(_F("Error: {1}") % saver.getErrorMessage()));
+        g_message("%s", FC(_F("Error: {1}") % saver.getErrorMessage()));
+        std::exit(-3);
     }
     return 0;
 }
 
 /**
  * @brief Export the input file as pdf
- * @param input Path to the input file
- * @param output Path to the output file
+ * @param infile Path to the input file
+ * @param outfile Path to the output file
  * @param layerRange Layer range to be parsed. Will only export those layers, for every exported page.
  *                  If a number is too high for the number of layers on a given page, it is just ignored.
  *                  If range=nullptr, exports all layers.
@@ -233,19 +246,27 @@ auto saveDoc(const char* input, const char* output) -> int {
  * rendered one by one to produce as many pages as there are layers.
  * @param backend The requested backend
  *
- * @return 0 on success, -2 on failure opening the input file, -3 on export failure
+ * @return 0 on success
+ *
+ * Calls std::exit(-2) on failure opening the input file and std::exit(-3) on export failure
  */
-auto exportPdf(const char* input, const char* output, const char* range, const char* layerRange,
+auto exportPdf(fs::path infile, fs::path outfile, const char* range, const char* layerRange,
                ExportBackgroundType exportBackground, bool progressiveMode, ExportBackend backend) -> int {
     LoadHandler loader;
-    auto doc = loader.loadDocument(input);
+    auto doc = loader.loadDocument(infile);
     if (doc == nullptr) {
-        g_error("%s", loader.getLastError().c_str());
+        g_message("%s", loader.getLastError().c_str());
+        std::exit(-2);
     }
 
     exitOnMissingPdfFileName(loader);
 
-    return ExportHelper::exportPdf(doc.get(), output, range, layerRange, exportBackground, progressiveMode, backend);
+    const auto res =
+            ExportHelper::exportPdf(doc.get(), outfile, range, layerRange, exportBackground, progressiveMode, backend);
+    if (res != 0) {
+        std::exit(res);
+    }
+    return 0;
 }
 
 struct XournalMainPrivate {
@@ -262,10 +283,10 @@ struct XournalMainPrivate {
         g_free(docFilename);
     }
 
-    gchar** optFilename{};
-    gchar* pdfFilename{};
-    gchar* imgFilename{};
-    gchar* docFilename{};
+    gchar** optFilename{};  ///< Array of paths, in GFilename encoding
+    gchar* pdfFilename{};   ///< Single path, in GFilename encoding
+    gchar* imgFilename{};   ///< Single path, in GFilename encoding
+    gchar* docFilename{};   ///< Single path, in GFilename encoding
     gboolean showVersion = false;
     int openAtPageNumber = 0;  // when no --page is used, the document opens at the page specified in the metadata file
     gchar* exportRange{};
@@ -497,7 +518,8 @@ auto on_handle_local_options(GApplication*, GVariantDict*, XMPtr app_data) -> gi
     if (app_data->pdfFilename && app_data->optFilename && *app_data->optFilename) {
         return exec_guarded(
                 [&] {
-                    return exportPdf(*app_data->optFilename, app_data->pdfFilename, app_data->exportRange,
+                    return exportPdf(Util::fromGFilename(*app_data->optFilename),
+                                     Util::fromGFilename(app_data->pdfFilename), app_data->exportRange,
                                      app_data->exportLayerRange,
                                      app_data->exportNoBackground ? EXPORT_BACKGROUND_NONE :
                                      app_data->exportNoRuling     ? EXPORT_BACKGROUND_UNRULED :
@@ -509,7 +531,8 @@ auto on_handle_local_options(GApplication*, GVariantDict*, XMPtr app_data) -> gi
     if (app_data->imgFilename && app_data->optFilename && *app_data->optFilename) {
         return exec_guarded(
                 [&] {
-                    return exportImg(*app_data->optFilename, app_data->imgFilename, app_data->exportRange,
+                    return exportImg(Util::fromGFilename(*app_data->optFilename),
+                                     Util::fromGFilename(app_data->imgFilename), app_data->exportRange,
                                      app_data->exportLayerRange, app_data->exportPngDpi, app_data->exportPngWidth,
                                      app_data->exportPngHeight,
                                      app_data->exportNoBackground ? EXPORT_BACKGROUND_NONE :
@@ -519,7 +542,12 @@ auto on_handle_local_options(GApplication*, GVariantDict*, XMPtr app_data) -> gi
                 "exportImg");
     }
     if (app_data->docFilename && app_data->optFilename && *app_data->optFilename) {
-        return exec_guarded([&] { return saveDoc(*app_data->optFilename, app_data->docFilename); }, "saveDocument");
+        return exec_guarded(
+                [&] {
+                    return saveDoc(Util::fromGFilename(*app_data->optFilename),
+                                   Util::fromGFilename(app_data->docFilename));
+                },
+                "saveDocument");
     }
     return -1;
 }

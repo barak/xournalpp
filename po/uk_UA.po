@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xournalpp\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-18 14:01+0000\n"
-"PO-Revision-Date: 2025-12-21 04:28\n"
+"POT-Creation-Date: 2026-02-03 08:38+0000\n"
+"PO-Revision-Date: 2026-02-03 08:53\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -47,8 +47,8 @@ msgstr "Так"
 msgid "No"
 msgstr "Ні"
 
-#: ../src/core/control/Control.cpp:828 ../src/core/control/Control.cpp:1784
-#: ../src/core/control/Control.cpp:2108
+#: ../src/core/control/Control.cpp:828 ../src/core/control/Control.cpp:1786
+#: ../src/core/control/Control.cpp:2111
 msgid "Cancel"
 msgstr "Скасувати"
 
@@ -69,7 +69,7 @@ msgid "Paper B_ackground"
 msgstr "_Тло паперу"
 
 #: ../src/core/control/Control.cpp:834
-#: ../src/core/control/pagetype/PageTypeHandler.cpp:41
+#: ../src/core/control/pagetype/PageTypeHandler.cpp:42
 msgid "With PDF background"
 msgstr "З тлом PDF"
 
@@ -123,74 +123,74 @@ msgstr "Помилка читання PDF-файлу \"{1}\"\n"
 msgid "Error reading PNG file \"{1}\""
 msgstr ""
 
-#: ../src/core/control/Control.cpp:1764
+#: ../src/core/control/Control.cpp:1766
 msgid "The attached background file could not be found. It might have been moved, renamed or deleted."
 msgstr "Прикріплений файл не знайдено. Можливо, його було переміщено, перейменовано або видалено."
 
-#: ../src/core/control/Control.cpp:1767
+#: ../src/core/control/Control.cpp:1769
 msgid "The background file \"{1}\" could not be found. It might have been moved, renamed or deleted.\n"
 "It was last seen at: \"{2}\""
 msgstr "Файл фонового зображення \"{1}\" не знайдено. Можливо, його було переміщено, перейменовано або видалено.\n"
 "Останнє відоме його розташування: \"{2}\""
 
-#: ../src/core/control/Control.cpp:1777
+#: ../src/core/control/Control.cpp:1779
 msgid "\n"
 "Proposed replacement file: \"{1}\""
 msgstr "\n"
 "Запропонований файл-замінник: \"{1}\""
 
-#: ../src/core/control/Control.cpp:1782
+#: ../src/core/control/Control.cpp:1784
 msgid "Select another PDF"
 msgstr "Оберіть інший файл PDF"
 
-#: ../src/core/control/Control.cpp:1783
+#: ../src/core/control/Control.cpp:1785
 msgid "Remove PDF Background"
 msgstr "Видалити тло PDF"
 
-#: ../src/core/control/Control.cpp:1787
+#: ../src/core/control/Control.cpp:1789
 msgid "Use proposed PDF"
 msgstr "Використовувати запропонований PDF"
 
-#: ../src/core/control/Control.cpp:1790
+#: ../src/core/control/Control.cpp:1792
 msgid "Missing PDF background file"
 msgstr "Відсутній PDF-файл підложки"
 
-#: ../src/core/control/Control.cpp:1922
+#: ../src/core/control/Control.cpp:1924
 msgid "Select font"
 msgstr "Обрати шрифт"
 
-#: ../src/core/control/Control.cpp:1941
+#: ../src/core/control/Control.cpp:1943
 #: ../src/core/gui/toolbarMenubar/ColorSelectorToolItem.cpp:57
 msgid "Select color"
 msgstr "Обрати колір"
 
-#: ../src/core/control/Control.cpp:1966
+#: ../src/core/control/Control.cpp:1968
 msgid "Unsaved Document"
 msgstr "Незбережений документ"
 
-#: ../src/core/control/Control.cpp:2101
+#: ../src/core/control/Control.cpp:2104
 msgid "Document file was removed."
 msgstr "Файл документу видалено."
 
-#: ../src/core/control/Control.cpp:2101
+#: ../src/core/control/Control.cpp:2104
 msgid "This document is not saved yet."
 msgstr "Цей документ ще не збережено."
 
-#: ../src/core/control/Control.cpp:2103
+#: ../src/core/control/Control.cpp:2106
 msgid "Save As..."
 msgstr "Зберегти як..."
 
-#: ../src/core/control/Control.cpp:2103 ../src/core/control/jobs/SaveJob.cpp:25
+#: ../src/core/control/Control.cpp:2106 ../src/core/control/jobs/SaveJob.cpp:25
 #: ../src/core/gui/dialog/XojSaveDlg.cpp:85
 #: ../src/core/gui/toolbarMenubar/ToolMenuHandler.cpp:291
 msgid "Save"
 msgstr "Зберегти"
 
-#: ../src/core/control/Control.cpp:2106
+#: ../src/core/control/Control.cpp:2109
 msgid "Discard"
 msgstr "Відмінити"
 
-#: ../src/core/control/Control.cpp:2191
+#: ../src/core/control/Control.cpp:2194
 msgid "Creating Gtk demo subprocess failed: {1} (exit code: {2})"
 msgstr ""
 
@@ -230,11 +230,11 @@ msgstr "трекпойнт"
 msgid "tablet pad"
 msgstr "планшет"
 
-#: ../src/core/control/ExportHelper.cpp:78
+#: ../src/core/control/ExportHelper.cpp:63
 msgid "Image file successfully created"
 msgstr "Файл зображення успішно створено"
 
-#: ../src/core/control/ExportHelper.cpp:134
+#: ../src/core/control/ExportHelper.cpp:105
 msgid "PDF file successfully created"
 msgstr "PDF-файл успішно створено"
 
@@ -262,13 +262,13 @@ msgstr "Не вдалося завантажити LaTeX PDF файл: {1}"
 msgid "Could not load LaTeX PDF file"
 msgstr "Не вдалося завантажити LaTeX PDF файл"
 
-#: ../src/core/control/PageBackgroundChangeController.cpp:110
+#: ../src/core/control/PageBackgroundChangeController.cpp:111
 #: ../src/core/control/xojfile/LoadHandler.cpp:483
 #: ../src/core/control/xojfile/LoadHandler.cpp:499
 msgid "Error reading PDF: {1}"
 msgstr "Помилка читання PDF: {1}"
 
-#: ../src/core/control/PageBackgroundChangeController.cpp:271
+#: ../src/core/control/PageBackgroundChangeController.cpp:272
 msgid "You don't have any PDF pages to select from. Cancel operation.\n"
 "Please select another background type: Menu \"Journal\" → \"Configure Page Template\"."
 msgstr "PDF сторінки для вибору відсутні. Операцію скасовано.\n"
@@ -310,12 +310,12 @@ msgstr "Відновити файл"
 msgid "The background file \"{1}\" could not be found. It might have been moved, renamed or deleted."
 msgstr "Файл фонового зображення \"{1}\" не знайдено. Можливо, його було переміщено, перейменовано або видалено."
 
-#: ../src/core/control/XournalMain.cpp:211
-#: ../src/core/control/XournalMain.cpp:218
+#: ../src/core/control/XournalMain.cpp:222
+#: ../src/core/control/XournalMain.cpp:230
 msgid "Error: {1}"
 msgstr "Помилка: {1}"
 
-#: ../src/core/control/XournalMain.cpp:351
+#: ../src/core/control/XournalMain.cpp:372
 msgid "<span foreground='red' size='x-large'>Missing the needed UI file:\n"
 "<b>{1}</b></span>\n"
 "Could not find them at any location.\n"
@@ -329,23 +329,23 @@ msgstr "<span foreground='red' size='x-large'>Відсутній необхід�
 "  Відсутній в Робочому Каталозі\n"
 "  Відсутній в {2}"
 
-#: ../src/core/control/XournalMain.cpp:356
+#: ../src/core/control/XournalMain.cpp:377
 msgid "\n\n"
 "Will now attempt to run without this file."
 msgstr "\n\n"
 "Спроба запустити без цього файлу."
 
-#: ../src/core/control/XournalMain.cpp:378
-#: ../src/core/control/XournalMain.cpp:439
+#: ../src/core/control/XournalMain.cpp:399
+#: ../src/core/control/XournalMain.cpp:460
 msgid "Sorry, Xournal++ can only open one file at once.\n"
 "Others are ignored."
 msgstr "На жаль, Xournal++ може відкрити не більше одного файлу одночасно. Усі інші ігноруються."
 
-#: ../src/core/control/XournalMain.cpp:389
+#: ../src/core/control/XournalMain.cpp:410
 msgid "File {1} does not exist."
 msgstr "Файл {1} не знайдено."
 
-#: ../src/core/control/XournalMain.cpp:393
+#: ../src/core/control/XournalMain.cpp:414
 msgid "Filesystem error: {1}\n"
 "Sorry, Xournal++ cannot open the file: {2}\n"
 "Consider copying the file to a local directory."
@@ -353,55 +353,55 @@ msgstr "Помилка файлової системи: {1}\n"
 "Вибачте, Xournal++ не може відкрити файл: {2}\n"
 "Спробуйте скопіювати файл до локальної директорії."
 
-#: ../src/core/control/XournalMain.cpp:578
+#: ../src/core/control/XournalMain.cpp:606
 msgid "Jump to Page (first Page: 1)"
 msgstr "Перейти до сторінки (перша сторінка: 1)"
 
-#: ../src/core/control/XournalMain.cpp:582
+#: ../src/core/control/XournalMain.cpp:610
 msgid "Get version of xournalpp"
 msgstr "Отримати версію xournalpp"
 
-#: ../src/core/control/XournalMain.cpp:584
+#: ../src/core/control/XournalMain.cpp:612
 msgid "Disable audio for this session"
 msgstr "Вимкнути звук для цієї сесії"
 
-#: ../src/core/control/XournalMain.cpp:586
+#: ../src/core/control/XournalMain.cpp:614
 msgid "Open PDF in attach mode\n"
 "                                       Ignored if no PDF file is specified."
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:590
+#: ../src/core/control/XournalMain.cpp:618
 msgid "Save xopp-file with the background PDF specified as FILE"
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:595
+#: ../src/core/control/XournalMain.cpp:623
 msgid "Use the provided backend for PDF exports.\n"
 "                                       Available backends: {1}\n"
 "                                       No effect without -p/--create-pdf=foo.pdf"
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:604
+#: ../src/core/control/XournalMain.cpp:632
 msgid "Export FILE as PDF"
 msgstr "Експортувати файл в PDF"
 
-#: ../src/core/control/XournalMain.cpp:607
+#: ../src/core/control/XournalMain.cpp:635
 msgid "Export FILE as image files (one per page)\n"
 "                                       Guess the output format from the extension of IMGFILE\n"
 "                                       Supported formats: .png, .svg"
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:613
+#: ../src/core/control/XournalMain.cpp:641
 msgid "Export without background\n"
 "                                       The exported file has transparent or white background,\n"
 "                                       depending on what its format supports\n"
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:618
+#: ../src/core/control/XournalMain.cpp:646
 msgid "Export without ruling\n"
 "                                       The exported file has no paper ruling\n"
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:623
+#: ../src/core/control/XournalMain.cpp:651
 msgid "Export layers progressively\n"
 "                                       In PDF export, Render layers progressively one by one.\n"
 "                                       This results in N export pages per page with N layers,\n"
@@ -409,38 +409,38 @@ msgid "Export layers progressively\n"
 "                                       The resulting PDF file can be used for a presentation.\n"
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:632
+#: ../src/core/control/XournalMain.cpp:660
 msgid "Only export the pages specified by RANGE (e.g. \"2-3,5,7-\")\n"
 "                                       No effect without -p/--create-pdf or -i/--create-img"
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:637
+#: ../src/core/control/XournalMain.cpp:665
 msgid "Only export the layers specified by RANGE (e.g. \"2-3,5,7-\")\n"
 "                                       No effect without -p/--create-pdf or -i/--create-img"
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:641
+#: ../src/core/control/XournalMain.cpp:669
 msgid "Set DPI for PNG exports. Default is 300\n"
 "                                       No effect without -i/--create-img=foo.png"
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:645
+#: ../src/core/control/XournalMain.cpp:673
 msgid "Set page width for PNG exports\n"
 "                                       No effect without -i/--create-img=foo.png\n"
 "                                       Ignored if --export-png-dpi is used"
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:650
+#: ../src/core/control/XournalMain.cpp:678
 msgid "Set page height for PNG exports\n"
 "                                       No effect without -i/--create-img=foo.png\n"
 "                                       Ignored if --export-png-dpi or --export-png-width is used"
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:658
+#: ../src/core/control/XournalMain.cpp:686
 msgid "Advanced export options"
 msgstr "Розширені параметри експорту"
 
-#: ../src/core/control/XournalMain.cpp:659
+#: ../src/core/control/XournalMain.cpp:687
 msgid "Display advanced export options"
 msgstr "Відобразити додаткові параметри експорту"
 
@@ -560,52 +560,52 @@ msgstr "Не вдалося запустити {1}: {2} (код завершен
 msgid "Layer {1}"
 msgstr "Шар {1}"
 
-#: ../src/core/control/pagetype/PageTypeHandler.cpp:26
+#: ../src/core/control/pagetype/PageTypeHandler.cpp:27
 msgid "Could not load pagetemplates.ini file"
 msgstr "Не вдалося завантажити файл pagetemplates.ini"
 
-#: ../src/core/control/pagetype/PageTypeHandler.cpp:30
+#: ../src/core/control/pagetype/PageTypeHandler.cpp:31
 msgid "Plain"
 msgstr "Звичайний"
 
-#: ../src/core/control/pagetype/PageTypeHandler.cpp:31
+#: ../src/core/control/pagetype/PageTypeHandler.cpp:32
 msgid "Ruled"
 msgstr "Правила"
 
-#: ../src/core/control/pagetype/PageTypeHandler.cpp:32
+#: ../src/core/control/pagetype/PageTypeHandler.cpp:33
 msgid "Ruled with vertical line"
 msgstr "Лінійно з вертикальною лінією"
 
-#: ../src/core/control/pagetype/PageTypeHandler.cpp:33
+#: ../src/core/control/pagetype/PageTypeHandler.cpp:34
 msgid "Staves"
 msgstr "Нотний стан"
 
-#: ../src/core/control/pagetype/PageTypeHandler.cpp:34
+#: ../src/core/control/pagetype/PageTypeHandler.cpp:35
 msgid "Graph"
 msgstr "Графік"
 
-#: ../src/core/control/pagetype/PageTypeHandler.cpp:35
+#: ../src/core/control/pagetype/PageTypeHandler.cpp:36
 msgid "Dotted"
 msgstr "Пунктирна"
 
-#: ../src/core/control/pagetype/PageTypeHandler.cpp:36
+#: ../src/core/control/pagetype/PageTypeHandler.cpp:37
 msgid "Isometric Dotted"
 msgstr "Ізометричний точковий"
 
-#: ../src/core/control/pagetype/PageTypeHandler.cpp:37
+#: ../src/core/control/pagetype/PageTypeHandler.cpp:38
 msgid "Isometric Graph"
 msgstr "Ізометричний графік"
 
-#: ../src/core/control/pagetype/PageTypeHandler.cpp:42
+#: ../src/core/control/pagetype/PageTypeHandler.cpp:43
 #: ../src/core/gui/toolbarMenubar/ToolMenuHandler.cpp:405
 msgid "Image"
 msgstr "Зображення"
 
-#: ../src/core/control/settings/Settings.cpp:153
+#: ../src/core/control/settings/Settings.cpp:154
 msgid "%F-Note-%H-%M"
 msgstr "%F-Примітка -%H-%M"
 
-#: ../src/core/control/settings/Settings.cpp:154
+#: ../src/core/control/settings/Settings.cpp:155
 msgid "%{name}_annotated"
 msgstr "%{name}_анотований"
 
@@ -808,7 +808,7 @@ msgstr "Не вдалось відтворити аудіозапис {1}"
 
 #: ../src/core/gui/PageView.cpp:944
 #: ../src/core/gui/sidebar/previews/base/SidebarPreviewBaseEntry.cpp:83
-#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:148
+#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:145
 msgid "Loading..."
 msgstr "Завантаження..."
 
@@ -1068,7 +1068,7 @@ msgid "Xournal++ files"
 msgstr "Xournal++ файли"
 
 #: ../src/core/gui/dialog/FileChooserFiltersHelper.cpp:34
-#: ../src/core/gui/dialog/PageTemplateDialog.cpp:119
+#: ../src/core/gui/dialog/PageTemplateDialog.cpp:120
 msgid "Xournal++ template"
 msgstr "Xournal++ шаблон"
 
@@ -1113,18 +1113,18 @@ msgstr "Помилка: {1}. Будь ласка, перевірте вміст 
 msgid "Error: {1} is not a regular file. Please check your LaTeX template file settings. "
 msgstr "Помилка: {1} не є звичайним файлом. Будь ласка, перевірте налаштування файлу шаблону LaTeX. "
 
-#: ../src/core/gui/dialog/PageTemplateDialog.cpp:115
+#: ../src/core/gui/dialog/PageTemplateDialog.cpp:116
 #: ../src/core/gui/dialog/XojSaveDlg.cpp:84
 msgid "Save File"
 msgstr "Зберегти Файл"
 
-#: ../src/core/gui/dialog/PageTemplateDialog.cpp:115
+#: ../src/core/gui/dialog/PageTemplateDialog.cpp:116
 #: ../src/core/gui/dialog/XojOpenDlg.cpp:80
 #: ../src/core/gui/dialog/XojSaveDlg.cpp:19
 msgid "_Cancel"
 msgstr "_Скасувати"
 
-#: ../src/core/gui/dialog/PageTemplateDialog.cpp:116
+#: ../src/core/gui/dialog/PageTemplateDialog.cpp:117
 msgid "_Save"
 msgstr "_Зберегти"
 
@@ -1722,27 +1722,27 @@ msgstr "Тонкий"
 msgid "Very Thick"
 msgstr "Дуже широкий"
 
-#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:175
+#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:172
 msgid "Show all"
 msgstr "Показати всі"
 
-#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:176
+#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:173
 msgid "Hide all"
 msgstr "Приховати все"
 
-#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:178
+#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:175
 msgid "Add a layer above the active layer"
 msgstr ""
 
-#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:179
+#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:176
 msgid "Add a layer below the active layer"
 msgstr ""
 
-#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:206
+#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:203
 msgid "Layer"
 msgstr "Шар"
 
-#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:303
+#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:300
 msgid "Layer Combo"
 msgstr "Комбінація Шарів"
 

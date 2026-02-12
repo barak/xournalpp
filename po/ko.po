@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xournalpp\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-12-18 14:01+0000\n"
-"PO-Revision-Date: 2025-12-21 04:28\n"
+"POT-Creation-Date: 2026-02-03 08:38+0000\n"
+"PO-Revision-Date: 2026-02-03 08:53\n"
 "Last-Translator: \n"
 "Language-Team: Korean\n"
 "Language: ko_KR\n"
@@ -47,8 +47,8 @@ msgstr "예"
 msgid "No"
 msgstr "아니오"
 
-#: ../src/core/control/Control.cpp:828 ../src/core/control/Control.cpp:1784
-#: ../src/core/control/Control.cpp:2108
+#: ../src/core/control/Control.cpp:828 ../src/core/control/Control.cpp:1786
+#: ../src/core/control/Control.cpp:2111
 msgid "Cancel"
 msgstr "취소"
 
@@ -69,7 +69,7 @@ msgid "Paper B_ackground"
 msgstr ""
 
 #: ../src/core/control/Control.cpp:834
-#: ../src/core/control/pagetype/PageTypeHandler.cpp:41
+#: ../src/core/control/pagetype/PageTypeHandler.cpp:42
 msgid "With PDF background"
 msgstr "PDF를 배경으로 사용"
 
@@ -121,74 +121,74 @@ msgstr "\"{1}\" PDF 파일 읽기 오류\n"
 msgid "Error reading PNG file \"{1}\""
 msgstr ""
 
-#: ../src/core/control/Control.cpp:1764
+#: ../src/core/control/Control.cpp:1766
 msgid "The attached background file could not be found. It might have been moved, renamed or deleted."
 msgstr "첨부된 배경 파일을 찾을 수 없습니다. 파일 이름이 바뀌었거나 파일이 이동, 삭제되었을 수 있습니다."
 
-#: ../src/core/control/Control.cpp:1767
+#: ../src/core/control/Control.cpp:1769
 msgid "The background file \"{1}\" could not be found. It might have been moved, renamed or deleted.\n"
 "It was last seen at: \"{2}\""
 msgstr "\"{1}\" 배경 파일을 찾을 수 없습니다. 파일 이름이 바뀌었거나 파일이 이동, 삭제되었을 수 있습니다.\n"
 "파일의 최근 위치: \"{2}\""
 
-#: ../src/core/control/Control.cpp:1777
+#: ../src/core/control/Control.cpp:1779
 msgid "\n"
 "Proposed replacement file: \"{1}\""
 msgstr "\n"
 "제안하는 대체 파일: \"{1}\""
 
-#: ../src/core/control/Control.cpp:1782
+#: ../src/core/control/Control.cpp:1784
 msgid "Select another PDF"
 msgstr "다른 PDF 선택"
 
-#: ../src/core/control/Control.cpp:1783
+#: ../src/core/control/Control.cpp:1785
 msgid "Remove PDF Background"
 msgstr "PDF 백그라운드 제거"
 
-#: ../src/core/control/Control.cpp:1787
+#: ../src/core/control/Control.cpp:1789
 msgid "Use proposed PDF"
 msgstr "제안된 PDF를 사용하십시오."
 
-#: ../src/core/control/Control.cpp:1790
+#: ../src/core/control/Control.cpp:1792
 msgid "Missing PDF background file"
 msgstr "PDF 배경 파일이 없습니다."
 
-#: ../src/core/control/Control.cpp:1922
+#: ../src/core/control/Control.cpp:1924
 msgid "Select font"
 msgstr "글꼴 선택"
 
-#: ../src/core/control/Control.cpp:1941
+#: ../src/core/control/Control.cpp:1943
 #: ../src/core/gui/toolbarMenubar/ColorSelectorToolItem.cpp:57
 msgid "Select color"
 msgstr "색상 선택"
 
-#: ../src/core/control/Control.cpp:1966
+#: ../src/core/control/Control.cpp:1968
 msgid "Unsaved Document"
 msgstr "저장되지 않은 문서"
 
-#: ../src/core/control/Control.cpp:2101
+#: ../src/core/control/Control.cpp:2104
 msgid "Document file was removed."
 msgstr "문서 파일 삭제됨."
 
-#: ../src/core/control/Control.cpp:2101
+#: ../src/core/control/Control.cpp:2104
 msgid "This document is not saved yet."
 msgstr "문서가 아직 저장되지 않았습니다"
 
-#: ../src/core/control/Control.cpp:2103
+#: ../src/core/control/Control.cpp:2106
 msgid "Save As..."
 msgstr "다른 이름으로 저장..."
 
-#: ../src/core/control/Control.cpp:2103 ../src/core/control/jobs/SaveJob.cpp:25
+#: ../src/core/control/Control.cpp:2106 ../src/core/control/jobs/SaveJob.cpp:25
 #: ../src/core/gui/dialog/XojSaveDlg.cpp:85
 #: ../src/core/gui/toolbarMenubar/ToolMenuHandler.cpp:291
 msgid "Save"
 msgstr "저장"
 
-#: ../src/core/control/Control.cpp:2106
+#: ../src/core/control/Control.cpp:2109
 msgid "Discard"
 msgstr "버리기"
 
-#: ../src/core/control/Control.cpp:2191
+#: ../src/core/control/Control.cpp:2194
 msgid "Creating Gtk demo subprocess failed: {1} (exit code: {2})"
 msgstr ""
 
@@ -228,11 +228,11 @@ msgstr "트랙포인트"
 msgid "tablet pad"
 msgstr "태블릿 패드"
 
-#: ../src/core/control/ExportHelper.cpp:78
+#: ../src/core/control/ExportHelper.cpp:63
 msgid "Image file successfully created"
 msgstr "이미지 파일이 성공적으로 생성되었습니다"
 
-#: ../src/core/control/ExportHelper.cpp:134
+#: ../src/core/control/ExportHelper.cpp:105
 msgid "PDF file successfully created"
 msgstr "PDF 파일이 성공적으로 생성되었습니다."
 
@@ -260,13 +260,13 @@ msgstr "다음 LaTeX PDF 파일을 불러올 수 없음: {1}"
 msgid "Could not load LaTeX PDF file"
 msgstr "LaTeX PDF 파일을 불러올 수 없음"
 
-#: ../src/core/control/PageBackgroundChangeController.cpp:110
+#: ../src/core/control/PageBackgroundChangeController.cpp:111
 #: ../src/core/control/xojfile/LoadHandler.cpp:483
 #: ../src/core/control/xojfile/LoadHandler.cpp:499
 msgid "Error reading PDF: {1}"
 msgstr "PDF를 읽는데 실패했습니다: {1}"
 
-#: ../src/core/control/PageBackgroundChangeController.cpp:271
+#: ../src/core/control/PageBackgroundChangeController.cpp:272
 msgid "You don't have any PDF pages to select from. Cancel operation.\n"
 "Please select another background type: Menu \"Journal\" → \"Configure Page Template\"."
 msgstr "선택할 PDF 페이지가 없습니다. 작업을 취소합니다.\n"
@@ -308,12 +308,12 @@ msgstr "파일 복구하기"
 msgid "The background file \"{1}\" could not be found. It might have been moved, renamed or deleted."
 msgstr "\"{1}\" 배경 파일을 찾을 수 없습니다. 파일 이름이 바뀌었거나 파일이 이동, 삭제되었을 수 있습니다."
 
-#: ../src/core/control/XournalMain.cpp:211
-#: ../src/core/control/XournalMain.cpp:218
+#: ../src/core/control/XournalMain.cpp:222
+#: ../src/core/control/XournalMain.cpp:230
 msgid "Error: {1}"
 msgstr "오류: {1}"
 
-#: ../src/core/control/XournalMain.cpp:351
+#: ../src/core/control/XournalMain.cpp:372
 msgid "<span foreground='red' size='x-large'>Missing the needed UI file:\n"
 "<b>{1}</b></span>\n"
 "Could not find them at any location.\n"
@@ -327,24 +327,24 @@ msgstr "<span foreground='red' size='x-large'>다음 필수 UI 파일이 존재�
 "  현재 주소에 없음\n"
 "  {2} 에 없음"
 
-#: ../src/core/control/XournalMain.cpp:356
+#: ../src/core/control/XournalMain.cpp:377
 msgid "\n\n"
 "Will now attempt to run without this file."
 msgstr "\n\n"
 "이 파일 없이 실행해보겠습니다."
 
-#: ../src/core/control/XournalMain.cpp:378
-#: ../src/core/control/XournalMain.cpp:439
+#: ../src/core/control/XournalMain.cpp:399
+#: ../src/core/control/XournalMain.cpp:460
 msgid "Sorry, Xournal++ can only open one file at once.\n"
 "Others are ignored."
 msgstr "Xournal++은 한번에 한 개의 파일만 열 수 있습니다.\n"
 "다른 파일들을 무시합니다."
 
-#: ../src/core/control/XournalMain.cpp:389
+#: ../src/core/control/XournalMain.cpp:410
 msgid "File {1} does not exist."
 msgstr "{1} 파일이 존재하지 않습니다."
 
-#: ../src/core/control/XournalMain.cpp:393
+#: ../src/core/control/XournalMain.cpp:414
 msgid "Filesystem error: {1}\n"
 "Sorry, Xournal++ cannot open the file: {2}\n"
 "Consider copying the file to a local directory."
@@ -352,55 +352,55 @@ msgstr "파일시스템 오류: {1}\n"
 "Xournal++에서 파일을 열 수 없습니다: {2}\n"
 "해당 파일을 로컬 디렉토리로 복사해 보십시오."
 
-#: ../src/core/control/XournalMain.cpp:578
+#: ../src/core/control/XournalMain.cpp:606
 msgid "Jump to Page (first Page: 1)"
 msgstr "페이지로 이동 (첫 페이지: 1)"
 
-#: ../src/core/control/XournalMain.cpp:582
+#: ../src/core/control/XournalMain.cpp:610
 msgid "Get version of xournalpp"
 msgstr "xournalpp 버전 가져오기"
 
-#: ../src/core/control/XournalMain.cpp:584
+#: ../src/core/control/XournalMain.cpp:612
 msgid "Disable audio for this session"
 msgstr "현재 세션에서 오디오 비활성화"
 
-#: ../src/core/control/XournalMain.cpp:586
+#: ../src/core/control/XournalMain.cpp:614
 msgid "Open PDF in attach mode\n"
 "                                       Ignored if no PDF file is specified."
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:590
+#: ../src/core/control/XournalMain.cpp:618
 msgid "Save xopp-file with the background PDF specified as FILE"
 msgstr "지정된 PDF 파일의 배경과 함께 xopp 파일 저장"
 
-#: ../src/core/control/XournalMain.cpp:595
+#: ../src/core/control/XournalMain.cpp:623
 msgid "Use the provided backend for PDF exports.\n"
 "                                       Available backends: {1}\n"
 "                                       No effect without -p/--create-pdf=foo.pdf"
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:604
+#: ../src/core/control/XournalMain.cpp:632
 msgid "Export FILE as PDF"
 msgstr "파일을 PDF로 내보내기"
 
-#: ../src/core/control/XournalMain.cpp:607
+#: ../src/core/control/XournalMain.cpp:635
 msgid "Export FILE as image files (one per page)\n"
 "                                       Guess the output format from the extension of IMGFILE\n"
 "                                       Supported formats: .png, .svg"
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:613
+#: ../src/core/control/XournalMain.cpp:641
 msgid "Export without background\n"
 "                                       The exported file has transparent or white background,\n"
 "                                       depending on what its format supports\n"
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:618
+#: ../src/core/control/XournalMain.cpp:646
 msgid "Export without ruling\n"
 "                                       The exported file has no paper ruling\n"
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:623
+#: ../src/core/control/XournalMain.cpp:651
 msgid "Export layers progressively\n"
 "                                       In PDF export, Render layers progressively one by one.\n"
 "                                       This results in N export pages per page with N layers,\n"
@@ -408,38 +408,38 @@ msgid "Export layers progressively\n"
 "                                       The resulting PDF file can be used for a presentation.\n"
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:632
+#: ../src/core/control/XournalMain.cpp:660
 msgid "Only export the pages specified by RANGE (e.g. \"2-3,5,7-\")\n"
 "                                       No effect without -p/--create-pdf or -i/--create-img"
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:637
+#: ../src/core/control/XournalMain.cpp:665
 msgid "Only export the layers specified by RANGE (e.g. \"2-3,5,7-\")\n"
 "                                       No effect without -p/--create-pdf or -i/--create-img"
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:641
+#: ../src/core/control/XournalMain.cpp:669
 msgid "Set DPI for PNG exports. Default is 300\n"
 "                                       No effect without -i/--create-img=foo.png"
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:645
+#: ../src/core/control/XournalMain.cpp:673
 msgid "Set page width for PNG exports\n"
 "                                       No effect without -i/--create-img=foo.png\n"
 "                                       Ignored if --export-png-dpi is used"
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:650
+#: ../src/core/control/XournalMain.cpp:678
 msgid "Set page height for PNG exports\n"
 "                                       No effect without -i/--create-img=foo.png\n"
 "                                       Ignored if --export-png-dpi or --export-png-width is used"
 msgstr ""
 
-#: ../src/core/control/XournalMain.cpp:658
+#: ../src/core/control/XournalMain.cpp:686
 msgid "Advanced export options"
 msgstr "고급 내보내기 옵션"
 
-#: ../src/core/control/XournalMain.cpp:659
+#: ../src/core/control/XournalMain.cpp:687
 msgid "Display advanced export options"
 msgstr "고급 내보내기 옵션 표시"
 
@@ -559,52 +559,52 @@ msgstr "{1} 을 시작할 수 없습니다:{2} (exit code {3})"
 msgid "Layer {1}"
 msgstr "{1} 레이어"
 
-#: ../src/core/control/pagetype/PageTypeHandler.cpp:26
+#: ../src/core/control/pagetype/PageTypeHandler.cpp:27
 msgid "Could not load pagetemplates.ini file"
 msgstr "pagetemplates.ini 파일을 불러올 수 없음"
 
-#: ../src/core/control/pagetype/PageTypeHandler.cpp:30
+#: ../src/core/control/pagetype/PageTypeHandler.cpp:31
 msgid "Plain"
 msgstr "빈 노트"
 
-#: ../src/core/control/pagetype/PageTypeHandler.cpp:31
+#: ../src/core/control/pagetype/PageTypeHandler.cpp:32
 msgid "Ruled"
 msgstr "줄 노트"
 
-#: ../src/core/control/pagetype/PageTypeHandler.cpp:32
+#: ../src/core/control/pagetype/PageTypeHandler.cpp:33
 msgid "Ruled with vertical line"
 msgstr "수직 줄 노트"
 
-#: ../src/core/control/pagetype/PageTypeHandler.cpp:33
+#: ../src/core/control/pagetype/PageTypeHandler.cpp:34
 msgid "Staves"
 msgstr "오선지"
 
-#: ../src/core/control/pagetype/PageTypeHandler.cpp:34
+#: ../src/core/control/pagetype/PageTypeHandler.cpp:35
 msgid "Graph"
 msgstr "그래프 모눈종이"
 
-#: ../src/core/control/pagetype/PageTypeHandler.cpp:35
+#: ../src/core/control/pagetype/PageTypeHandler.cpp:36
 msgid "Dotted"
 msgstr "점 모눈종이"
 
-#: ../src/core/control/pagetype/PageTypeHandler.cpp:36
+#: ../src/core/control/pagetype/PageTypeHandler.cpp:37
 msgid "Isometric Dotted"
 msgstr "등각 투영 점 모눈종이"
 
-#: ../src/core/control/pagetype/PageTypeHandler.cpp:37
+#: ../src/core/control/pagetype/PageTypeHandler.cpp:38
 msgid "Isometric Graph"
 msgstr "등각 투영 그래프 모눈종이"
 
-#: ../src/core/control/pagetype/PageTypeHandler.cpp:42
+#: ../src/core/control/pagetype/PageTypeHandler.cpp:43
 #: ../src/core/gui/toolbarMenubar/ToolMenuHandler.cpp:405
 msgid "Image"
 msgstr "이미지"
 
-#: ../src/core/control/settings/Settings.cpp:153
+#: ../src/core/control/settings/Settings.cpp:154
 msgid "%F-Note-%H-%M"
 msgstr "%F-노트-%H-%M"
 
-#: ../src/core/control/settings/Settings.cpp:154
+#: ../src/core/control/settings/Settings.cpp:155
 msgid "%{name}_annotated"
 msgstr "%{name}_주석추가됨"
 
@@ -807,7 +807,7 @@ msgstr "오디오 녹음 {1} 을 재생할 수 없습니다."
 
 #: ../src/core/gui/PageView.cpp:944
 #: ../src/core/gui/sidebar/previews/base/SidebarPreviewBaseEntry.cpp:83
-#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:148
+#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:145
 msgid "Loading..."
 msgstr "로딩중..."
 
@@ -1067,7 +1067,7 @@ msgid "Xournal++ files"
 msgstr "Xournal++ 파일"
 
 #: ../src/core/gui/dialog/FileChooserFiltersHelper.cpp:34
-#: ../src/core/gui/dialog/PageTemplateDialog.cpp:119
+#: ../src/core/gui/dialog/PageTemplateDialog.cpp:120
 msgid "Xournal++ template"
 msgstr "Xournal++ 템플릿"
 
@@ -1112,18 +1112,18 @@ msgstr "오류: {1}. {2} 의 내용을 확인 하십시오."
 msgid "Error: {1} is not a regular file. Please check your LaTeX template file settings. "
 msgstr "오류: {1} 는 정상적인 파일이 아닙니다. LaTeX 템플릿 파일 설정을 확인 하십시오. "
 
-#: ../src/core/gui/dialog/PageTemplateDialog.cpp:115
+#: ../src/core/gui/dialog/PageTemplateDialog.cpp:116
 #: ../src/core/gui/dialog/XojSaveDlg.cpp:84
 msgid "Save File"
 msgstr "파일 저장"
 
-#: ../src/core/gui/dialog/PageTemplateDialog.cpp:115
+#: ../src/core/gui/dialog/PageTemplateDialog.cpp:116
 #: ../src/core/gui/dialog/XojOpenDlg.cpp:80
 #: ../src/core/gui/dialog/XojSaveDlg.cpp:19
 msgid "_Cancel"
 msgstr "_취소"
 
-#: ../src/core/gui/dialog/PageTemplateDialog.cpp:116
+#: ../src/core/gui/dialog/PageTemplateDialog.cpp:117
 msgid "_Save"
 msgstr "_저장"
 
@@ -1721,27 +1721,27 @@ msgstr "부드럽게"
 msgid "Very Thick"
 msgstr "매우 두껍게"
 
-#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:175
+#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:172
 msgid "Show all"
 msgstr "모두 보이기"
 
-#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:176
+#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:173
 msgid "Hide all"
 msgstr "모두 숨기기"
 
-#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:178
+#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:175
 msgid "Add a layer above the active layer"
 msgstr ""
 
-#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:179
+#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:176
 msgid "Add a layer below the active layer"
 msgstr ""
 
-#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:206
+#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:203
 msgid "Layer"
 msgstr "레이어"
 
-#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:303
+#: ../src/core/gui/toolbarMenubar/ToolPageLayer.cpp:300
 msgid "Layer Combo"
 msgstr ""
 
