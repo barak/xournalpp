@@ -22,20 +22,17 @@ License: GPL-2+
 Comment: Source of truth https://github.com/xournalpp/xournalpp/graphs/contributors
          For a full and detailed list of contributors refer to the git log.
 
-Files: src/core/control/xojfile/LoadHandlerHelper.cpp
-       src/core/control/xojfile/LoadHandlerHelper.h
-       src/core/gui/widgets/ZoomCallib.cpp
-       src/core/gui/widgets/ZoomCallib.h
-Copyright: 2015, Xournal Team
-License: GPL-2+
-Comment: The files were committed by Andreas Butti initially who was active for both
-         Xournal and Xournal++
+Files: desktop/com.github.xournalpp.xournalpp.appdata.xml
+Copyright: 2019, Tobias Mueller <tobiasmue@gnome.org>
+License: CC0-1.0
 
-Files: src/core/gui/widgets/gtkmenutooltogglebutton.cpp
-       src/core/gui/widgets/gtkmenutooltogglebutton.h
-Copyright: 2004, Paolo Borelli
-           2003, Ricardo Fernandez Pascual
-License: LGPL-2+
+Files: debian/*
+Copyright: 2007, Mathieu Bouchard <mbouchar@bioinfo.ulaval.ca>
+           2008, Lucas Nussbaum <lucas@lucas-nussbaum.net>
+           2009–2014, Carlo Segre <segre@debian.org>
+           2018–2019, Andreas Butti <andreas.butti@gmail.com>
+           2020–2024, Barak A. Pearlmutter <bap@debian.org>
+License: GPL-2+
 
 Files: ui/iconsColor-dark/*
        ui/iconsColor-light/*
@@ -70,18 +67,6 @@ Files: cmake/find/Gettext.cmake
 Copyright: 2012–2013, Valama development team
 License: GPL-3+
 
-Files: desktop/com.github.xournalpp.xournalpp.appdata.xml
-Copyright: 2019, Tobias Mueller <tobiasmue@gnome.org>
-License: CC0-1.0
-
-Files: debian/*
-Copyright: 2007, Mathieu Bouchard <mbouchar@bioinfo.ulaval.ca>
-           2008, Lucas Nussbaum <lucas@lucas-nussbaum.net>
-           2009–2014, Carlo Segre <segre@debian.org>
-           2018–2019, Andreas Butti <andreas.butti@gmail.com>
-           2020–2024, Barak A. Pearlmutter <bap@debian.org>
-License: GPL-2+
-
 Files: plugins/MigrateFontSizes/plugin.ini
 Copyright: 2021, Roland Lötscher
 License: GPL-2+
@@ -100,16 +85,6 @@ Files: plugins/QuickScreenshot/plugin.ini
 Copyright: 2020, Debbie Reynolds
 License: GPL-2+
 
-Files: src/core/gui/GladeSearchpath.cpp
-       src/core/gui/GladeSearchpath.h
-Copyright: 2011, Andreas Butti
-License: GPL-2+
-
-Files: src/core/gui/dialog/LatexDialog.h
-       src/core/gui/dialog/LatexDialog.cpp
-Copyright: 2013, Wilson Brenna
-License: GPL-2+
-
 Files: src/util/pixbuf-utils.cpp
 Copyright: 2001, 2002, 2003, The Free Software Foundation, Inc.
            2003, Ettore Perazzoli
@@ -117,6 +92,31 @@ Copyright: 2001, 2002, 2003, The Free Software Foundation, Inc.
 License: GPL-3+
 Comment: Original Author Paolo Bacchilega <paolo.bacch@tin.it>
           seemingly for the FSF but this is unclear from the code
+
+Files: src/core/gui/GladeSearchpath.cpp
+       src/core/gui/GladeSearchpath.h
+Copyright: 2011, Andreas Butti
+License: GPL-2+
+
+Files: src/core/control/xojfile/LoadHandlerHelper.cpp
+       src/core/control/xojfile/LoadHandlerHelper.h
+       src/core/gui/widgets/ZoomCallib.cpp
+       src/core/gui/widgets/ZoomCallib.h
+Copyright: 2015, Xournal Team
+License: GPL-2+
+Comment: The files were committed by Andreas Butti initially who was active for both
+         Xournal and Xournal++
+
+Files: src/core/gui/widgets/gtkmenutooltogglebutton.cpp
+       src/core/gui/widgets/gtkmenutooltogglebutton.h
+Copyright: 2004, Paolo Borelli
+           2003, Ricardo Fernandez Pascual
+License: LGPL-2+
+
+Files: src/core/gui/dialog/LatexDialog.h
+       src/core/gui/dialog/LatexDialog.cpp
+Copyright: 2013, Wilson Brenna
+License: GPL-2+
 
 Files: src/util/include/util/safe_casts.h
 Copyright: 2020, Fabian Keßler <fabian_kessler@gmx.de>
