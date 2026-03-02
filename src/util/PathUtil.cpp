@@ -5,12 +5,13 @@
 #include <fstream>      // for ifstream, char_traits, basic_ist...
 #include <iterator>     // for begin
 #include <sstream>      // for stringstream
+#include <stdexcept>    // for runtime_error
 #include <string_view>  // for basic_string_view, operator""sv
 #include <type_traits>  // for remove_reference<>::type
 #include <utility>      // for move
 #include <variant>
 
-#include <config-paths.h>  // for PACKAGE_DATA_DIR
+#include <config-paths.h>  // for PROJECT_INSTALL_DIR
 #include <glib.h>          // for gchar, g_free, g_filename_to_uri
 
 #include "util/PlaceholderString.h"  // for PlaceholderString
@@ -120,11 +121,16 @@ auto Util::readString(fs::path const& path, bool showErrorToUser, std::ios_base:
     try {
         std::stringstream buffer;
         std::ifstream ifs{path, openmode};
+        if (!ifs) {
+            throw std::runtime_error{FS(_F("Could not open file: {1}") % std::strerror(errno))};
+        }
+        ifs.exceptions(std::ios::failbit | std::ios::badbit);
         buffer << ifs.rdbuf();
         return buffer.str();
-    } catch (const fs::filesystem_error& e) {
+    } catch (const std::exception& e) {
         if (showErrorToUser) {
-            XojMsgBox::showErrorToUser(nullptr, e.what());
+            const auto msg = FS(_F("Error reading \"{1}\":\n{2}") % path.u8string() % e.what());
+            XojMsgBox::showErrorToUser(nullptr, msg);
         }
     }
     return std::nullopt;
@@ -506,29 +512,14 @@ void Util::safeReplaceExtension(fs::path& p, const char* newExtension) {
 }
 
 auto Util::getDataPath() -> fs::path {
-#ifdef _WIN32
-    wchar_t szFileName[MAX_PATH];
-    szFileName[0] = 0;
-    GetModuleFileNameW(nullptr, szFileName, MAX_PATH);
-    auto exePath = std::wstring_view(szFileName);
-    std::string::size_type pos = exePath.find_last_of(L"\\/");
-    fs::path p = exePath.substr(0, pos);
-    p = p / L".." / L"share" / PROJECT_NAME;
-    return p;
-#elif defined(__APPLE__)
+#if defined(__APPLE__)
     fs::path p = getExePath().parent_path();
     if (fs::exists(p / "Resources")) {
-        p = p / "Resources";
-    } else {
-        p = PACKAGE_DATA_DIR;
-        p /= PROJECT_NAME;
+        return p / "Resources";
     }
-    return p;
-#else
-    fs::path p = PACKAGE_DATA_DIR;
-    p /= PROJECT_NAME;
-    return p;
 #endif
+
+    return getExePath().parent_path() / "share" / PROJECT_NAME;
 }
 
 auto Util::getLocalePath() -> fs::path {
@@ -539,7 +530,12 @@ auto Util::getLocalePath() -> fs::path {
     }
 #endif
 
-    return getDataPath() / ".." / "locale";
+    return getDataPath().parent_path() / "locale";
+}
+
+auto Util::getInstallUiPath() -> fs::path {
+    fs::path p = PROJECT_INSTALL_DIR;
+    return p / "share" / PROJECT_NAME / "ui";
 }
 
 auto Util::getBuiltInPaletteDirectoryPath() -> fs::path { return getDataPath() / "palettes"; }

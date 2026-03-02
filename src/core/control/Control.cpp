@@ -559,7 +559,11 @@ auto Control::firePageSelected(const PageRef& page) -> size_t {
     return pageId;
 }
 
-void Control::firePageSelected(size_t page) { DocumentHandler::firePageSelected(page); }
+void Control::firePageSelected(size_t page) {
+    if (page != this->getCurrentPageNo()) {
+        DocumentHandler::firePageSelected(page);
+    }
+}
 
 void Control::manageToolbars() {
     xoj::popup::PopupWindowWrapper<ToolbarManageDialog> dlg(
@@ -901,6 +905,7 @@ void Control::insertPage(const PageRef& page, size_t position, bool shouldScroll
     this->doc->lock();
     this->doc->insertPage(page, position);  // insert the new page to the document and update page numbers
     this->doc->unlock();
+    undoRedo->addUndoAction(std::make_unique<InsertDeletePageUndoAction>(page, position, true));
 
     // notify document listeners about the inserted page; this creates the new XojViewPage, recalculates the layout
     // and creates a preview page in the sidebar
@@ -916,7 +921,6 @@ void Control::insertPage(const PageRef& page, size_t position, bool shouldScroll
     }
 
     updatePageActions();
-    undoRedo->addUndoAction(std::make_unique<InsertDeletePageUndoAction>(page, position, true));
 }
 
 void Control::gotoPage() {
@@ -1605,7 +1609,6 @@ bool Control::openPdfFile(fs::path filepath, bool attachToDocument, int scrollTo
 bool Control::openPngFile(fs::path filepath, bool attachToDocument, int scrollToPage) {
     fs::path imagePath(filepath);
     this->getCursor()->setCursorBusy(true);
-    auto doc = std::make_unique<Document>(this);
     this->replaceDocument(createNewDocument(this, std::move(filepath), std::nullopt), -1);
 
     // Put a png file directly in the page
@@ -1654,9 +1657,20 @@ bool Control::openXoptFile(fs::path filepath) {
 
 void Control::openFileWithoutSavingTheCurrentDocument(fs::path filepath, bool attachToDocument, int scrollToPage,
                                                       std::function<void(bool)> callback) {
-    if (filepath.empty() || !fs::exists(filepath)) {
-        this->replaceDocument(createNewDocument(this, std::move(filepath), std::nullopt), -1);
+    if (filepath.empty()) {
+        this->replaceDocument(createNewDocument(this, fs::path(), std::nullopt), -1);
         callback(true);
+        return;
+    }
+
+    if (std::error_code err; !fs::exists(filepath, err)) {
+        std::string message =
+                err ? FS(_F("Failed to determine if path exists \"{1}\": {2}") % filepath.u8string() % err.message()) :
+                      FS(_F("That file does not exist:\n\"{1}\"") % filepath.u8string());
+        XojMsgBox::showErrorToUser(getGtkWindow(), message);
+        // We create an empty document to avoid ever being in a "no document" state.
+        this->replaceDocument(createNewDocument(this, fs::path(), std::nullopt), -1);
+        callback(false);
         return;
     }
 
@@ -1713,17 +1727,13 @@ void Control::fileLoaded(int scrollToPage) {
     this->doc->unlock();
 
     if (!filepath.empty()) {
-        MetadataEntry md = MetadataManager::getForFile(filepath);
-        if (!md.valid) {
-            md.zoom = -1;
-            md.page = 0;
+        auto md = MetadataManager::getForFile(filepath);
+        if (md) {
+            if (scrollToPage >= 0) {
+                md->page = scrollToPage;
+            }
+            loadMetadata(*md);
         }
-
-        if (scrollToPage >= 0) {
-            md.page = scrollToPage;
-        }
-
-        loadMetadata(md);
         RecentManager::addRecentFileFilename(filepath);
     } else {
         zoom->updateZoomFitValue();
@@ -1827,9 +1837,6 @@ public:
  * Load the data after processing the document...
  */
 auto Control::loadMetadataCallback(MetadataCallbackData* data) -> bool {
-    if (!data->md.valid) {
-        return false;
-    }
     ZoomControl* zoom = data->ctrl->zoom;
     if (zoom->isZoomPresentationMode()) {
         data->ctrl->setViewPresentationMode(true);
@@ -2094,7 +2101,13 @@ void Control::quit(bool allowCancel) {
 void Control::close(std::function<void(bool)> callback, const bool allowDestroy, const bool allowCancel,
                     const bool forceClose) {
     clearSelectionEndText();
+
+    doc->lock();
+    auto const& file = doc->getEvMetadataFilename();
+    doc->unlock();
+    metadata->storeMetadata(file, static_cast<int>(getCurrentPageNo()), zoom->getZoomReal());
     metadata->documentChanged();
+
     resetGeometryTool();
 
     bool safeToClose = forceClose || !undoRedo->isChanged();
