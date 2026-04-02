@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: xournalpp\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-17 10:08+0000\n"
-"PO-Revision-Date: 2026-02-22 04:55\n"
+"POT-Creation-Date: 2026-03-07 16:00+0000\n"
+"PO-Revision-Date: 2026-03-28 17:05\n"
 "Last-Translator: \n"
 "Language-Team: Ukrainian\n"
 "Language: uk_UA\n"
@@ -31,49 +31,49 @@ msgstr "Помилка файлової системи: {1}"
 msgid "Could not remove old autosave file \"{1}\": {2}"
 msgstr "Неможливо видалити файл автозбереження \"{1}\": {2}"
 
-#: ../src/core/control/Control.cpp:575
+#: ../src/core/control/Control.cpp:579
 msgid "You deleted the active toolbar. Falling back to the default toolbar."
 msgstr "Ви видалили активну панель інструментів. Повертаємось до панелі за замовчуванням."
 
-#: ../src/core/control/Control.cpp:595
+#: ../src/core/control/Control.cpp:599
 msgid "The Toolbarconfiguration \"{1}\" is predefined, would you create a copy to edit?"
 msgstr "Конфігурацію панелі інструментів \"{1}\" вже задано. Хочете створити копію для редагування?"
 
-#: ../src/core/control/Control.cpp:598 ../src/core/control/Control.cpp:1572
+#: ../src/core/control/Control.cpp:602 ../src/core/control/Control.cpp:1576
 msgid "Yes"
 msgstr "Так"
 
-#: ../src/core/control/Control.cpp:598 ../src/core/control/Control.cpp:1572
+#: ../src/core/control/Control.cpp:602 ../src/core/control/Control.cpp:1576
 msgid "No"
 msgstr "Ні"
 
-#: ../src/core/control/Control.cpp:828 ../src/core/control/Control.cpp:1792
-#: ../src/core/control/Control.cpp:2114
+#: ../src/core/control/Control.cpp:832 ../src/core/control/Control.cpp:1796
+#: ../src/core/control/Control.cpp:2124
 msgid "Cancel"
 msgstr "Скасувати"
 
-#: ../src/core/control/Control.cpp:829
+#: ../src/core/control/Control.cpp:833
 msgid "Insert after current page"
 msgstr "Вставити після поточної сторінки"
 
-#: ../src/core/control/Control.cpp:830
+#: ../src/core/control/Control.cpp:834
 msgid "Insert at end"
 msgstr "Вставити в кінці"
 
-#: ../src/core/control/Control.cpp:833
+#: ../src/core/control/Control.cpp:837
 msgid "_Journal"
 msgstr "_Журнал"
 
-#: ../src/core/control/Control.cpp:833
+#: ../src/core/control/Control.cpp:837
 msgid "Paper B_ackground"
 msgstr "_Тло паперу"
 
-#: ../src/core/control/Control.cpp:834
+#: ../src/core/control/Control.cpp:838
 #: ../src/core/control/pagetype/PageTypeHandler.cpp:42
 msgid "With PDF background"
 msgstr "З тлом PDF"
 
-#: ../src/core/control/Control.cpp:837
+#: ../src/core/control/Control.cpp:841
 msgid "Your current document does not contain PDF Page no {1}\n"
 "Would you like to insert this page?\n\n"
 "Tip: You can select {2} to insert a PDF page."
@@ -81,15 +81,15 @@ msgstr "У поточному PDF документі відсутня сторі
 "Бажаєте вставити цю сторінку?\n\n"
 "Підказка: Можна обрати {2} для додавання PDF сторінки."
 
-#: ../src/core/control/Control.cpp:880
+#: ../src/core/control/Control.cpp:884
 msgid "No pdf pages available to append. You may need to reopen the document first."
 msgstr "Немає сторінок pdf, доступних для додавання. Вам може знадобитися заново відкрити документ."
 
-#: ../src/core/control/Control.cpp:894
+#: ../src/core/control/Control.cpp:898
 msgid "Unable to retrieve pdf page."
 msgstr "Не вдалося виділити сторінку pdf окремо."
 
-#: ../src/core/control/Control.cpp:1496
+#: ../src/core/control/Control.cpp:1500
 msgid "Do not open Autosave files. They may will be overwritten!\n"
 "Copy the files to another folder.\n"
 "Files from Folder {1} cannot be opened."
@@ -97,109 +97,109 @@ msgstr "Не відкривайте автоматично збережені ф
 "Скопіюйте файли до іншої директорії.\n"
 "Файли з директорії {1} не вдається відкрити."
 
-#: ../src/core/control/Control.cpp:1516
+#: ../src/core/control/Control.cpp:1520
 msgid "file: {1}"
 msgstr "файл: {1}"
 
-#: ../src/core/control/Control.cpp:1549
+#: ../src/core/control/Control.cpp:1553
 msgid "Error opening file \"{1}\""
 msgstr "Помилка відкриття файлу \"{1}\""
 
-#: ../src/core/control/Control.cpp:1574
+#: ../src/core/control/Control.cpp:1578
 msgid "File version mismatch"
 msgstr "Невідповідність версії файлу"
 
-#: ../src/core/control/Control.cpp:1575
+#: ../src/core/control/Control.cpp:1579
 msgid "The file being loaded has a file format version newer than the one currently supported by this version of Xournal++, so it may not load properly. Open anyways?"
 msgstr "Файл, який завантажується, має новішу версію формату ніж та, що наразі підтримується цією версією Xournal++, так що він може не завантажитись належним чином. Все одно відкрити?"
 
-#: ../src/core/control/Control.cpp:1598
+#: ../src/core/control/Control.cpp:1602
 msgid "Error reading PDF file \"{1}\"\n"
 "{2}"
 msgstr "Помилка читання PDF-файлу \"{1}\"\n"
 "{2}"
 
-#: ../src/core/control/Control.cpp:1619
+#: ../src/core/control/Control.cpp:1623
 msgid "Error reading PNG file \"{1}\""
 msgstr ""
 
-#: ../src/core/control/Control.cpp:1664
+#: ../src/core/control/Control.cpp:1668
 msgid "Failed to determine if path exists \"{1}\": {2}"
 msgstr ""
 
-#: ../src/core/control/Control.cpp:1665
+#: ../src/core/control/Control.cpp:1669
 msgid "That file does not exist:\n"
 "\"{1}\""
 msgstr ""
 
-#: ../src/core/control/Control.cpp:1772
+#: ../src/core/control/Control.cpp:1776
 msgid "The attached background file could not be found. It might have been moved, renamed or deleted."
 msgstr "Прикріплений файл не знайдено. Можливо, його було переміщено, перейменовано або видалено."
 
-#: ../src/core/control/Control.cpp:1775
+#: ../src/core/control/Control.cpp:1779
 msgid "The background file \"{1}\" could not be found. It might have been moved, renamed or deleted.\n"
 "It was last seen at: \"{2}\""
 msgstr "Файл фонового зображення \"{1}\" не знайдено. Можливо, його було переміщено, перейменовано або видалено.\n"
 "Останнє відоме його розташування: \"{2}\""
 
-#: ../src/core/control/Control.cpp:1785
+#: ../src/core/control/Control.cpp:1789
 msgid "\n"
 "Proposed replacement file: \"{1}\""
 msgstr "\n"
 "Запропонований файл-замінник: \"{1}\""
 
-#: ../src/core/control/Control.cpp:1790
+#: ../src/core/control/Control.cpp:1794
 msgid "Select another PDF"
 msgstr "Оберіть інший файл PDF"
 
-#: ../src/core/control/Control.cpp:1791
+#: ../src/core/control/Control.cpp:1795
 msgid "Remove PDF Background"
 msgstr "Видалити тло PDF"
 
-#: ../src/core/control/Control.cpp:1795
+#: ../src/core/control/Control.cpp:1799
 msgid "Use proposed PDF"
 msgstr "Використовувати запропонований PDF"
 
-#: ../src/core/control/Control.cpp:1798
+#: ../src/core/control/Control.cpp:1802
 msgid "Missing PDF background file"
 msgstr "Відсутній PDF-файл підложки"
 
-#: ../src/core/control/Control.cpp:1927
+#: ../src/core/control/Control.cpp:1931
 msgid "Select font"
 msgstr "Обрати шрифт"
 
-#: ../src/core/control/Control.cpp:1946
+#: ../src/core/control/Control.cpp:1950
 #: ../src/core/gui/toolbarMenubar/ColorSelectorToolItem.cpp:57
 msgid "Select color"
 msgstr "Обрати колір"
 
-#: ../src/core/control/Control.cpp:1971
+#: ../src/core/control/Control.cpp:1975
 msgid "Unsaved Document"
 msgstr "Незбережений документ"
 
-#: ../src/core/control/Control.cpp:2107
+#: ../src/core/control/Control.cpp:2117
 msgid "Document file was removed."
 msgstr "Файл документу видалено."
 
-#: ../src/core/control/Control.cpp:2107
+#: ../src/core/control/Control.cpp:2117
 msgid "This document is not saved yet."
 msgstr "Цей документ ще не збережено."
 
-#: ../src/core/control/Control.cpp:2109
+#: ../src/core/control/Control.cpp:2119
 msgid "Save As..."
 msgstr "Зберегти як..."
 
-#: ../src/core/control/Control.cpp:2109 ../src/core/control/jobs/SaveJob.cpp:25
+#: ../src/core/control/Control.cpp:2119 ../src/core/control/jobs/SaveJob.cpp:25
 #: ../src/core/gui/dialog/XojSaveDlg.cpp:85
 #: ../src/core/gui/toolbarMenubar/ToolMenuHandler.cpp:291
 msgid "Save"
 msgstr "Зберегти"
 
-#: ../src/core/control/Control.cpp:2112
+#: ../src/core/control/Control.cpp:2122
 msgid "Discard"
 msgstr "Відмінити"
 
-#: ../src/core/control/Control.cpp:2197
+#: ../src/core/control/Control.cpp:2207
 msgid "Creating Gtk demo subprocess failed: {1} (exit code: {2})"
 msgstr ""
 
@@ -259,15 +259,15 @@ msgstr "Не вдалося прочитати файл глобального �
 msgid "Global template file is not a regular file. Please check your settings. "
 msgstr "Глобальний шаблон не є звичним файлом. Будь ласка, перевірте налаштування. "
 
-#: ../src/core/control/LatexController.cpp:244
+#: ../src/core/control/LatexController.cpp:241
 msgid "Latex generation encountered an error: {1} (exit code: {2})"
 msgstr "Latex генерація зіткнулася з помилкою: {1} (код виходу: {2})"
 
-#: ../src/core/control/LatexController.cpp:313
+#: ../src/core/control/LatexController.cpp:310
 msgid "Could not load LaTeX PDF file: {1}"
 msgstr "Не вдалося завантажити LaTeX PDF файл: {1}"
 
-#: ../src/core/control/LatexController.cpp:318
+#: ../src/core/control/LatexController.cpp:315
 msgid "Could not load LaTeX PDF file"
 msgstr "Не вдалося завантажити LaTeX PDF файл"
 
@@ -461,7 +461,7 @@ msgstr "Помилка при автозбереженні: {1}"
 msgid "Autosaving to {1}"
 msgstr "Автозбереження до {1}"
 
-#: ../src/core/control/jobs/AutosaveJob.cpp:69
+#: ../src/core/control/jobs/AutosaveJob.cpp:73
 msgid "Could not rename autosave file from \"{1}\" to \"{2}\": {3}"
 msgstr "Не вдалося перейменувати файл автозбереження з \"{1}\" на \"{2}\": {3}"
 
@@ -513,7 +513,7 @@ msgid "Xournal (Compatibility)"
 msgstr "Xournal (Сумісність)"
 
 #: ../src/core/control/jobs/CustomExportJob.cpp:132
-#: ../src/core/control/jobs/SaveJob.cpp:138
+#: ../src/core/control/jobs/SaveJob.cpp:139
 msgid "Save file error: {1}"
 msgstr "Помилка зберігання файлу: {1}"
 
@@ -521,15 +521,15 @@ msgstr "Помилка зберігання файлу: {1}"
 msgid "Unsupported graphics format: "
 msgstr "Графічний формат, що не підтримується: "
 
-#: ../src/core/control/jobs/ImageExport.cpp:170
+#: ../src/core/control/jobs/ImageExport.cpp:169
 msgid "Error save image #1"
 msgstr "Помилка збереження зображення #1"
 
-#: ../src/core/control/jobs/ImageExport.cpp:179
+#: ../src/core/control/jobs/ImageExport.cpp:178
 msgid "Error while exporting the pdf background: I cannot find the pdf page number "
 msgstr "Помилка при експорті тла PDF: не вдається знайти номер сторінки в PDF "
 
-#: ../src/core/control/jobs/ImageExport.cpp:203
+#: ../src/core/control/jobs/ImageExport.cpp:202
 msgid "Error save image #2"
 msgstr "Помилка збереження зображення #2"
 
@@ -537,7 +537,7 @@ msgstr "Помилка збереження зображення #2"
 msgid "PDF Export"
 msgstr "Експорт PDF"
 
-#: ../src/core/control/jobs/SaveJob.cpp:124
+#: ../src/core/control/jobs/SaveJob.cpp:123
 msgid "Save file error, can't backup: {1}"
 msgstr "Помилка збереження файлу, не можливо створити резервну копію: {1}"
 
@@ -803,7 +803,7 @@ msgstr "Атрибут \"{1}\" має бути у форматі size_t, пот�
 msgid "Could not write background \"{1}\", {2}"
 msgstr "Не вдалося записати тло \"{1}\", {2}"
 
-#: ../src/core/control/xojfile/SaveHandler.cpp:376
+#: ../src/core/control/xojfile/SaveHandler.cpp:362
 msgid "Could not write background \"{1}\". Continuing anyway."
 msgstr "Не вдалося записати тло \"{1}\". Проте, роботу продовжено."
 
@@ -1188,33 +1188,33 @@ msgstr "Увімкніть чутливість натиску або налаш
 msgid "Filter input pressure. Multiply the pressure by the pressure multiplier. If less than the minimum, use the minimum pressure."
 msgstr "Фільтрувати тиск введення. Перемножте тиск на коефіцієнт тиску. Якщо менше за мінімальний, використовуйте мінімальний тиск."
 
-#: ../src/core/gui/dialog/SettingsDialogPaletteTab.cpp:30
+#: ../src/core/gui/dialog/SettingsDialogPaletteTab.cpp:31
 msgid "Built-in palettes"
 msgstr "Вбудовані палітри"
 
-#: ../src/core/gui/dialog/SettingsDialogPaletteTab.cpp:33
+#: ../src/core/gui/dialog/SettingsDialogPaletteTab.cpp:34
 msgid "User palettes"
 msgstr "Палітри користувача"
 
-#: ../src/core/gui/dialog/SettingsDialogPaletteTab.cpp:98
-msgid "<i>The palettes shown below are obtained from the <a href=\"file://{1}\">Built-in palettes</a> and <a href=\"file://{2}\">User palettes</a> directories:</i>\n"
-msgstr "<i>Палітри, які показані нижче, отримані з <a href=\"file://{1}\">Вбудовані палітри</a> і <a href=\"file://{2}\">Палітри користувача</a> директорії:</i>\n"
+#: ../src/core/gui/dialog/SettingsDialogPaletteTab.cpp:99
+msgid "<i>The palettes shown below are obtained from the <a href=\"{1}\">Built-in palettes</a> and <a href=\"{2}\">User palettes</a> directories:</i>\n"
+msgstr ""
 
-#: ../src/core/gui/dialog/SettingsDialogPaletteTab.cpp:111
+#: ../src/core/gui/dialog/SettingsDialogPaletteTab.cpp:117
 msgid "No palette files (i.e. with extension .gpl) could be found.\n"
 "Using the default until another palette is configured."
 msgstr "Файли палітр (з розширенням .gpl) не знайдено.\n"
 "Активована палітра за замовчуванням, поки інша не буде налаштована."
 
-#: ../src/core/gui/dialog/SettingsDialogPaletteTab.cpp:153
+#: ../src/core/gui/dialog/SettingsDialogPaletteTab.cpp:159
 msgid "Error"
 msgstr "Помилка"
 
-#: ../src/core/gui/dialog/SettingsDialogPaletteTab.cpp:165
+#: ../src/core/gui/dialog/SettingsDialogPaletteTab.cpp:171
 msgid "Name"
 msgstr "Ім’я"
 
-#: ../src/core/gui/dialog/SettingsDialogPaletteTab.cpp:168
+#: ../src/core/gui/dialog/SettingsDialogPaletteTab.cpp:174
 msgid "Palette has no Name"
 msgstr "Палітра не має Імені"
 
@@ -1852,8 +1852,8 @@ msgctxt "as a noun: a copy of"
 msgid "Copy"
 msgstr "Копіювати"
 
-#: ../src/core/model/Document.cpp:360 ../src/core/model/Document.cpp:369
-#: ../src/core/model/Document.cpp:372
+#: ../src/core/model/Document.cpp:330 ../src/core/model/Document.cpp:339
+#: ../src/core/model/Document.cpp:342
 msgid "Document not loaded! ({1}), {2}"
 msgstr "Документ не завантажений! ({1}), {2}"
 
@@ -2105,17 +2105,11 @@ msgid "Error reading \"{1}\":\n"
 "{2}"
 msgstr ""
 
-#: ../src/util/PathUtil.cpp:316
-msgid "File couldn't be opened. You have to do it manually:\n"
-"URL: {1}"
-msgstr "Файл не вдалося відкрити. Зробіть це вручну:\n"
-"URL: {1}"
-
-#: ../src/util/PathUtil.cpp:431
+#: ../src/util/PathUtil.cpp:409
 msgid "xournalpp-{1}"
 msgstr "xournalpp-{1}"
 
-#: ../src/util/PathUtil.cpp:440
+#: ../src/util/PathUtil.cpp:418
 msgid "Could not create folder: {1}\n"
 "Failed with error: {2}"
 msgstr "Не вдалося створити теку: {1}\n"
@@ -2224,7 +2218,7 @@ msgstr "Закрити"
 #: ../ui/goto.glade:108 ../ui/intEdTexDialog.glade:203
 #: ../ui/pageFormat.glade:346 ../ui/pageTemplate.glade:278
 #: ../ui/plugin.glade:114 ../ui/renameLayerDialog.glade:71
-#: ../ui/selectOpacity.glade:134 ../ui/settings.glade:6520
+#: ../ui/selectOpacity.glade:134 ../ui/settings.glade:6522
 msgid "Ok"
 msgstr "Ок"
 
@@ -2370,7 +2364,7 @@ msgid "Height"
 msgstr "Висота"
 
 #: ../ui/exportSettings.glade:53 ../ui/settings.glade:260
-#: ../ui/settings.glade:277 ../ui/settings.glade:3735
+#: ../ui/settings.glade:277 ../ui/settings.glade:3737
 msgid "None"
 msgstr "Нема"
 
@@ -3335,7 +3329,7 @@ msgid "Recolor Drawing Area (might introduce lags when moving selections)"
 msgstr ""
 
 #: ../ui/settings.glade:3264
-msgid "Recolors the drawing area so that white regions get the dark color and black regions get the light color. Other colors are interpolated accordingly."
+msgid "Recolors the drawing area so that light regions get the \"Light Color\" and dark regions get the \"Dark Color\". Other colors are interpolated accordingly. Can be use to implement a dark-mode."
 msgstr ""
 
 #: ../ui/settings.glade:3274
@@ -3343,570 +3337,572 @@ msgid "Recolor Previews in the Sidebar"
 msgstr ""
 
 #: ../ui/settings.glade:3279
-msgid "Recolors the previews in the sidebar (Page/Layer Preview) so that white regions get the dark color and black regions get the light color. Other colors are interpolated accordingly."
+msgid "Recolors the previews in the sidebar (Page/Layer Preview) the same way as the drawing area."
 msgstr ""
 
 #: ../ui/settings.glade:3293
-msgid "The color black regions are translated to"
+msgid "The color light regions are translated to\n"
+"(use a dark color for a dark-mode)"
 msgstr ""
 
-#: ../ui/settings.glade:3307
-msgid "The color white regions are translated to"
+#: ../ui/settings.glade:3308
+msgid "The color dark regions are translated to\n"
+"(use a light color for dark-mode)"
 msgstr ""
 
-#: ../ui/settings.glade:3322
+#: ../ui/settings.glade:3324
 msgid "Dark Color"
 msgstr "Темний колір"
 
-#: ../ui/settings.glade:3336
+#: ../ui/settings.glade:3338
 msgid "Light Color"
 msgstr "Світлий колір"
 
-#: ../ui/settings.glade:3349
-msgid "Recoloring / Inverting colors"
+#: ../ui/settings.glade:3351
+msgid "Recoloring (allows theming)"
 msgstr ""
 
-#: ../ui/settings.glade:3381
+#: ../ui/settings.glade:3383
 msgid "Cursor icon for pen"
 msgstr "Курсор для пера"
 
-#: ../ui/settings.glade:3396
+#: ../ui/settings.glade:3398
 msgctxt "stylus cursor uses no icon"
 msgid "No icon"
 msgstr "Немає іконки"
 
-#: ../ui/settings.glade:3397
+#: ../ui/settings.glade:3399
 msgctxt "stylus cursor uses a small dot"
 msgid "Small dot icon"
 msgstr "Маленька точка"
 
-#: ../ui/settings.glade:3398
+#: ../ui/settings.glade:3400
 msgctxt "stylus cursor uses a big pen icon"
 msgid "Big pen icon"
 msgstr "Іконка великої ручки"
 
-#: ../ui/settings.glade:3399
+#: ../ui/settings.glade:3401
 msgctxt "stylus cursor uses system cursor"
 msgid "System cursor"
 msgstr "Системний курсор"
 
-#: ../ui/settings.glade:3424
+#: ../ui/settings.glade:3426
 msgid "Highlight cursor position"
 msgstr "Підсвічувати позицію курсора"
 
-#: ../ui/settings.glade:3429
+#: ../ui/settings.glade:3431
 msgid "Draw a transparent circle around the cursor"
 msgstr "Намалювати напівпрозоре коло навколо курсору"
 
-#: ../ui/settings.glade:3447 ../ui/settings.glade:3590
+#: ../ui/settings.glade:3449 ../ui/settings.glade:3592
 msgid "Choose the color to use for \"Highlight cursor position\""
 msgstr "Оберіть колір підсвічування позиції курсора"
 
-#: ../ui/settings.glade:3461
+#: ../ui/settings.glade:3463
 msgid "Circle Color"
 msgstr "Колір кола"
 
-#: ../ui/settings.glade:3485 ../ui/settings.glade:3536
-#: ../ui/settings.glade:5028
+#: ../ui/settings.glade:3487 ../ui/settings.glade:3538
+#: ../ui/settings.glade:5030
 msgid "pixels"
 msgstr "пікс."
 
-#: ../ui/settings.glade:3513
+#: ../ui/settings.glade:3515
 msgid "Radius"
 msgstr "Радіус"
 
-#: ../ui/settings.glade:3549
+#: ../ui/settings.glade:3551
 msgid "30"
 msgstr "30"
 
-#: ../ui/settings.glade:3565
+#: ../ui/settings.glade:3567
 msgid "Border Width"
 msgstr "Ширина рамки"
 
-#: ../ui/settings.glade:3604
+#: ../ui/settings.glade:3606
 msgid "Border Color"
 msgstr "Колір рамки"
 
-#: ../ui/settings.glade:3636
+#: ../ui/settings.glade:3638
 msgid "Cursor"
 msgstr "Курсор"
 
-#: ../ui/settings.glade:3661
+#: ../ui/settings.glade:3663
 msgid "Show sidebar on the right side"
 msgstr "Показати бічну панель з правого боку"
 
-#: ../ui/settings.glade:3676
+#: ../ui/settings.glade:3678
 msgid "Show vertical scrollbar on the left side"
 msgstr "Показувати вертикальну прокрутку ліворуч"
 
-#: ../ui/settings.glade:3695
+#: ../ui/settings.glade:3697
 msgid "Left / Right-Handed"
 msgstr "Для лівої / правої руки"
 
-#: ../ui/settings.glade:3720
+#: ../ui/settings.glade:3722
 msgid "Page numbering  "
 msgstr "Нумерація сторінок  "
 
-#: ../ui/settings.glade:3736
+#: ../ui/settings.glade:3738
 msgid "Below preview"
 msgstr ""
 
-#: ../ui/settings.glade:3737
+#: ../ui/settings.glade:3739
 msgid "Circle background"
 msgstr ""
 
-#: ../ui/settings.glade:3738
+#: ../ui/settings.glade:3740
 msgid "Square background"
 msgstr ""
 
-#: ../ui/settings.glade:3758
+#: ../ui/settings.glade:3760
 msgid "Sidebar"
 msgstr "Бокова панель"
 
-#: ../ui/settings.glade:3784
+#: ../ui/settings.glade:3786
 msgid "Hide the horizontal scrollbar"
 msgstr "Приховати горизонтальну прокрутку"
 
-#: ../ui/settings.glade:3799
+#: ../ui/settings.glade:3801
 msgid "Hide the vertical scrollbar"
 msgstr "Приховати вертикальну прокрутку"
 
-#: ../ui/settings.glade:3814
+#: ../ui/settings.glade:3816
 msgid "Disable scrollbar fade out"
 msgstr "Вимкнути зникнення смуги прокрутки"
 
-#: ../ui/settings.glade:3832
+#: ../ui/settings.glade:3834
 msgid "Scrollbars"
 msgstr "Смуги прокрутки"
 
-#: ../ui/settings.glade:3886
+#: ../ui/settings.glade:3888
 msgid "When an element is selected and moved past the visible portion of the canvas, pan the screen by an amount equal to this percentage of the visible part of the canvas. "
 msgstr ""
 
-#: ../ui/settings.glade:3888
+#: ../ui/settings.glade:3890
 msgid "Base speed"
 msgstr "Звичайна швидкість"
 
-#: ../ui/settings.glade:3899
+#: ../ui/settings.glade:3901
 msgid "Multiply the panning speed by up to this amount, based on how much of the selected element is out of view."
 msgstr ""
 
-#: ../ui/settings.glade:3901
+#: ../ui/settings.glade:3903
 msgid "Max multiplier"
 msgstr "Максимальний множник"
 
-#: ../ui/settings.glade:3914
+#: ../ui/settings.glade:3916
 msgid "Selection Edge Panning"
 msgstr ""
 
-#: ../ui/settings.glade:3939 ../ui/settings.glade:4013
+#: ../ui/settings.glade:3941 ../ui/settings.glade:4015
 #: ../ui/mainmenubar.xml:205
 msgid "Show Menubar"
 msgstr "Показувати стрічку меню"
 
-#: ../ui/settings.glade:3954 ../ui/settings.glade:4028
+#: ../ui/settings.glade:3956 ../ui/settings.glade:4030
 msgid "Show Toolbar"
 msgstr "Показати панель інструментів"
 
-#: ../ui/settings.glade:3969 ../ui/settings.glade:4058
+#: ../ui/settings.glade:3971 ../ui/settings.glade:4060
 #: ../ui/mainmenubar.xml:210
 msgid "Show Sidebar"
 msgstr "Показати бічну панель"
 
-#: ../ui/settings.glade:3988 ../ui/mainmenubar.xml:193
+#: ../ui/settings.glade:3990 ../ui/mainmenubar.xml:193
 msgid "Fullscreen"
 msgstr "На весь екран"
 
-#: ../ui/settings.glade:4043
+#: ../ui/settings.glade:4045
 msgid "Go Fullscreen"
 msgstr "На повний екран"
 
-#: ../ui/settings.glade:4078
+#: ../ui/settings.glade:4080
 msgid "Select toolbar:"
 msgstr "Оберіть панель інструментів:"
 
-#: ../ui/settings.glade:4111
+#: ../ui/settings.glade:4113
 msgid "Presentation Mode"
 msgstr "Режим презентації"
 
-#: ../ui/settings.glade:4140
+#: ../ui/settings.glade:4142
 msgid "Pre-load pages before"
 msgstr "Попереднє завантаження сторінок до"
 
-#: ../ui/settings.glade:4152
+#: ../ui/settings.glade:4154
 msgid "Pre-load pages after"
 msgstr "Попереднє завантаження сторінок після"
 
-#: ../ui/settings.glade:4189
+#: ../ui/settings.glade:4191
 msgid "Clear cached paged while scrolling"
 msgstr "Очистити кешовані сторінки під час прокручування"
 
-#: ../ui/settings.glade:4216
+#: ../ui/settings.glade:4218
 msgid "Performance"
 msgstr "Продуктивність"
 
-#: ../ui/settings.glade:4247
+#: ../ui/settings.glade:4249
 msgid "View"
 msgstr "Вигляд"
 
-#: ../ui/settings.glade:4296
+#: ../ui/settings.glade:4298
 msgid "Speed for Ctrl + Scroll"
 msgstr "Швидкість для Ctrl + Scroll"
 
-#: ../ui/settings.glade:4323
+#: ../ui/settings.glade:4325
 msgid "Speed for a Zoomstep"
 msgstr "Швидкість для кроку масштабування"
 
-#: ../ui/settings.glade:4383
+#: ../ui/settings.glade:4385
 msgid "Zoom Speed"
 msgstr "Швидкість масштабування"
 
-#: ../ui/settings.glade:4410
+#: ../ui/settings.glade:4412
 msgid "<i>To make sure on 100% zoom the size of elements is natural.</i>"
 msgstr ""
 
-#: ../ui/settings.glade:4430
+#: ../ui/settings.glade:4432
 msgid "<i>Put a ruler on your screen and move the slider until both rulers match.</i>"
 msgstr ""
 
-#: ../ui/settings.glade:4446
+#: ../ui/settings.glade:4448
 msgid "Automatic"
 msgstr ""
 
-#: ../ui/settings.glade:4503
+#: ../ui/settings.glade:4505
 msgid "The unit of the ruler is cm"
 msgstr "Одиниця виміру лінійки - см"
 
-#: ../ui/settings.glade:4524
+#: ../ui/settings.glade:4526
 msgid "Display DPI Calibration"
 msgstr "Калібрування DPI дисплея"
 
-#: ../ui/settings.glade:4555
+#: ../ui/settings.glade:4557
 msgid "Zoom"
 msgstr "Масштаб"
 
-#: ../ui/settings.glade:4604
+#: ../ui/settings.glade:4606
 msgid "<i>If you add additional space beside the pages you can choose the area of the screen you would like to work on.</i>"
 msgstr "<i>Якщо ви додасте додаткове місце біля сторінок, ви зможете вибрати область екрану, на якій ви хотіли б працювати.</i>"
 
-#: ../ui/settings.glade:4727
+#: ../ui/settings.glade:4729
 msgid "Add additional horizontal space"
 msgstr ""
 
-#: ../ui/settings.glade:4743
+#: ../ui/settings.glade:4745
 msgid "Add additional vertical space"
 msgstr ""
 
-#: ../ui/settings.glade:4761
+#: ../ui/settings.glade:4763
 msgid "<i>or</i>"
 msgstr "<i>або</i>"
 
-#: ../ui/settings.glade:4773
+#: ../ui/settings.glade:4775
 msgid "Unlimited scrolling"
 msgstr ""
 
-#: ../ui/settings.glade:4797
+#: ../ui/settings.glade:4799
 msgid "<i>The amount is specified in pixels.</i>"
 msgstr "<i>Сума вказана в пікселях.</i>"
 
-#: ../ui/settings.glade:4829
+#: ../ui/settings.glade:4831
 msgid "Scrolling outside the page"
 msgstr "Прокрутка за межами сторінки"
 
-#: ../ui/settings.glade:4856
+#: ../ui/settings.glade:4858
 msgid "Offset first page this many pages when <b>Pair Pages</b> enabled"
 msgstr ""
 
-#: ../ui/settings.glade:4857
+#: ../ui/settings.glade:4859
 msgid "First Page Offset "
 msgstr "Відступ першої сторінки "
 
-#: ../ui/settings.glade:4870
+#: ../ui/settings.glade:4872
 msgid "Usually 0 or 1"
 msgstr "Зазвичай 0 або 1"
 
-#: ../ui/settings.glade:4889
+#: ../ui/settings.glade:4891
 msgid "Paired Pages"
 msgstr "Спарені сторінки"
 
-#: ../ui/settings.glade:4915
+#: ../ui/settings.glade:4917
 msgid "when scrolling to end of last page"
 msgstr "при прокручуванні до кінця останньої сторінки"
 
-#: ../ui/settings.glade:4930
+#: ../ui/settings.glade:4932
 msgid "when drawing on last page"
 msgstr "при малюванні на останній сторінці"
 
-#: ../ui/settings.glade:4945
+#: ../ui/settings.glade:4947
 msgid "disabled"
 msgstr "Відключено"
 
-#: ../ui/settings.glade:4963
+#: ../ui/settings.glade:4965
 msgid "Automatically Add Empty Last Page (excluding PDFs)"
 msgstr "Автоматично додавати в кінці порожню сторінку (за винятком PDF)"
 
-#: ../ui/settings.glade:4987
+#: ../ui/settings.glade:4989
 msgid "Enable  with determination radius of "
 msgstr "Увімкнути з радіусом визначення "
 
-#: ../ui/settings.glade:4992
+#: ../ui/settings.glade:4994
 msgid "Drag LEFT from start point acts like shift key is being held.\n"
 "Drag UP acts as if Control key is being held.\n\n"
 "Determination Radius: Radius at which modifiers will lock in until finished drawing.\n\n"
 "<i>Useful for operating without keyboard.</i>"
 msgstr ""
 
-#: ../ui/settings.glade:5042
+#: ../ui/settings.glade:5044
 msgid "Drawing Tools - Set Modifiers by Draw Direction (Experimental)"
 msgstr ""
 
-#: ../ui/settings.glade:5059
+#: ../ui/settings.glade:5061
 msgid "Preserve line width"
 msgstr "Зберігати ширину лінії"
 
-#: ../ui/settings.glade:5064
+#: ../ui/settings.glade:5066
 msgid "After resizing a selection, the line width of all strokes will be the same as before the resizing operation. "
 msgstr "Після зміни розміру виділеної області, ширина усіх ліній залишатиметься такою ж, як і до зміни розміру. "
 
-#: ../ui/settings.glade:5075
+#: ../ui/settings.glade:5077
 msgid "Resizing"
 msgstr "Зміна розміру"
 
-#: ../ui/settings.glade:5111
+#: ../ui/settings.glade:5113
 msgid "Rotation snapping tolerance"
 msgstr "Допуск при фіксації повороту"
 
-#: ../ui/settings.glade:5123
+#: ../ui/settings.glade:5125
 msgid "Grid snapping tolerance"
 msgstr "Допуск при прив'язці до сітки"
 
-#: ../ui/settings.glade:5165
+#: ../ui/settings.glade:5167
 msgid "Grid size"
 msgstr "Розмір сітки"
 
-#: ../ui/settings.glade:5196
+#: ../ui/settings.glade:5198
 msgid "Use snapping for recognized shapes"
 msgstr "Використовувати прив'язку для розпізнаних фігур"
 
-#: ../ui/settings.glade:5200
+#: ../ui/settings.glade:5202
 msgid "If activated, shapes that have been recognized by the shape recognizer will be snapped to the grid automatically. This may lead to unexpected results if you have the shape recognizer turned on while writing."
 msgstr ""
 
-#: ../ui/settings.glade:5215
+#: ../ui/settings.glade:5217
 msgid "Snapping"
 msgstr "Прив'язка"
 
-#: ../ui/settings.glade:5243
+#: ../ui/settings.glade:5245
 msgid "Minimum Stroke Size"
 msgstr "Мінімальний розмір штриха"
 
-#: ../ui/settings.glade:5298
+#: ../ui/settings.glade:5300
 msgctxt "Short taps/clicks will trigger special actions"
 msgid "Enable Tap action"
 msgstr "Увімкнути дії по дотику"
 
-#: ../ui/settings.glade:5303
+#: ../ui/settings.glade:5305
 msgid "Do not draw for inputs of short time and length unless it comes in short succession. Instead, show floating toolbox."
 msgstr ""
 
-#: ../ui/settings.glade:5315
+#: ../ui/settings.glade:5317
 msgid "Time limit (ms)"
 msgstr "Часовий ліміт (мс)"
 
-#: ../ui/settings.glade:5327
+#: ../ui/settings.glade:5329
 msgid "Time limit: taps lasting longer will not trigger a special action\n\n"
 "<i>Recommended: 150ms</i>"
 msgstr ""
 
-#: ../ui/settings.glade:5347
+#: ../ui/settings.glade:5349
 msgid "Length limit: taps moving further away will not trigger a special action\n\n"
 "<i>Recommended: 1 mm</i>"
 msgstr ""
 
-#: ../ui/settings.glade:5367
+#: ../ui/settings.glade:5369
 msgid "Length limit (mm)"
 msgstr "Ліміт довжини (мм)"
 
-#: ../ui/settings.glade:5378
+#: ../ui/settings.glade:5380
 msgid "Frequency limit (ms)"
 msgstr "Обмеження частоти (мс)"
 
-#: ../ui/settings.glade:5390
+#: ../ui/settings.glade:5392
 msgid "Frequency limit: A tap happening within this time period after a stroke will not trigger a special action.\n\n"
 "<i>Recommended: 500ms</i>"
 msgstr ""
 
-#: ../ui/settings.glade:5407
+#: ../ui/settings.glade:5409
 msgid "Try to select object first."
 msgstr "Спочатку спробуйте вибрати об'єкт."
 
-#: ../ui/settings.glade:5412 ../ui/settings.glade:5442
+#: ../ui/settings.glade:5414 ../ui/settings.glade:5444
 msgid "Try to select object first; if nothing selected then show floating toolbox if enabled."
 msgstr "Спробуйте спочатку вибрати об'єкт; якщо нічого не вибрано, буде показано спливаючу панель інструментів (якщо її увімкнено)."
 
-#: ../ui/settings.glade:5425
+#: ../ui/settings.glade:5427
 msgid "All three conditions must be met before stroke is ignored.\n"
 "It must be short in time and length and we can't have ignored another stroke recently."
 msgstr "Всі три умови повинні бути виконані, перш ніж штрих буде проігноровано. Штрих повинен бути коротким за часом та довжиною і не повинно бути нещодавно проігнорованих штрихів."
 
-#: ../ui/settings.glade:5428
+#: ../ui/settings.glade:5430
 msgid "Settings:"
 msgstr "Параметри:"
 
-#: ../ui/settings.glade:5437
+#: ../ui/settings.glade:5439
 msgid "Show Floating Toolbox"
 msgstr "Показувати плаваючу панель інструментів"
 
-#: ../ui/settings.glade:5456
+#: ../ui/settings.glade:5458
 msgid "Action on Tool Tap"
 msgstr ""
 
-#: ../ui/settings.glade:5484
+#: ../ui/settings.glade:5486
 msgid "<i>Re-render PDF backgrounds more often while zooming for better render quality.\n"
 "<b>Note:</b> This should not affect print quality.</i>"
 msgstr "<i>Перемальовувати тло PDF частіше під час зміни масштабу для більшої якості.\n"
 "<b>Примітка:</b> Це не впливає на якість друку.</i>"
 
-#: ../ui/settings.glade:5506
+#: ../ui/settings.glade:5508
 msgid "When zoomed in on a high-resolution PDF, each re-render can take a long time. Setting this to a large value causes these re-renders to happen less often.\n\n"
 "Set this to 0% to always re-render on zoom."
 msgstr "Під час збільшення масштабу PDF з високою роздільною здатністю, кожне перемалювання (рендеринг) може зайняти багато часу. Встановлення великого значення дозволить знизити частоту рендерингу.\n\n"
 "Встановіть значення 0%, щоб постійно перемальовувати при зміні масштабу."
 
-#: ../ui/settings.glade:5509
+#: ../ui/settings.glade:5511
 msgid "Re-render when the page's zoom changes by more than "
 msgstr "Перемальовувати, коли масштаб сторінки збільшується більше ніж на "
 
-#: ../ui/settings.glade:5522
+#: ../ui/settings.glade:5524
 msgid "0.00"
 msgstr "0.00"
 
-#: ../ui/settings.glade:5539
+#: ../ui/settings.glade:5541
 msgid "%."
 msgstr "%."
 
-#: ../ui/settings.glade:5560
+#: ../ui/settings.glade:5562
 msgid "PDF Cache"
 msgstr "Кеш PDF"
 
-#: ../ui/settings.glade:5591
+#: ../ui/settings.glade:5593
 msgid "Drawing Area"
 msgstr "Область малювання"
 
-#: ../ui/settings.glade:5638
+#: ../ui/settings.glade:5640
 msgid "<i>Select the tool and Settings if you press the Default Button.</i>"
 msgstr "<i>Оберіть інструмент та його налаштування, які активуються по основній кнопці</i>"
 
-#: ../ui/settings.glade:5690
+#: ../ui/settings.glade:5692
 msgid "<b>Default tool</b>"
 msgstr ""
 
-#: ../ui/settings.glade:5726
+#: ../ui/settings.glade:5728
 msgid "<i>The laser pointer allows to write strokes that will fade out after a short while.</i>"
 msgstr ""
 
-#: ../ui/settings.glade:5747
+#: ../ui/settings.glade:5749
 msgid "Fade out delay (in ms)"
 msgstr ""
 
-#: ../ui/settings.glade:5799
+#: ../ui/settings.glade:5801
 msgid "<b>Laser pointer</b>"
 msgstr ""
 
-#: ../ui/settings.glade:5839
+#: ../ui/settings.glade:5841
 msgid "Tools"
 msgstr "Інструменти"
 
-#: ../ui/settings.glade:5892
+#: ../ui/settings.glade:5894
 msgid "<i>\n"
 "Using the checkbox the audio system can be disabled or enabled for future sessions (restart required).\n"
 "Disabling audio for a single session can be achieved using the <tt>--disable-audio</tt> flag on the command line.\n"
 "</i>"
 msgstr ""
 
-#: ../ui/settings.glade:5908
+#: ../ui/settings.glade:5910
 msgid "Disable Audio"
 msgstr "Вимкнути звук"
 
-#: ../ui/settings.glade:5930
+#: ../ui/settings.glade:5932
 msgid "Enable or Disable Audio"
 msgstr "Увімкнути або вимкнути звук"
 
-#: ../ui/settings.glade:5957
+#: ../ui/settings.glade:5959
 msgid "<i>Audio recordings are currently stored in a separate folder and referenced from the journal.</i>"
 msgstr "<i>Аудіозаписи зберігаються в окремій теці, а в журналі записані посилання на них.</i>"
 
-#: ../ui/settings.glade:5976 ../ui/settings.glade:6012
+#: ../ui/settings.glade:5978 ../ui/settings.glade:6014
 msgid "Storage Folder"
 msgstr "Місце зберігання"
 
-#: ../ui/settings.glade:5991
+#: ../ui/settings.glade:5993
 msgid "Select Folder"
 msgstr "Вибрати теку"
 
-#: ../ui/settings.glade:6039
+#: ../ui/settings.glade:6041
 msgid "<i>Specify the audio devices used for recording and playback of audio attachments.\n"
 "If available select <small><tt>pulse</tt></small> as input / output device.</i>"
 msgstr "<i>Вкажіть аудіо пристрої, що використовуються для запису або відтворення аудіовкладень.\n"
 "Якщо доступно оберіть <small><tt>pulse</tt></small> в ролі пристрою входу/виходу.</i>"
 
-#: ../ui/settings.glade:6063
+#: ../ui/settings.glade:6065
 msgid "Input Device"
 msgstr "Пристрої вводу"
 
-#: ../ui/settings.glade:6085
+#: ../ui/settings.glade:6087
 msgid "Output Device"
 msgstr "Пристрій виведення"
 
-#: ../ui/settings.glade:6116
+#: ../ui/settings.glade:6118
 msgid "Audio Devices"
 msgstr "Аудіо-пристрої"
 
-#: ../ui/settings.glade:6145
+#: ../ui/settings.glade:6147
 msgid "Sample Rate"
 msgstr "Частота дискретизації"
 
-#: ../ui/settings.glade:6156
+#: ../ui/settings.glade:6158
 msgid "Gain"
 msgstr "Підсилення"
 
-#: ../ui/settings.glade:6203
+#: ../ui/settings.glade:6205
 msgid "Recording Quality"
 msgstr "Якість запису"
 
-#: ../ui/settings.glade:6229
+#: ../ui/settings.glade:6231
 msgid "Default Seek Time (in seconds)"
 msgstr "Час перемотування (в секундах)"
 
-#: ../ui/settings.glade:6242
+#: ../ui/settings.glade:6244
 msgid "1,00"
 msgstr "1,00"
 
-#: ../ui/settings.glade:6261
+#: ../ui/settings.glade:6263
 msgid "Playback Settings"
 msgstr "Налаштування відтворення"
 
-#: ../ui/settings.glade:6275
+#: ../ui/settings.glade:6277
 msgid "<i>Changes take only effect on new recordings and playbacks.</i>"
 msgstr "<i>Зміни вплинуть лише на нові записи і відтворювання.</i>"
 
-#: ../ui/settings.glade:6306
+#: ../ui/settings.glade:6308
 msgid "Audio Recording"
 msgstr "Аудіозапис"
 
-#: ../ui/settings.glade:6379
+#: ../ui/settings.glade:6381
 msgid "<i>Select language (requires restart)</i>"
 msgstr "<i>Обрати мову (потрібен перезапуск)</i>"
 
-#: ../ui/settings.glade:6411 ../ui/settings.glade:6457
+#: ../ui/settings.glade:6413 ../ui/settings.glade:6459
 msgid "Language"
 msgstr "Мова"
 
-#: ../ui/settings.glade:6427
+#: ../ui/settings.glade:6429
 msgid "Language Settings"
 msgstr "Налаштування мови"
 
-#: ../ui/settings.glade:6481
+#: ../ui/settings.glade:6483
 msgid "Palette"
 msgstr "Палітра"
 
