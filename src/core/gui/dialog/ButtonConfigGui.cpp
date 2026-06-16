@@ -82,7 +82,7 @@ ButtonConfigGui::ButtonConfigGui(GladeSearchpath* gladeSearchPath, GtkBox* box, 
     addTypeCB("tool-text", _("Text"), TOOL_TEXT);
     addTypeCB("tool-image", _("Insert image"), TOOL_IMAGE);
     addTypeCB("laser-pointer", _("Laser Pointer - Pen"), TOOL_LASER_POINTER_PEN);
-    addTypeCB("laser-pointer", _("Laser Pointer - Hightlighter"), TOOL_LASER_POINTER_HIGHLIGHTER);
+    addTypeCB("laser-pointer", _("Laser Pointer - Highlighter"), TOOL_LASER_POINTER_HIGHLIGHTER);
     addTypeCB("spacer", _("Vertical space"), TOOL_VERTICAL_SPACE);
     addTypeCB("select-lasso", _("Select region"), TOOL_SELECT_REGION);
     addTypeCB("select-rect", _("Select rectangle"), TOOL_SELECT_RECT);
@@ -310,6 +310,15 @@ void ButtonConfigGui::enableDisableTools() {
             gtk_widget_set_visible(cbStrokeType, false);
             break;
 
+        case TOOL_LASER_POINTER_PEN:
+        case TOOL_LASER_POINTER_HIGHLIGHTER:
+            gtk_widget_set_visible(cbThickness, true);
+            gtk_widget_set_visible(colorButton, true);
+            gtk_widget_set_visible(cbDrawingType, false);
+            gtk_widget_set_visible(cbEraserType, false);
+            gtk_widget_set_visible(cbStrokeType, false);
+            break;
+
         case TOOL_NONE:
         case TOOL_IMAGE:
             // case TOOL_DRAW_RECT:
@@ -327,6 +336,7 @@ void ButtonConfigGui::enableDisableTools() {
             gtk_widget_set_visible(cbStrokeType, false);
             break;
         default:
+            g_warning("Unhandled tool in ButtonConfigGui");
             break;
     }
 }
