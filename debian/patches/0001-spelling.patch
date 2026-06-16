@@ -1,0 +1,21 @@
+From: "Barak A. Pearlmutter" <barak+git@pearlmutter.net>
+Date: Wed, 17 Jun 2026 02:39:46 +0100
+Subject: spelling
+
+---
+ src/core/gui/inputdevices/PrintEvent.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/core/gui/inputdevices/PrintEvent.cpp b/src/core/gui/inputdevices/PrintEvent.cpp
+index cecf183..1a2a51b 100644
+--- a/src/core/gui/inputdevices/PrintEvent.cpp
++++ b/src/core/gui/inputdevices/PrintEvent.cpp
+@@ -28,7 +28,7 @@ static StreamType& operator<<(StreamType& str, TimeToReadable t) {
+         str << h << ":" << std::setw(2) << m << ":" << std::setw(2) << s << "." << std::setw(3) << ms;
+         str.fill(fill);
+     } else {
+-        str << "Erronous value";
++        str << "Erroneous value";
+     }
+     str << "  (" << t.ts << ")";
+     return str;

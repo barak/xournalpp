@@ -3,15 +3,19 @@
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 # Get __DATE__ and __TIME__ in sources to refer to debian/changelog ultimate timestamp
 include /usr/share/dpkg/pkg-info.mk
+include /usr/share/dpkg/buildopts.mk
+JOPT=$(addprefix -j,$(DEB_BUILD_OPTION_PARALLEL))
 
 %:
 	dh $@
 
 override_dh_auto_configure:
-	dh_auto_configure -- -D ENABLE_CPPUNIT=ON
+	dh_auto_configure -- \
+		-D CMAKE_BUILD_TYPE=RelWithDebInfo \
+		-D ENABLE_CPPTRACE=OFF
 
 override_dh_auto_build:
-	dh_auto_build -- translations all
+	dh_auto_build -- $(JOPT) translations all
 
 execute_after_dh_auto_install:
 	@echo "Upstream installs unnecessary file."
@@ -19,6 +23,3 @@ execute_after_dh_auto_install:
 
 override_dh_dwz:
 	dh_dwz --no-dwz-multifile
-
-override_dh_auto_configure:
-	dh_auto_configure -- -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_CPPTRACE=OFF
