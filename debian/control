@@ -3,7 +3,7 @@ Maintainer: Barak A. Pearlmutter <bap@debian.org>
 Uploaders: Mike Gabriel <sunweaver@debian.org>
 Section: x11
 Standards-Version: 4.7.4
-Build-Depends: debhelper-compat (= 13), cmake,
+Build-Depends: debhelper-compat (= 14), cmake,
 	libcppunit-dev,
 	help2man,
 	lsb-release,
