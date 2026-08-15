@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.7
+
+* Fixed Lua API changeToolColor not recognizing some tool names (#7631)
+* Fixed failing assertion when right clicking (#7669)
+* Updated translations
+
 ## 1.3.6
 
 * Fixed several issues with button configuration (#7526)
